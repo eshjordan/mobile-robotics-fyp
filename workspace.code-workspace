@@ -10,6 +10,13 @@
 		],
 		"python.analysis.extraPaths": [
 			"/opt/ros/rolling/lib/python3.12/site-packages"
+		],
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true,
+	},
+	"extensions": {
+		"recommendations": [
+			"llvm-vs-code-extensions.vscode-clangd"
 		]
 	}
 }

@@ -65,6 +65,12 @@ https://docs.ros.org/en/rolling/Tutorials/Advanced/Simulators/Webots/Installatio
 sudo apt install ros-rolling-webots-ros2
 ```
 
+# Workspace Setup
+Install all dependencies of the packages in the workspace
+```bash
+rosdep install --from-paths src --ignore-src -r -y
+```
+
 # Testing
 https://cyberbotics.com/doc/guide/epuck?version=R2023a
 
