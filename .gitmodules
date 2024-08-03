@@ -1,0 +1,6 @@
+[submodule "src/lazy-agent-sim"]
+	path = src/lazy-agent-sim
+	url = https://github.com/eshjordan/lazy-agent-sim.git
+[submodule "src/webots_ros2"]
+	path = src/webots_ros2
+	url = https://github.com/cyberbotics/webots_ros2.git
