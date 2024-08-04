@@ -66,8 +66,9 @@ sudo apt install ros-rolling-webots-ros2
 ```
 
 # Workspace Setup
-Install all dependencies of the packages in the workspace
+Install clangd for formatting and linting, and all dependencies of the packages in the workspace
 ```bash
+sudo apt update && sudo apt install clangd-16 clang-tidy-16 clang-format-16
 rosdep install --from-paths src --ignore-src -r -y
 ```
 

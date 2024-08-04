@@ -1,0 +1,17 @@
+{
+  "build": {
+    "executor": "parallel",
+    "cmake-args": [
+      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+    ],
+  },
+  "test": {
+    "packages-skip-regex": [
+      "^webots_ros2.*$",
+    ],
+  },
+  "test-result": {
+    "all": true,
+    "verbose": true
+  }
+}

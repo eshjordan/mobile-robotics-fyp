@@ -4,3 +4,7 @@
 [submodule "src/webots_ros2"]
 	path = src/webots_ros2
 	url = https://github.com/cyberbotics/webots_ros2.git
+[submodule "src/epuck_driver_cpp"]
+	path = src/epuck_driver_cpp
+	url = https://github.com/gctronic/epuck_driver_cpp.git
+	branch = e-puck2_wifi
