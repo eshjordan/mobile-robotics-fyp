@@ -1,6 +1,12 @@
 # mobile-robotics-fyp
 ROS 2 Colcon workspace for use in modelling and testing coverage problems with distributed, lazy agents with event-driven communication.
 
+## Preferred Development Workflow
+Step 1 - Install Docker.
+Step 2 - Use VS Code's Dev Containers feature to automatically setup the development environment.
+If not already installed, add the extension `ms-vscode-remote.remote-containers`.
+When prompted, open the workspace in the container, and you will be good to go.
+
 ## Installation
 Install ROS 2 Rolling Ridley on Ubuntu 24.04
 

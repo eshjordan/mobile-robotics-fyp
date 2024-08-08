@@ -1,0 +1,25 @@
+{
+    "name": "mobile_robotics_ws",
+    "dockerComposeFile": [
+        "./docker-compose.yaml"
+    ],
+    "service": "dev",
+    "workspaceFolder": "/mobile_robotics_ws",
+    "shutdownAction": "stopCompose",
+    // "postCreateCommand": "echo ubuntu ALL=\\(root\\) NOPASSWD:ALL > /etc/sudoers.d/ubuntu && chmod 0440 /etc/sudoers.d/ubuntu",
+    // "postCreateCommand": "sudo mkdir -p /etc/apt/keyrings && cd /etc/apt/keyrings && sudo wget -q https://cyberbotics.com/Cyberbotics.asc && echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/Cyberbotics.asc] https://cyberbotics.com/debian binary-amd64/' | sudo tee /etc/apt/sources.list.d/Cyberbotics.list && sudo apt update && sudo apt install -y webots",
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "bash"
+            },
+            "extensions": [
+                "ms-iot.vscode-ros",
+                "ms-python.python",
+                "ms-vscode.cpptools",
+                "llvm-vs-code-extensions.vscode-clangd",
+                "ms-python.black-formatter"
+            ]
+        }
+    }
+}

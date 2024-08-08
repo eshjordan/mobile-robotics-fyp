@@ -13,22 +13,11 @@
 		],
 		"editor.formatOnSave": true,
 		"editor.formatOnType": true,
-
-		"clangd.path": "clangd",
 		"clangd.arguments": [
 			"--background-index",
 			"--suggest-missing-includes",
 			"--clang-tidy",
 			"-j=16"
 		],
-
-		"black-formatter.args": [
-		],
-	},
-	"extensions": {
-		"recommendations": [
-			"llvm-vs-code-extensions.vscode-clangd",
-			"ms-python.black-formatter"
-		]
 	}
 }
