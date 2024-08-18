@@ -18,7 +18,10 @@
                 "ms-python.python",
                 "ms-vscode.cpptools",
                 "llvm-vs-code-extensions.vscode-clangd",
-                "ms-python.black-formatter"
+                "ms-python.black-formatter",
+                "eamodio.gitlens",
+                "twxs.cmake",
+                "ms-vscode.cmake-tools"
             ]
         }
     }
