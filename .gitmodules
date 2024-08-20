@@ -8,3 +8,9 @@
 	path = src/epuck_driver_cpp
 	url = https://github.com/gctronic/epuck_driver_cpp.git
 	branch = e-puck2_wifi
+[submodule "epuck/e-puck2_main-processor"]
+	path = epuck/e-puck2_main-processor
+	url = https://github.com/e-puck2/e-puck2_main-processor.git
+[submodule "epuck/esp-idf"]
+	path = epuck/esp-idf
+	url = https://github.com/e-puck2/esp-idf.git
