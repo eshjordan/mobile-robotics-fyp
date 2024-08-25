@@ -18,6 +18,7 @@ services:
 
     # Change to your container name
     container_name: mobile_robotics_ws
+    network_mode: host
     volumes:
       # Mount the project
       - ..:/mobile_robotics_ws/:rw
