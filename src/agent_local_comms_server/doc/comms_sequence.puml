@@ -16,7 +16,7 @@ activate "Local Comms Manager"
 
 par Runs continously on a timer
 loop
-"Robot[N] Client" --> "Local Comms Manager": Heartbeat {ID(N), Pose(N)}
+"Robot[N] Client" --> "Local Comms Manager": Heartbeat {ID(N)}
 "Local Comms Manager" --> "Robot[N] Client": Response {}
 end
 end
