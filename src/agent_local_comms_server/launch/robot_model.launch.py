@@ -18,10 +18,10 @@ def generate_launch_description():
                 "manager_robot_tf_prefix": "epuck2_robot_",
                 "manager_robot_tf_suffix": "",
                 "manager_robot_tf_frame": "base_link",
+                "robot0_host": "127.0.0.1",
+                "robot0_port": "50002",
                 "robot1_host": "127.0.0.1",
-                "robot1_port": "50001",
-                "robot2_host": "127.0.0.1",
-                "robot2_port": "50002",
+                "robot1_port": "50003",
             }.items(),
         )
     )
@@ -29,6 +29,29 @@ def generate_launch_description():
     ld = launch.LaunchDescription(
         launch_args
         + [
+            launch_ros.actions.Node(
+                package="agent_local_comms_server",
+                executable="test_robot",
+                name="test_robot0",
+                output="screen",
+                parameters=[
+                    {
+                        "robot_id": 0,
+                        "manager_host": launch.substitutions.LaunchConfiguration(
+                            "manager_server_host"
+                        ),
+                        "manager_port": launch.substitutions.LaunchConfiguration(
+                            "manager_server_port"
+                        ),
+                        "robot_host": launch.substitutions.LaunchConfiguration(
+                            "robot0_host"
+                        ),
+                        "robot_port": launch.substitutions.LaunchConfiguration(
+                            "robot0_port"
+                        ),
+                    }
+                ],
+            ),
             launch_ros.actions.Node(
                 package="agent_local_comms_server",
                 executable="test_robot",
@@ -48,29 +71,6 @@ def generate_launch_description():
                         ),
                         "robot_port": launch.substitutions.LaunchConfiguration(
                             "robot1_port"
-                        ),
-                    }
-                ],
-            ),
-            launch_ros.actions.Node(
-                package="agent_local_comms_server",
-                executable="test_robot",
-                name="test_robot2",
-                output="screen",
-                parameters=[
-                    {
-                        "robot_id": 2,
-                        "manager_host": launch.substitutions.LaunchConfiguration(
-                            "manager_server_host"
-                        ),
-                        "manager_port": launch.substitutions.LaunchConfiguration(
-                            "manager_server_port"
-                        ),
-                        "robot_host": launch.substitutions.LaunchConfiguration(
-                            "robot2_host"
-                        ),
-                        "robot_port": launch.substitutions.LaunchConfiguration(
-                            "robot2_port"
                         ),
                     }
                 ],

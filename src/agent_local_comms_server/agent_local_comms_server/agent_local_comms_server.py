@@ -5,9 +5,14 @@ import socket
 import struct
 from typing import override
 import rclpy
+import rclpy.time
 import rclpy.duration
 import rclpy.node
-from agent_local_comms_server.packets import EpuckHeartbeatPacket
+from agent_local_comms_server.packets import (
+    EpuckHeartbeatPacket,
+    EpuckHeartbeatResponsePacket,
+    EpuckNeighbourPacket,
+)
 from socketserver import BaseRequestHandler, ThreadingUDPServer
 import threading
 import tf2_ros.buffer
@@ -15,6 +20,8 @@ import tf2_ros.transform_listener
 
 
 ENDIAN_FMT = "<"
+MAX_ROBOTS = 10
+MAX_HOST_LEN = 16
 
 
 class LocalCommsManager(rclpy.node.Node):
@@ -80,16 +87,8 @@ class LocalCommsManager(rclpy.node.Node):
 
     def create_request_handler(manager: "LocalCommsManager"):
         class Handler(BaseRequestHandler):
-            def __init__(self, *args, **kwargs):
-                super().__init__(*args, **kwargs)
-                manager.get_logger().info("Created new request handler")
-
             @override
             def handle(self):
-                manager.get_logger().info(
-                    f"Received request from {self.client_address}"
-                )
-
                 def tf_distance(tf: tf2_ros.TransformStamped) -> float:
                     return math.sqrt(
                         tf.transform.translation.x**2
@@ -111,16 +110,23 @@ class LocalCommsManager(rclpy.node.Node):
                     )
                     return
 
-                if (heartbeat.id, *self.client_address) not in manager.known_robots:
-                    manager.known_robots.add((heartbeat.id, *self.client_address))
+                manager.get_logger().info(
+                    f"manager.known_robots: {manager.known_robots}"
+                )
 
-                frame = manager.frame_name(heartbeat.id)
+                if (
+                    heartbeat.robot_id,
+                    *self.client_address,
+                ) not in manager.known_robots:
+                    manager.known_robots.add((heartbeat.robot_id, *self.client_address))
+
+                frame = manager.frame_name(heartbeat.robot_id)
 
                 # Find neighbouring robots
                 known_frames = [
                     (id, host, port, manager.frame_name(id))
                     for id, host, port in manager.known_robots
-                    if id != heartbeat.id
+                    if id != heartbeat.robot_id
                 ]
 
                 # Get all transforms to known frames
@@ -129,10 +135,14 @@ class LocalCommsManager(rclpy.node.Node):
                         id,
                         host,
                         port,
-                        manager.tf_buffer.lookup_transform(other_frame, frame, 0),
+                        manager.tf_buffer.lookup_transform(
+                            other_frame, frame, rclpy.time.Time()
+                        ),
                     )
                     for id, host, port, other_frame in known_frames
-                    if manager.tf_buffer.can_transform(other_frame, frame, 0)
+                    if manager.tf_buffer.can_transform(
+                        other_frame, frame, rclpy.time.Time()
+                    )
                 ]
 
                 # Calculate distances to all known robots
@@ -149,27 +159,19 @@ class LocalCommsManager(rclpy.node.Node):
                 ]
 
                 # Send response with all neighbour ids and distances
-                response = bytes(
-                    [
-                        0x21,
-                        len(neighbours),
-                    ]
-                    + [
-                        byte
-                        for other_agent in [
-                            struct.pack(ENDIAN_FMT + "B", id)
-                            + struct.pack(ENDIAN_FMT + "B", len(host.encode("ascii")))
-                            + host.encode("ascii")
-                            + struct.pack(ENDIAN_FMT + "H", port)
-                            + struct.pack(ENDIAN_FMT + "f", dist)
-                            for id, host, port, dist in neighbours
-                        ]
-                        for byte in other_agent
-                    ]
-                )
+                neighbour_packets = [
+                    EpuckNeighbourPacket(robot_id=id, host=host, port=port, dist=dist)
+                    for id, host, port, dist in neighbours
+                ]
 
-                manager.get_logger().info(f"Sending response: {response}")
-                manager.get_logger().info(f"Header byte: {response[0]}")
+                response = EpuckHeartbeatResponsePacket(
+                    num_neighbours=len(neighbour_packets),
+                    neighbours=neighbour_packets,
+                ).pack()
+
+                manager.get_logger().debug(
+                    f"Sending heartbeat response to {self.client_address}"
+                )
 
                 # response = [0x21, len(neighbour_ids) + neighbour_id + len(neighbour_host) + neighbour_host + neighbour_port + neightbour_dist + ...]
                 client.sendto(response, self.client_address)
