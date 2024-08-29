@@ -46,7 +46,7 @@ end note
 loop
 alt Robot[N+1] sees Robot[N] is within comms range
 "Robot[N+1] Client" --> "Local Comms Manager": Heartbeat {ID(N+1)}
-"Local Comms Manager" --> "Robot[N+1] Client": Response { (ID(N), Dist(N+1, N)), (...)}
+"Local Comms Manager" --> "Robot[N+1] Client": Response { (ID(N), Host(N), Port(N), Dist(N+1, N)), (...) }
 par
 "Robot[N+1] Client" -> "Robot[N] Server": Connect
 activate "Robot[N] Server"
