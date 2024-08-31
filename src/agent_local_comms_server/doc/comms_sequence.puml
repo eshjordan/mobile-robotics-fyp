@@ -16,7 +16,7 @@ activate "Local Comms Manager"
 
 par Runs continously on a timer
 loop
-"Robot[N] Client" --> "Local Comms Manager": Heartbeat {ID(N)}
+"Robot[N] Client" --> "Local Comms Manager": Heartbeat { (ID(N), Host(N), Port(N)) }
 "Local Comms Manager" --> "Robot[N] Client": Response {}
 end
 end
@@ -29,7 +29,7 @@ activate "Local Comms Manager"
 
 par Runs continously on a timer
 loop
-"Robot[N+1] Client" --> "Local Comms Manager": Heartbeat {ID(N+1)}
+"Robot[N+1] Client" --> "Local Comms Manager": Heartbeat { (ID(N+1), Host(N+1), Port(N+1)) }
 "Local Comms Manager" --> "Robot[N+1] Client": Response {}
 end
 end
@@ -45,7 +45,7 @@ end note
 
 loop
 alt Robot[N+1] sees Robot[N] is within comms range
-"Robot[N+1] Client" --> "Local Comms Manager": Heartbeat {ID(N+1)}
+"Robot[N+1] Client" --> "Local Comms Manager": Heartbeat { (ID(N+1), Host(N+1), Port(N+1)) }
 "Local Comms Manager" --> "Robot[N+1] Client": Response { (ID(N), Host(N), Port(N), Dist(N+1, N)), (...) }
 par
 "Robot[N+1] Client" -> "Robot[N] Server": Connect
@@ -57,13 +57,13 @@ end
 end
 ...Robot[N+1] sees Robot[N] go out of comms range...
 
-"Robot[N+1] Client" --> "Local Comms Manager": Heartbeat {ID(N+1)}
+"Robot[N+1] Client" --> "Local Comms Manager": Heartbeat { (ID(N+1), Host(N+1), Port(N+1)) }
 "Local Comms Manager" --> "Robot[N+1] Client": Response {}
 "Robot[N+1] Client" -> "Robot[N] Server": Close
 deactivate "Robot[N] Server"
 
 else Robot[N+1] sees Robot[N] is out of comms range
-"Robot[N+1] Client" --> "Local Comms Manager": Heartbeat {ID(N+1)}
+"Robot[N+1] Client" --> "Local Comms Manager": Heartbeat { (ID(N+1), Host(N+1), Port(N+1)) }
 "Local Comms Manager" --> "Robot[N+1] Client": Response {}
 end
 end

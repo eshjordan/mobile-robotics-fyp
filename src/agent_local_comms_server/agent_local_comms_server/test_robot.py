@@ -91,7 +91,11 @@ class RobotCommsModel(rclpy.node.Node):
                 f"Sending heartbeat to {self.manager_host}:{self.manager_port}"
             )
             self.robot_client.sendto(
-                EpuckHeartbeatPacket(robot_id=self.robot_id).pack(),
+                EpuckHeartbeatPacket(
+                    robot_id=self.robot_id,
+                    robot_host=self.robot_host,
+                    robot_port=self.robot_port,
+                ).pack(),
                 (self.manager_host, self.manager_port),
             )
 
@@ -104,28 +108,49 @@ class RobotCommsModel(rclpy.node.Node):
             )
             response = EpuckHeartbeatResponsePacket.unpack(data)
 
-            neighbours = []
             for neighbour in response.neighbours:
-                neighbours.append(neighbour)
-                self.get_logger().info(
+                self.get_logger().debug(
                     f"Received neighbour: {neighbour.robot_id} ({neighbour.host}:{neighbour.port}) at distance {neighbour.dist}"
                 )
 
-                if (
-                    neighbour.robot_id < self.robot_id
-                    and neighbour.robot_id not in self.client_threads
-                ):
-                    client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    self.client_threads[neighbour.robot_id] = (
-                        client,
-                        threading.Thread(
-                            target=self.send_knowledge,
-                            args=(client, neighbour),
-                        ),
-                    )
+            # Start threads for new neighbours
+            new_in_range_neighbours = [
+                neighbour
+                for neighbour in response.neighbours
+                if neighbour.robot_id not in self.client_threads.keys()
+                and neighbour.robot_id < self.robot_id
+            ]
 
-                    self.client_threads[neighbour.robot_id][1].daemon = True
-                    self.client_threads[neighbour.robot_id][1].start()
+            for neighbour in new_in_range_neighbours:
+                self.get_logger().info(
+                    f"Starting thread for neighbour {neighbour.robot_id} ({neighbour.host}:{neighbour.port})"
+                )
+                client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                self.client_threads[neighbour.robot_id] = (
+                    client,
+                    threading.Thread(
+                        target=self.send_knowledge,
+                        args=(client, neighbour),
+                    ),
+                )
+
+                self.client_threads[neighbour.robot_id][1].daemon = True
+                self.client_threads[neighbour.robot_id][1].start()
+
+            # Stop threads for out of range neighbours
+            out_of_range_neighbour_threads = [
+                self.client_threads.pop(neighbour_id)
+                for neighbour_id in self.client_threads.keys()
+                if neighbour_id
+                not in [neighbour.robot_id for neighbour in response.neighbours]
+            ]
+
+            for client, thread in out_of_range_neighbour_threads:
+                self.get_logger().info(
+                    f"Stopping thread for neighbour {neighbour.robot_id} ({neighbour.host}:{neighbour.port})"
+                )
+                client.shutdown(socket.SHUT_RDWR)
+                thread.join()
 
             time.sleep(1)
 
@@ -139,42 +164,76 @@ class RobotCommsModel(rclpy.node.Node):
         client: socket.socket,
         neighbour: EpuckNeighbourPacket,
     ):
-        self.get_logger().info("Sending knowledge packets")
+        self.get_logger().info(
+            f"Starting knowledge connection with {neighbour.robot_id} ({neighbour.host}:{neighbour.port})"
+        )
+
         while True:
             knowledge = EpuckKnowledgePacket(
                 robot_id=self.robot_id,
                 N=len(self.known_ids),
                 known_ids=list(self.known_ids),
             )
-            client.sendto(knowledge.pack(), (neighbour.host, neighbour.port))
 
-            data, retaddr = self.robot_client.recvfrom(EpuckKnowledgePacket.calcsize())
+            try:
+                client.sendto(knowledge.pack(), (neighbour.host, neighbour.port))
+            except Exception as e:
+                self.get_logger().warning(
+                    f"Shutdown connection to ({neighbour.host}:{neighbour.port})"
+                )
+                break
+
+            self.get_logger().debug(
+                f"Sending knowledge to {neighbour.robot_id} ({neighbour.host}:{neighbour.port}): {self.known_ids}"
+            )
+
+            data, retaddr = client.recvfrom(EpuckKnowledgePacket.calcsize())
+            if len(data) == 0:
+                self.get_logger().warning(
+                    f"({neighbour.host}:{neighbour.port}) disconnected"
+                )
+                break
 
             response = EpuckKnowledgePacket.unpack(data)
+
             other_known_ids = set(response.known_ids)
+            difference = other_known_ids.difference(self.known_ids)
             self.known_ids.update(other_known_ids)
 
-            self.get_logger().info(
+            if len(difference) > 0:
+                self.get_logger().info(
+                    f"Received new IDs from ({neighbour.host}:{neighbour.port}): {difference}"
+                )
+
+            self.get_logger().debug(
                 f"Received knowledge from {neighbour.robot_id} ({neighbour.host}:{neighbour.port}): {other_known_ids}"
             )
+
             time.sleep(1)
 
     def create_handler(robot_model):
         class ReceiveKnowledgeHandler(socketserver.BaseRequestHandler):
             @override
             def handle(self):
-                robot_model.get_logger().info("Received knowledge packet")
-
                 self.request: tuple[bytes, socket.socket]
                 data, client = self.request
 
-                # Parse packet
+                host = self.client_address[0]
+                port = self.client_address[1]
+
                 response = EpuckKnowledgePacket.unpack(data)
+
                 other_known_ids = set(response.known_ids)
+                difference = other_known_ids.difference(robot_model.known_ids)
                 robot_model.known_ids.update(other_known_ids)
 
-                robot_model.get_logger().info(
-                    f"Received knowledge from {self.client_address}: {other_known_ids}"
+                if len(difference) > 0:
+                    robot_model.get_logger().info(
+                        f"Received new IDs from ({host}:{port}): {difference}"
+                    )
+
+                robot_model.get_logger().debug(
+                    f"Received knowledge from {response.robot_id} ({host}:{port}): {other_known_ids}"
                 )
 
                 knowledge = EpuckKnowledgePacket(
@@ -184,6 +243,10 @@ class RobotCommsModel(rclpy.node.Node):
                 )
 
                 client.sendto(knowledge.pack(), self.client_address)
+
+                robot_model.get_logger().debug(
+                    f"Sending knowledge to {response.robot_id} ({host}:{port}): {robot_model.known_ids}"
+                )
 
                 return
 

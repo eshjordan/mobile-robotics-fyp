@@ -110,15 +110,22 @@ class LocalCommsManager(rclpy.node.Node):
                     )
                     return
 
-                manager.get_logger().info(
+                manager.get_logger().debug(
                     f"manager.known_robots: {manager.known_robots}"
                 )
 
                 if (
                     heartbeat.robot_id,
-                    *self.client_address,
+                    heartbeat.robot_host,
+                    heartbeat.robot_port,
                 ) not in manager.known_robots:
-                    manager.known_robots.add((heartbeat.robot_id, *self.client_address))
+                    manager.known_robots.add(
+                        (
+                            heartbeat.robot_id,
+                            heartbeat.robot_host,
+                            heartbeat.robot_port,
+                        )
+                    )
 
                 frame = manager.frame_name(heartbeat.robot_id)
 
