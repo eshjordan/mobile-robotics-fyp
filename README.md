@@ -2,12 +2,12 @@
 ROS 2 Colcon workspace for use in modelling and testing coverage problems with distributed, lazy agents with event-driven communication.
 
 ## Preferred Development Workflow
-Step 1 - Install Docker.
-Step 2 - Use VS Code's Dev Containers feature to automatically setup the development environment.
-If not already installed, add the extension `ms-vscode-remote.remote-containers`.
-When prompted, open the workspace in the container, and you will be good to go.
+1. Install Docker.
+2. Use VS Code's Dev Containers feature to automatically setup the development environment.
+3. If not already installed, add the extension `ms-vscode-remote.remote-containers`.
+4. When prompted, open the workspace in the container, and you will be good to go.
 
-## Installation
+## Local installation, if not using Dev Containers (which is preferred)
 Install ROS 2 Rolling Ridley on Ubuntu 24.04
 
 https://docs.ros.org/en/rolling/Installation/Ubuntu-Install-Debians.html
@@ -45,7 +45,7 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/gazebo.
 # sudo curl -sSl https://packages.osrfoundation.org/gazebo.key -o /etc/apt/keyrings/gazebo.gpg
 gpg --no-default-keyring --keyring /tmp/keyring.gpg --keyserver hkps://keyserver.ubuntu.com --recv-key 67170598af249743 && sudo gpg --no-default-keyring --keyring /tmp/keyring.gpg --output /etc/apt/keyrings/gazebo.gpg --export
 sudo apt update
-sudo apt install libgz-transport13-dev python3-gz-transport13
+sudo apt install -y libgz-transport13-dev python3-gz-transport13
 ```
 
 # Install Webots
