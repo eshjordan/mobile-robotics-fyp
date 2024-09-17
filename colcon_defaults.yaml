@@ -6,9 +6,9 @@
       "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
       "-DCMAKE_BUILD_TYPE=RelWithDebInfo",
     ],
-    # "packages-skip-regex": [
-    #   "^webots_ros2.*$",
-    # ],
+    "packages-skip-regex": [
+      "^webots_ros2.*$",
+    ],
   },
   "test": {
     "packages-skip-regex": [

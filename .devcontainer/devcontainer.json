@@ -4,10 +4,11 @@
         "./docker-compose.yaml"
     ],
     "service": "dev",
-    "workspaceFolder": "/mobile_robotics_ws",
     "shutdownAction": "stopCompose",
-    "postCreateCommand": "./init.sh",
-    // "postCreateCommand": "sudo mkdir -p /etc/apt/keyrings && cd /etc/apt/keyrings && sudo wget -q https://cyberbotics.com/Cyberbotics.asc && echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/Cyberbotics.asc] https://cyberbotics.com/debian binary-amd64/' | sudo tee /etc/apt/sources.list.d/Cyberbotics.list && sudo apt update && sudo apt install -y webots",
+    "privileged": true,
+    "workspaceFolder": "/mobile_robotics_ws",
+    "initializeCommand": "xhost +local:docker",
+    "postCreateCommand": "./.devcontainer/init.sh",
     "customizations": {
         "vscode": {
             "settings": {

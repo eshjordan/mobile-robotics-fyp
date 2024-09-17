@@ -4,4 +4,4 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/gazebo.
 # sudo curl -sSl https://packages.osrfoundation.org/gazebo.key -o /etc/apt/keyrings/gazebo.gpg
 gpg --no-default-keyring --keyring /tmp/keyring.gpg --keyserver hkps://keyserver.ubuntu.com --recv-key 67170598af249743 && sudo gpg --no-default-keyring --keyring /tmp/keyring.gpg --output /etc/apt/keyrings/gazebo.gpg --export
 sudo apt update
-sudo apt install libgz-transport13-dev python3-gz-transport13
+sudo apt install -y libgz-transport13-dev python3-gz-transport13
