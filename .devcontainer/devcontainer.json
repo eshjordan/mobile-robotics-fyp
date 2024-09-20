@@ -7,7 +7,7 @@
     "shutdownAction": "stopCompose",
     "privileged": true,
     "workspaceFolder": "/mobile_robotics_ws",
-    "initializeCommand": "xhost +local:docker",
+    "initializeCommand": "set DISPLAY=127.0.0.1:0.0& xhost +",
     "postCreateCommand": "./.devcontainer/init.sh",
     "customizations": {
         "vscode": {
