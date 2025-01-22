@@ -3,9 +3,13 @@ ROS 2 Colcon workspace for use in modelling and testing coverage problems with d
 
 ## Preferred Development Workflow
 1. Install Docker.
-2. Use VS Code's Dev Containers feature to automatically setup the development environment.
-3. If not already installed, add the extension `ms-vscode-remote.remote-containers`.
-4. When prompted, open the workspace in the container, and you will be good to go.
+1. Use VS Code's Dev Containers feature to automatically setup the development environment.
+1. If not already installed, add the extension `ms-vscode-remote.remote-containers`.
+1. When prompted, open the workspace in the container, and you will be good to go.
+
+## Devcontainer on Windows
+1. Install VcXsrv - https://github.com/marchaesen/vcxsrv/releases/latest
+1. Append the following directory to your `PATH` environment variable: `C:\Program Files\VcXsrv`
 
 ## Local installation, if not using Dev Containers (which is preferred)
 Install ROS 2 Rolling Ridley on Ubuntu 24.04
