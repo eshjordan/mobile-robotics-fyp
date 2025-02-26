@@ -3,10 +3,17 @@ from rclpy.node import Node
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from math import sqrt, atan2, pi
-from controller import Robot
-from tf2_ros import TransformListener, Buffer
 
-def generate_circumference_waypoints(start_angle, end_angle, radius = 10, num_waypoints = 25 , center = (0,0)):
+# from controller import Robot
+from tf2_ros import TransformListener, Buffer
+import numpy as np
+import tf_transformations
+from lazy_agent_sim_interfaces.msg import EpuckKnowledgePacket, EpuckKnowledgeRecord
+
+
+def generate_circumference_waypoints(
+    start_angle, end_angle, radius=10, num_waypoints=25, center=(0, 0)
+):
     """
     Generate waypoints along the circumference of a circular slice.
 
@@ -34,6 +41,7 @@ def generate_circumference_waypoints(start_angle, end_angle, radius = 10, num_wa
 
     return waypoints
 
+
 class SimplePathPlanner:
     def __init__(self, waypoints):
         self.waypoints = waypoints
@@ -48,8 +56,15 @@ class SimplePathPlanner:
         self.waypoints = new_waypoints
         self.current_waypoint_index = 0
 
-    def algorithm(self, my_start_angle, my_end_angle, my_agent_number,
-                  other_start_angle, other_end_angle, other_agent_number):
+    def algorithm(
+        self,
+        my_start_angle,
+        my_end_angle,
+        my_agent_number,
+        other_start_angle,
+        other_end_angle,
+        other_agent_number,
+    ):
         """
         Algorithm placeholder to calculate partitions based on robot interaction.
         Parameters:
@@ -58,35 +73,65 @@ class SimplePathPlanner:
 
         implement  partitioning logic based on the two robots' partition and known agents.
         """
-        self.get_logger().info(f"My Partition: Start {my_start_angle}, End {my_end_angle}, Agents known: {my_agent_number}")
-        self.get_logger().info(f"Other Partition: Start {other_start_angle}, End {other_end_angle}, Agents known: {other_agent_number}")
+        self.get_logger().info(
+            f"My Partition: Start {my_start_angle}, End {my_end_angle}, Agents known: {my_agent_number}"
+        )
+        self.get_logger().info(
+            f"Other Partition: Start {other_start_angle}, End {other_end_angle}, Agents known: {other_agent_number}"
+        )
 
         # Placeholder for partitioning logic
-        new_start_angle, new_end_angle = 0.0, 2*np.pi####################################################################################### insert stuff here for algorithm
-        
+        new_start_angle, new_end_angle = (
+            0.0,
+            2 * np.pi,
+        )  ####################################################################################### insert stuff here for algorithm
+
         new_waypoints = generate_circumference_waypoints(new_start_angle, new_end_angle)
         self.update_waypoints(new_waypoints)
 
     def plan(self, current_position, current_orientation):
-        """ Plan the robot's path towards the next waypoint."""
+        """Plan the robot's path towards the next waypoint."""
         waypoint = self.get_next_waypoint()
         if waypoint is None:
             return  # No more waypoints, stop planning
 
+
 class VelocityController(Node):
     def __init__(self):
-        super().__init__('velocity_controller')
+        super().__init__("velocity_controller")
+
+        self.declare_parameter("robot_id", 0)
+        self.declare_parameter("robot_tf_prefix", "epuck2_robot_")
+        self.declare_parameter("robot_tf_suffix", "")
+        self.declare_parameter("robot_tf_frame", "/base_link")
+
+        self.robot_id = self.get_parameter("robot_id").value
+        self.robot_tf_prefix = self.get_parameter("robot_tf_prefix").value
+        self.robot_tf_suffix = self.get_parameter("robot_tf_suffix").value
+        self.robot_tf_frame = self.get_parameter("robot_tf_frame").value
 
         # Initialize odometry subscriber
         self.odom_subscriber = self.create_subscription(
             Odometry,
-            '/odom',
+            self.robot_node_name(self.robot_id) + "/odom",
             self.odom_callback,
-            10
+            10,
+        )
+
+        # Initialise knowledge subscriber
+        self.knowledge_subscriber = self.create_subscription(
+            EpuckKnowledgePacket,
+            "/agent_local_comms_server/knowledge",
+            self.knowledge_callback,
+            10,
         )
 
         # Initialize publisher for velocity commands
-        self.publisher = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.publisher = self.create_publisher(
+            Twist,
+            self.robot_node_name(self.robot_id) + "/mobile_base/cmd_vel",
+            10,
+        )
 
         # # Initialize tf2 buffer and listener ###################################################################################### uncomment
         # self.tf_buffer = Buffer()
@@ -97,6 +142,9 @@ class VelocityController(Node):
         self.y = 0.0  # Current y position
         self.theta = 0.0  # Current orientation (yaw)
 
+        # Robot's knowledge
+        self.knowledge_records = []
+
         # Robot's partition information
         self.start_angle = 0.0
         self.end_angle = 2 * np.pi
@@ -106,7 +154,13 @@ class VelocityController(Node):
         self.path_planner = SimplePathPlanner(self.generate_initial_waypoints())
 
         # Initialize the e-puck robot
-        self.epuck = EPUCKRobot()
+        # self.epuck = EPUCKRobot()
+
+    def robot_node_name(self, id: int) -> str:
+        return f"{self.robot_tf_prefix}" + f"{id}" + f"{self.robot_tf_suffix}"
+
+    def frame_name(self, id: int) -> str:
+        return self.robot_node_name(id) + f"{self.robot_tf_frame}"
 
     def odom_callback(self, msg):
         """Callback function to process odometry data."""
@@ -117,21 +171,39 @@ class VelocityController(Node):
         orientation_q = msg.pose.pose.orientation
         _, _, self.theta = self.euler_from_quaternion(orientation_q)
 
+        self.get_logger().info(
+            f"Received odometry message - x: {self.x}, y: {self.y}, theta: {self.theta}",
+            throttle_duration_sec=0.5,
+        )
+
+    def knowledge_callback(self, msg: EpuckKnowledgePacket):
+        """Callback function to process knowledge data."""
+        if msg.robot_id != self.robot_id:
+            return
+
+        self.get_logger().info(
+            f"Received knowledge message: {msg}",
+            throttle_duration_sec=1.0,
+        )
+
+        self.knowledge_records = msg.known_ids
+
     def euler_from_quaternion(self, q):
         """Convert quaternion (x, y, z, w) to euler angles (roll, pitch, yaw)."""
-        import tf_transformations
         quaternion = (q.x, q.y, q.z, q.w)
         euler = tf_transformations.euler_from_quaternion(quaternion)
         return euler  # Returns roll, pitch, yaw (we use yaw as theta)
 
     def get_other_robot_position(self, other_robot_frame):
-        """ Get position and orientation of another robot using tf2. #######################################################################################
+        """Get position and orientation of another robot using tf2. #######################################################################################
         Args: other_robot_frame (str): The tf frame ID of the other robot.
-        Returns: (float, float, float): The x, y position and orientation (theta) of the other robot."""
+        Returns: (float, float, float): The x, y position and orientation (theta) of the other robot.
+        """
         try:
             # Lookup transform from the other robot to the base frame
             transform = self.tf_buffer.lookup_transform(
-                'base_link', other_robot_frame, rclpy.time.Time())
+                "base_link", other_robot_frame, rclpy.time.Time()
+            )
             x = transform.transform.translation.x
             y = transform.transform.translation.y
 
@@ -141,15 +213,17 @@ class VelocityController(Node):
 
             return x, y, theta
         except:
-            self.get_logger().warn(f"Could not get transform for {other_robot_frame}")
+            self.get_logger().warning(
+                f"Could not get transform for {other_robot_frame}"
+            )
             return None
 
     def get_other_robot_partition(self):
-        """Placeholder function to get another robot's partition info.""" #######################################################################################
+        """Placeholder function to get another robot's partition info."""  #######################################################################################
         return 0.0, np.pi  # Replace with actual logic
 
     def get_other_robot_agent_number(self):
-        """Placeholder function to get another robot's knwon agent number info."""#######################################################################################
+        """Placeholder function to get another robot's knwon agent number info."""  #######################################################################################
         return 2  # Replace with actual logic
 
     def control_loop(self):
@@ -165,11 +239,11 @@ class VelocityController(Node):
         # other_robot_info = self.get_other_robot_info(other_robot_frame)
         other_robot_info = None
 
-        if other_robot_info: #if detect other robots
+        if other_robot_info:  # if detect other robots
             other_x, other_y, other_theta = other_robot_info
 
             # Example: Check if another robot is close
-            distance_to_other = sqrt((other_x - self.x)**2 + (other_y - self.y)**2)
+            distance_to_other = sqrt((other_x - self.x) ** 2 + (other_y - self.y) ** 2)
             if distance_to_other < 2.0:  # Adjust threshold as necessary
                 self.stop_robot()
 
@@ -179,8 +253,12 @@ class VelocityController(Node):
 
                 # Call your algorithm with both robots' information
                 self.path_planner.algorithm(
-                    self.start_angle, self.end_angle, self.agent_number,
-                    other_start_angle, other_end_angle, other_agent_number  # Assuming the other robot knows about 2 agents
+                    self.start_angle,
+                    self.end_angle,
+                    self.agent_number,
+                    other_start_angle,
+                    other_end_angle,
+                    other_agent_number,  # Assuming the other robot knows about 2 agents
                 )
                 self.turn_around()
             else:
@@ -215,23 +293,20 @@ class VelocityController(Node):
         twist.linear.x = 0.0
         twist.angular.z = 0.0
         self.publisher.publish(twist)
-        self.get_logger().info('Robot stopped for interaction')
+        self.get_logger().info("Robot stopped for interaction")
 
     def turn_around(self):
         """Turn the robot around before following new waypoints."""
         turn_angle = pi  # 180 degrees
         self.send_twist_message(0.0, turn_angle)
-        self.get_logger().info('Turning around after interaction')
+        self.get_logger().info("Turning around after interaction")
 
     def generate_initial_waypoints(self):
         """Generate initial waypoints for the robot to follow."""
         return generate_circumference_waypoints(
-            start_angle=0,
-            end_angle=2 * pi,
-            radius=10,
-            num_waypoints=25,
-            center=(0, 0)
+            start_angle=0, end_angle=2 * pi, radius=10, num_waypoints=25, center=(0, 0)
         )
+
 
 def main():
 
@@ -244,6 +319,7 @@ def main():
     # Shutdown
     velocity_controller.destroy_node()
     rclpy.shutdown()
+
 
 if __name__ == "__main__":
     main()

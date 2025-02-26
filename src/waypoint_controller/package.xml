@@ -5,7 +5,11 @@
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="atoo0005@student.monash.edu">ubuntu</maintainer>
-  <license>Apache-2.0</license>
+  <license>GPL-3.0-only</license>
+
+  <depend>tf_transformations</depend>
+  <exec_depend>agent_local_comms_server</exec_depend>
+  <depend>lazy_agent_sim_interfaces</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
@@ -16,5 +20,3 @@
     <build_type>ament_python</build_type>
   </export>
 </package>
-
-
