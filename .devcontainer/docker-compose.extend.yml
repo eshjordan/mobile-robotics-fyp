@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: .devcontainer/Dockerfile
-    
+
     environment:
       DISPLAY: "host.docker.internal:0"
 
@@ -15,7 +15,7 @@ services:
     network_mode: host
     volumes:
       # Mount the project
-      - .:/mobile_robotics_ws
+      - mobile_robotics_volume:/mobile_robotics_ws
 
     # Default command so things don't shut down after the process ends.
     command: sleep infinity
@@ -25,3 +25,6 @@ services:
       - SYS_PTRACE
     security_opt:
       - seccomp:unconfined
+
+volumes:
+  mobile_robotics_volume:
