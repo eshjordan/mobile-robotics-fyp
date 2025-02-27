@@ -7,7 +7,7 @@
     "service": "dev",
     "shutdownAction": "stopCompose",
     "privileged": true,
-    "workspaceFolder": "/mobile_robotics_ws",
+    "workspaceFolder": "/workspaces/mobile-robotics-fyp",
     "postCreateCommand": ".devcontainer/init.sh",
     "customizations": {
         "vscode": {

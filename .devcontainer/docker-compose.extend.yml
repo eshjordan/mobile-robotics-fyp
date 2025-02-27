@@ -15,7 +15,7 @@ services:
     network_mode: host
     volumes:
       # Mount the project
-      - mobile_robotics_volume:/mobile_robotics_ws
+      - mobile_robotics_volume:/workspaces/mobile-robotics-fyp
 
     # Default command so things don't shut down after the process ends.
     command: sleep infinity

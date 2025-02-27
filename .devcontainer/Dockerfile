@@ -7,11 +7,11 @@ SHELL [ "/bin/bash", "-c"]
 
 RUN echo ubuntu ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/ubuntu && chmod 0440 /etc/sudoers.d/ubuntu
 
-RUN mkdir -p /mobile_robotics_ws
-WORKDIR /mobile_robotics_ws
+RUN mkdir -p /workspaces/mobile-robotics-fyp
+WORKDIR /workspaces/mobile-robotics-fyp
 
 # # Set the ownership of the mms_ws2 workspace to the new user
-# RUN chown -R ${UID}:${GID} /mobile_robotics_ws/
+# RUN chown -R ${UID}:${GID} /workspaces/mobile-robotics-fyp
 
 # Set the user and source entrypoint in the user's .bashrc file
 USER ubuntu
