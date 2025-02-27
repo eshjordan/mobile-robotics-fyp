@@ -1,14 +1,14 @@
 {
-    "name": "mobile_robotics_ws",
+    "name": "Mobile Robotics FYP",
     "dockerComposeFile": [
-        "./docker-compose.yaml"
+        "../docker-compose.yml",
+        "docker-compose.extend.yml"
     ],
     "service": "dev",
     "shutdownAction": "stopCompose",
     "privileged": true,
     "workspaceFolder": "/mobile_robotics_ws",
-    // "initializeCommand": "set DISPLAY=127.0.0.1:0.0& xhost +",
-    "postCreateCommand": "./.devcontainer/init.sh",
+    "postCreateCommand": ".devcontainer/init.sh",
     "customizations": {
         "vscode": {
             "settings": {

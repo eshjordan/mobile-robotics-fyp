@@ -15,5 +15,5 @@ WORKDIR /mobile_robotics_ws
 
 # Set the user and source entrypoint in the user's .bashrc file
 USER ubuntu
-COPY ./entrypoint.sh /
+COPY .devcontainer/entrypoint.sh /
 RUN echo "source /entrypoint.sh" >> /home/ubuntu/.bashrc
