@@ -1,14 +1,30 @@
 ---
-Checks:          'boost-*, bugprone-*, clang-analyzer-*, cppcoreguidelines-*, google-*, hicpp-*, misc-*, modernize-*,
+Checks:          'boost-*, bugprone-*, clang-analyzer-*, cppcoreguidelines-*, hicpp-*, misc-*, modernize-*,
                   performance-*, portability-*, readability-*,
-                  -cppcoreguidelines-virtual-class-destructor,
+                  -boost-use-ranges,
+                  -bugprone-easily-swappable-parameters,
+                  -clang-diagnostic-*,
+                  -cppcoreguidelines-avoid-const-or-ref-data-members,
                   -cppcoreguidelines-avoid-magic-numbers,
+                  -cppcoreguidelines-non-private-member-variables-in-classes,
+                  -cppcoreguidelines-virtual-class-destructor,
+                  -readability-function-cognitive-complexity,
+                  -readability-identifier-length,
                   -readability-magic-numbers,
+                  -readability-math-missing-parentheses,
+                  -misc-const-correctness,
+                  -misc-include-cleaner,
+                  -misc-non-private-member-variables-in-classes,
                   -modernize-use-trailing-return-type,
-                  -misc-include-cleaner'
+                  -modernize-avoid-c-arrays,
+                  -hicpp-avoid-c-arrays,
+                  -hicpp-vararg,
+                  -cppcoreguidelines-pro-type-vararg,
+                  -modernize-macro-to-enum,
+                  -performance-avoid-endl'
 WarningsAsErrors: '1'
 HeaderFilterRegex: ''
-FormatStyle:     none
+FormatStyle:     file
 User:            jordan
 CheckOptions:
   - key:             bugprone-narrowing-conversions.WarnOnFloatingPointNarrowingConversion
@@ -19,28 +35,48 @@ CheckOptions:
     value:           llvm
   - key:             modernize-replace-auto-ptr.IncludeStyle
     value:           llvm
-  - key:             readability-identifier-naming.NamespaceCase
-    value:           lower_case
   - key:             readability-identifier-naming.ClassCase
     value:           CamelCase
   - key:             readability-identifier-naming.StructCase
     value:           CamelCase
-  - key:             readability-identifier-naming.FunctionCase
+  - key:             readability-identifier-naming.EnumCase
     value:           CamelCase
+  - key:             readability-identifier-naming.TypeAliasCase
+    value:           lower_case
+  - key:             readability-identifier-naming.TypedefCase
+    value:           lower_case
+  - key:             readability-identifier-naming.TemplateParameterCase
+    value:           CamelCase
+  - key:             readability-identifier-naming.ValueTemplateParameterCase
+    value:           UPPER_CASE
+  - key:             readability-identifier-naming.GlobalConstantCase
+    value:           UPPER_CASE
+  - key:             readability-identifier-naming.ConstexprFunctionCase
+    value:           UPPER_CASE
+  - key:             readability-identifier-naming.ConstexprVariableCase
+    value:           UPPER_CASE
+  - key:             readability-identifier-naming.EnumConstantCase
+    value:           UPPER_CASE
+  - key:             readability-identifier-naming.NamespaceCase
+    value:           lower_case
+  - key:             readability-identifier-naming.FunctionCase
+    value:           lower_case
   - key:             readability-identifier-naming.MemberCase
     value:           lower_case
   - key:             readability-identifier-naming.MethodCase
-    value:           CamelCase
+    value:           lower_case
   - key:             readability-identifier-naming.VariableCase
     value:           lower_case
   - key:             readability-identifier-naming.ConstantCase
-    value:           CamelCase
+    value:           lower_case
   - key:             readability-identifier-naming.ParameterCase
     value:           lower_case
-  - key:             readability-identifier-naming.GlobalConstantCase
-    value:           UPPER_CASE
-  - key:             readability-identifier-naming.PrivateMemberSuffix
+  - key:             readability-identifier-naming.PrivateMemberCase
+    value:           lower_case
+  - key:             readability-identifier-naming.PrivateMemberPrefix
     value:           _
-  - key:             readability-identifier-naming.ConstantMemberPrefix
-    value:           k
+  - key:             readability-identifier-naming.ProtectedMemberCase
+    value:           lower_case
+  - key:             readability-identifier-naming.ProtectedMemberPrefix
+    value:           _
 ...
