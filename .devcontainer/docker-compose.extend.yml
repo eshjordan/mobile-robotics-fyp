@@ -15,7 +15,7 @@ services:
     network_mode: host
     volumes:
       # Mount the project
-      - mobile_robotics_volume:/workspaces/mobile-robotics-fyp
+      - .:/workspaces/mobile-robotics-fyp
 
     # Default command so things don't shut down after the process ends.
     command: sleep infinity
@@ -25,6 +25,3 @@ services:
       - SYS_PTRACE
     security_opt:
       - seccomp:unconfined
-
-volumes:
-  mobile_robotics_volume:
