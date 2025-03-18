@@ -3,14 +3,14 @@
 	url = https://github.com/eshjordan/lazy_agent_sim.git
 [submodule "src/epuck_driver_cpp"]
 	path = src/epuck_driver_cpp
-	url = https://github.com/gctronic/epuck_driver_cpp.git
+	url = https://github.com/eshjordan/epuck_driver_cpp.git
 	branch = e-puck2_wifi
 [submodule "epuck/e-puck2_main-processor"]
 	path = epuck/e-puck2_main-processor
 	url = https://github.com/e-puck2/e-puck2_main-processor.git
 [submodule "epuck/esp-idf"]
 	path = epuck/esp-idf
-	url = https://github.com/e-puck2/esp-idf.git
+	url = https://github.com/eshjordan/esp-idf.git
 [submodule "src/mocap4ros2_optitrack"]
 	path = src/mocap4ros2_optitrack
 	url = https://github.com/OptiTrack/mocap4ros2_optitrack.git
