@@ -19,5 +19,19 @@
 			"--clang-tidy",
 			"-j=16"
 		],
+		"cSpell.enabled": false,
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"type": "gdb",
+				"request": "launch",
+				"name": "Launch cpp_epuck_unit_test",
+				"target": "./build/cpp_epuck/cpp_epuck_unit_test",
+				"cwd": "${workspaceRoot}",
+				"valuesFormatting": "parseText"
+			}
+		]
 	}
 }
