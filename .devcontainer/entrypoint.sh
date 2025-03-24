@@ -18,7 +18,7 @@ if [ "$answer" != "${answer#[Yy]}" ] ;then
   sudo apt update
   cd /workspaces/mobile-robotics-fyp
   rosdep update
-  rosdep install --ignore-src --default-yes --from-path src
+  rosdep install --os=ubuntu:noble --ignore-src --default-yes --from-path src
 fi
 
 # Execute the command passed into this entrypoint
