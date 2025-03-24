@@ -32,10 +32,7 @@ def generate_launch_description():
             launch_ros.actions.Node(
                 package="waypoint_controller",
                 executable="controller",
-                name=(
-                    "waypoint_controller_",
-                    launch.substitutions.LaunchConfiguration("robot_id"),
-                ),
+                name="waypoint_controller",
                 parameters=[
                     {
                         "robot_id": launch.substitutions.LaunchConfiguration(
