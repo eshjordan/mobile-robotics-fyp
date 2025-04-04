@@ -4,6 +4,8 @@ import geometry_msgs.msg
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 from geometry_msgs.msg import PoseStamped
 import tf_transformations
+import math as mth
+
 
 
 def main():
@@ -20,7 +22,6 @@ def main():
 
 #Step 1: hardcode waypoint controller, just send constant twist message forwards
 #Step2: introduce currrent position of robot - send robot to specific location
-import math as mth
 class WaypointController_v1(Node):
     def __init__(self):
         super().__init__('waypoint_controller')
@@ -59,9 +60,10 @@ class WaypointController_v1(Node):
         # print(msg.x, msg.y, msg.z)
         # self.get_logger().info(f"subscribing vicon position = {msg.pose.position}")
 
-        print(msg.pose.position)
-        print("\n\n\n")
-        print(msg.pose)
+        # print(msg.pose.position)
+        # print("\n\n\n")
+        # print(msg.pose)
+   
         self.x = msg.pose.position.x
         self.y = msg.pose.position.y
         self.z = msg.pose.position.z
