@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'controller = waypoint_controller.controller:main'
+            'controller = waypoint_controller.controller:main',
+            'test = waypoint_controller.test:main'
         ],
     },
 )
