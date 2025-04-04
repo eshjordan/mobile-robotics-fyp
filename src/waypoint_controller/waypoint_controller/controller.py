@@ -4,7 +4,9 @@ import geometry_msgs.msg
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 from geometry_msgs.msg import PoseStamped
 import tf_transformations
-
+import math as mth
+from math import sqrt, atan2, pi
+import numpy as np
 
 def main():
     print("hi")
@@ -20,24 +22,23 @@ def main():
 
 #Step 1: hardcode waypoint controller, just send constant twist message forwards
 #Step2: introduce currrent position of robot - send robot to specific location
-import math as mth
+
 class WaypointController_v1(Node):
     def __init__(self):
         super().__init__('waypoint_controller')
 
-        self.subscriber = self.create_subscription(
-            PoseStamped,
-            '/vrpn_mocap/BW_epuck/pose',
-            self.listener_callback,
-            qos_profile = QoSProfile(
-            reliability=ReliabilityPolicy.BEST_EFFORT,
-            durability=DurabilityPolicy.VOLATILE,
-            history=HistoryPolicy.KEEP_LAST,
-            depth=10
-            # 10,
-        ))
-        self.subscriber  # prevent unused variable warning
-
+        # self.subscriber = self.create_subscription( ## uncomment to use vicon info
+        #     PoseStamped,
+        #     '/vrpn_mocap/BW_epuck/pose',
+        #     self.listener_callback,
+        #     qos_profile = QoSProfile(
+        #     reliability=ReliabilityPolicy.BEST_EFFORT,
+        #     durability=DurabilityPolicy.VOLATILE,
+        #     history=HistoryPolicy.KEEP_LAST,
+        #     depth=10
+        #     # 10,
+        # ))
+        # self.subscriber  # prevent unused variable warning
 
         self.cmd_pub = self.create_publisher(
             geometry_msgs.msg.Twist, 
@@ -45,28 +46,40 @@ class WaypointController_v1(Node):
             10,    
         )
 
-        
+        ## Robot current velocity twist msgs
         self.declare_parameter('linear.x',0.0)
-        self.declare_parameter('linear.y',0.0)
-        self.declare_parameter('linear.z',0.0)
-        self.declare_parameter('angular.x',0.0)
-        self.declare_parameter('angular.y',0.0)
         self.declare_parameter('angular.z',0.0)
         self.create_timer(1.0, self.send_twist_message) #send message every second
+        ## Robot's curernt orientation
+        self.theta = 0.0
+        ## Robot's partition information
+        self.start_angle = 0.0
+        self.end_angle = 2 * np.pi
+        self.agent_number = 1
+        ## Path planner instance
+        self.path_planner = SimplePathPlanner(self.generate_initial_waypoints())
         
-
     def listener_callback(self, msg):
         # print(msg.x, msg.y, msg.z)
         # self.get_logger().info(f"subscribing vicon position = {msg.pose.position}")
 
-        print(msg.pose.position)
-        print("\n\n\n")
-        print(msg.pose)
-        self.x = msg.pose.position.x
-        self.y = msg.pose.position.y
-        self.z = msg.pose.position.z
-    # print(msg)
-    # self.get_logger().info
+        # print(msg.pose.position)
+        # print("\n\n\n")
+        # print(msg.pose)
+
+        ## Extract pose position from vicon topic
+        # self.x = msg.pose.position.x
+        # self.y = msg.pose.position.y
+        # self.z = msg.pose.position.z
+        ## Hardcode pose
+        self.x = 0.0
+        self.y = 0.0
+        self.z = 0.0
+        ## Extract orientation from vicon topic using quaternion
+        orientation_q = msg.pose.pose.orientation
+        _, _, self.theta = self.euler_from_quaternion(orientation_q)
+        # print(msg)
+        # self.get_logger().info
 
     def euler_from_quaternion(self, q):
             """Convert quaternion (x, y, z, w) to euler angles (roll, pitch, yaw)."""
@@ -75,163 +88,134 @@ class WaypointController_v1(Node):
             return euler  # Returns roll, pitch, yaw (we use yaw as theta)
 
     def send_twist_message(self):
-
+        "calcualte twist message to send using current pose and next waypoint"
         # waypoint = self.path_planner.get_next_waypoint()
-        waypoint = [0,0,0]
-        # if waypoint is None:
-        #     self.stop_robot()
-        #     return
+        waypoint = [1.0,
+                    0.0]
+        if waypoint is None:
+            # self.stop_robot()
+            return
 
+        ## calculate velocities
         dx = waypoint[0] - self.x
         dy = waypoint[1] - self.y
         distance = mth.sqrt(dx**2 + dy**2)
         angle_to_waypoint = mth.atan2(dy, dx)
         angle_diff = angle_to_waypoint - self.theta
 
-        linear_velocity = self.x * distance
-        angular_velocity = self.z * angle_diff
+        linear_velocity = 0.05 * distance
+        angular_velocity = 0.1 * angle_diff
 
+        # hardcoded velocities
+        # linear_velocity = 0.1
+        # angular_velocity = 0.0
 
-
-        # hardcoded vel
-        linear_x = 0.1
-
-        # # use current velocity
-        # linear_x = self.get_parameter('linear.x').value
-        linear_y = self.get_parameter('linear.y').value
-        linear_z = self.get_parameter('linear.z').value
-        angular_x = self.get_parameter('angular.x').value
-        angular_y = self.get_parameter('angular.y').value
-        angular_z = self.get_parameter('angular.z').value
+        # # use current velocity - dynamic
+        # linear_velocity = self.get_parameter('linear.x').value
+        # angular_velocity = self.get_parameter('angular.z').value
 
         twist = geometry_msgs.msg.Twist()
-        twist.linear.x = linear_x
-        twist.linear.y = linear_y
-        twist.linear.z = linear_z
+        twist.linear.x = linear_velocity
+        # twist.linear.y = linear_y
+        # twist.linear.z = linear_z
 
-        twist.angular.x = angular_x
-        twist.angular.y = angular_y
-        twist.angular.z = angular_z
+        # twist.angular.x = angular_x
+        # twist.angular.y = angular_y
+        twist.angular.z = angular_velocity
         self.cmd_pub.publish(twist)
 
-        # self.get_logger().info(f"sending forward twist command: linear.x = {linear_x}")
+        self.get_logger().info(f"sending forward twist command: linear.x = {linear_velocity}, angular.z = {angular_velocity}")
 
+    def stop_robot(self):
+        """Stop the robot."""
+        twist = geometry_msgs.msg.Twist()
+        twist.linear.x = 0.0
+        twist.angular.z = 0.0
+        self.cmd_pub.publish(twist)
+        self.get_logger().info('Robot stopped for interaction')
 
+    # def generate_initial_waypoints(self):
+    #     """Generate initial waypoints for the robot to follow."""
+    #     return generate_circumference_waypoints(
+    #         start_angle=0,
+    #         end_angle=2 * pi,
+    #         radius=10,
+    #         num_waypoints=25,
+    #         center=(0, 0)
+    #     )
 
-    # def send_twist_message(self):
-    #     """Continue moving towards the next waypoint if no obstacles are detected."""
-        
-#         twist = Twist()
-#         twist.linear.x = linear_velocity
-#         twist.angular.z = angular_velocity
-#         self.publisher.publish(twist)
-
-
-
-
-
-# 
-# class MinimalSubscriber(Node):
-# 
-    # def __init__(self):
-        # super().__init__('minimal_subscriber')
-        # self.subscription = self.create_subscription(
-            # PoseStamped,
-            # '/vrpn_mocap/BW_epuck0/pose',
-            # self.listener_callback,
-            # qos_profile = QoSProfile(
-            # reliability=ReliabilityPolicy.BEST_EFFORT,
-            # durability=DurabilityPolicy.VOLATILE,
-            # history=HistoryPolicy.KEEP_LAST,
-            # depth=10
-            # 10,
-        # ))
-        # self.subscription  # prevent unused variable warning
-# 
-    # def listener_callback(self, msg):
-        # print(msg.x, msg.y, msg.z)
-        # self.get_logger().info(f"subscribing vicon position = {msg.pose.position}")
-# 
-        # print(msg.pose.position)
-        # print(msg)
-        # self.get_logger().info('I heard: "%s"' % msg.data)
-# 
-# 
 #Step3: Path planner - robot to patrol given area
 
-
-
 # from nav_msgs.msg import Odometry
-# from math import sqrt, atan2, pi
 # from controller import Robot
 # from tf2_ros import TransformListener, Buffer
 
-# def generate_circumference_waypoints(start_angle, end_angle, radius = 10, num_waypoints = 25 , center = (0,0)):
-#     """
-#     Generate waypoints along the circumference of a circular slice.
+def generate_circumference_waypoints(start_angle, end_angle, radius = 10, num_waypoints = 25 , center = (0,0)):
+    """
+    Generate waypoints along the circumference of a circular slice.
 
-#     Parameters:
-#     center (tuple): (x, y) center of the circle
-#     start_angle (float): Starting angle of the slice (in radians)
-#     end_angle (float): Ending angle of the slice (in radians)
-#     radius (float): Radius of the circumference
-#     num_waypoints (int): Number of waypoints along the circumference
+    Parameters:
+    center (tuple): (x, y) center of the circle
+    start_angle (float): Starting angle of the slice (in radians)
+    end_angle (float): Ending angle of the slice (in radians)
+    radius (float): Radius of the circumference
+    num_waypoints (int): Number of waypoints along the circumference
 
-#     Returns:
-#     waypoints (list): List of (x, y) waypoints along the circumference
-#     """
+    Returns:
+    waypoints (list): List of (x, y) waypoints along the circumference
+    """
 
-#     waypoints = []
+    waypoints = []
 
-#     # Generate evenly spaced angles along the arc
-#     angular_steps = np.linspace(start_angle, end_angle, num_waypoints)
+    # Generate evenly spaced angles along the arc
+    angular_steps = np.linspace(start_angle, end_angle, num_waypoints)
 
-#     # Convert each angle to Cartesian coordinates and store as waypoints
-#     for theta in angular_steps:
-#         x = center[0] + radius * np.cos(theta)
-#         y = center[1] + radius * np.sin(theta)
-#         waypoints.append((x, y))
+    # Convert each angle to Cartesian coordinates and store as waypoints
+    for theta in angular_steps:
+        x = center[0] + radius * np.cos(theta)
+        y = center[1] + radius * np.sin(theta)
+        waypoints.append((x, y))
+    print("waypoints", waypoints)
+    return waypoints
 
-#     return waypoints
+class SimplePathPlanner:
+    def __init__(self, waypoints):
+        self.waypoints = waypoints
+        self.current_waypoint_index = 0
 
-# class SimplePathPlanner:
-#     def __init__(self, waypoints):
-#         self.waypoints = waypoints
-#         self.current_waypoint_index = 0
+    def get_next_waypoint(self):
+        if self.current_waypoint_index < len(self.waypoints):
+            return self.waypoints[self.current_waypoint_index]
+        return None
 
-#     def get_next_waypoint(self):
-#         if self.current_waypoint_index < len(self.waypoints):
-#             return self.waypoints[self.current_waypoint_index]
-#         return None
+    def update_waypoints(self, new_waypoints):
+        self.waypoints = new_waypoints
+        self.current_waypoint_index = 0
 
-#     def update_waypoints(self, new_waypoints):
-#         self.waypoints = new_waypoints
-#         self.current_waypoint_index = 0
+    def algorithm(self, my_start_angle, my_end_angle, my_agent_number,
+                  other_start_angle, other_end_angle, other_agent_number):
+        """
+        Algorithm placeholder to calculate partitions based on robot interaction.
+        Parameters:
+        - my_start_angle, my_end_angle, my_agent_number:  info of this robot.
+        - other_start_angle, other_end_angle, other_agent_number: info of the detected robot.
 
-#     def algorithm(self, my_start_angle, my_end_angle, my_agent_number,
-#                   other_start_angle, other_end_angle, other_agent_number):
-#         """
-#         Algorithm placeholder to calculate partitions based on robot interaction.
-#         Parameters:
-#         - my_start_angle, my_end_angle, my_agent_number:  info of this robot.
-#         - other_start_angle, other_end_angle, other_agent_number: info of the detected robot.
+        implement  partitioning logic based on the two robots' partition and known agents.
+        """
+        self.get_logger().info(f"My Partition: Start {my_start_angle}, End {my_end_angle}, Agents known: {my_agent_number}")
+        self.get_logger().info(f"Other Partition: Start {other_start_angle}, End {other_end_angle}, Agents known: {other_agent_number}")
 
-#         implement  partitioning logic based on the two robots' partition and known agents.
-#         """
-#         self.get_logger().info(f"My Partition: Start {my_start_angle}, End {my_end_angle}, Agents known: {my_agent_number}")
-#         self.get_logger().info(f"Other Partition: Start {other_start_angle}, End {other_end_angle}, Agents known: {other_agent_number}")
-
-#         # Placeholder for partitioning logic
-#         new_start_angle, new_end_angle = 0.0, 2*np.pi####################################################################################### insert stuff here for algorithm
+        # Placeholder for partitioning logic
+        new_start_angle, new_end_angle = 0.0, 2*np.pi####################################################################################### insert stuff here for algorithm
         
-#         new_waypoints = generate_circumference_waypoints(new_start_angle, new_end_angle)
-#         self.update_waypoints(new_waypoints)
+        new_waypoints = generate_circumference_waypoints(new_start_angle, new_end_angle)
+        self.update_waypoints(new_waypoints)
 
-#     def plan(self, current_position, current_orientation):
-#         """ Plan the robot's path towards the next waypoint."""
-#         waypoint = self.get_next_waypoint()
-#         if waypoint is None:
-#             return  # No more waypoints, stop planning
+    def plan(self, current_position, current_orientation):
+        """ Plan the robot's path towards the next waypoint."""
+        waypoint = self.get_next_waypoint()
+        if waypoint is None:
+            return  # No more waypoints, stop planning
 
 # class VelocityController(Node):
 #     def __init__(self):
