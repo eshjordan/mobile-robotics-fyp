@@ -27,7 +27,7 @@ class WaypointController_v1(Node):
 
         self.subscriber = self.create_subscription( ## uncomment to use vicon info
             PoseStamped,
-            '/vrpn_mocap/BW_epuck/pose',
+            '/vrpn_mocap/BW_epuck0/pose',
             self.listener_callback,
             qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -47,7 +47,7 @@ class WaypointController_v1(Node):
         ## Robot current velocity twist msgs
         self.declare_parameter('linear.x',0.0)
         self.declare_parameter('angular.z',0.0)
-        self.create_timer(1.0, self.send_twist_message) #send message every second
+        self.create_timer(0.01, self.send_twist_message) #send message every second
         ## Robot's curernt pose and orientation
         self.x = 0.0
         self.y = 0.0
@@ -59,6 +59,8 @@ class WaypointController_v1(Node):
         self.agent_number = 1
         ## Path planner instance
         self.path_planner = SimplePathPlanner(self.generate_initial_waypoints())
+
+        self.prnt_msg = 0
         
     def listener_callback(self, msg):
         # print(msg.x, msg.y, msg.z)
@@ -73,17 +75,50 @@ class WaypointController_v1(Node):
         self.y = msg.pose.position.y
         self.z = msg.pose.position.z
 
-        # ## Extract orientation from vicon topic using quaternion
-        # orientation_q = msg.pose.orientation
-        # _, _, self.theta = self.euler_from_quaternion(orientation_q)
+
+        ## Extract orientation from vicon topic using quaternion
+        orientation_q = msg.pose.orientation
+        # self.get_logger().info(f"orientation_q = {orientation_q}")
+        _, _, self.theta = self.euler_from_quaternion(orientation_q)
+
+
+        # self.prnt_msg += 1
+        # if self.prnt_msg % 100 == 0:
+        #     self.get_logger().info("x: {:10.3f}   y: {:10.3f}   z: {:10.3f}   theta: {:10.3f}".format(self.x, self.y, self.z, self.theta))
+        
+
         # print(msg)
         # self.get_logger().info
 
-    def euler_from_quaternion(self, q):
-        """Convert quaternion (x, y, z, w) to euler angles (roll, pitch, yaw)."""
-        quaternion = (q.x, q.y, q.z, q.w)
-        euler = tf2_ros.transformations.euler_from_quaternion(quaternion)
-        return euler  # Returns roll, pitch, yaw (we use yaw as theta)
+    # def euler_from_quaternion(self, q):
+    #     """Convert quaternion (x, y, z, w) to euler angles (roll, pitch, yaw)."""
+    #     quaternion = (q.x, q.y, q.z, q.w)
+    #     euler = tf2_ros.transformations.euler_from_quaternion(quaternion)
+    #     return euler  # Returns roll, pitch, yaw (we use yaw as theta)
+    
+    def euler_from_quaternion(self, quaternion):
+        """
+        Converts quaternion (w in last place) to euler roll, pitch, yaw
+        quaternion = [x, y, z, w]
+        Bellow should be replaced when porting for ROS 2 Python tf_conversions is done.
+        """
+        x = quaternion.x
+        y = quaternion.y
+        z = quaternion.z
+        w = quaternion.w
+
+        sinr_cosp = 2 * (w * x + y * z)
+        cosr_cosp = 1 - 2 * (x * x + y * y)
+        roll = np.arctan2(sinr_cosp, cosr_cosp)
+
+        sinp = 2 * (w * y - z * x)
+        pitch = np.arcsin(sinp)
+
+        siny_cosp = 2 * (w * z + x * y)
+        cosy_cosp = 1 - 2 * (y * y + z * z)
+        yaw = np.arctan2(siny_cosp, cosy_cosp)
+        # self.get_logger().info(f"yaw = {yaw}")
+        return roll, pitch, yaw
 
     def send_twist_message(self):
         "calcualte twist message to send using current pose and next waypoint"
@@ -100,15 +135,17 @@ class WaypointController_v1(Node):
         ## calculate velocities
         dx = waypoint[0] - self.x
         dy = waypoint[1] - self.y
-        print(f"self,x {self.x}, self.y {self.y}")
+        # print(f"self,x {self.x}, self.y {self.y}")
 
         distance = mth.sqrt(dx**2 + dy**2)
-        print("distance", distance)
+        # print("distance", distance)
         angle_to_waypoint = mth.atan2(dy, dx)
-        angle_diff = angle_to_waypoint - self.theta
+        angle_diff = ((angle_to_waypoint - self.theta) % 2*np.pi) - np.pi
+        # angle_diff = angle_to_waypoint - self.theta
+        # angle_diff = mth.atan2(mth.sin(angle_diff), mth.cos(angle_diff))  # Normalize angle to [-pi, pi]
 
         linear_velocity = 0.05 * distance
-        angular_velocity = 0.1 * angle_diff
+        angular_velocity = 0.5 * angle_diff
 
         # hardcoded velocities
         # linear_velocity = 0.1
@@ -128,7 +165,14 @@ class WaypointController_v1(Node):
         twist.angular.z = angular_velocity
         self.cmd_pub.publish(twist)
 
-        self.get_logger().info(f"sending forward twist command: linear.x = {linear_velocity}, angular.z = {angular_velocity}")
+
+        self.prnt_msg += 1
+        if self.prnt_msg % 100 == 0:
+            self.get_logger().info("x: {:7.3f}  y: {:7.3f}  z: {:7.3f}  theta: {:7.3f} linear_velocity: {:7.3f}  angular_z: {:7.3} pi".format(self.x, self.y, self.z, self.theta, linear_velocity, angular_velocity/np.pi))
+        
+
+
+        # self.get_logger().info(f"sending forward twist command: linear.x = {linear_velocity}, angular.z = {angular_velocity}")
 
     def stop_robot(self):
         """Stop the robot."""

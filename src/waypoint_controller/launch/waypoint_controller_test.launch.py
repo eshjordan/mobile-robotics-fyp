@@ -34,7 +34,7 @@ def generate_launch_description():
         )
     )
 
-    return launch.LaunchDescription([
+    return launch.LaunchDescription(
         launch_args +
         [
             launch_ros.actions.Node(
@@ -61,4 +61,4 @@ def generate_launch_description():
                 ],
             ),
         ]
-    ])
+    )
