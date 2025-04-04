@@ -25,18 +25,18 @@ class WaypointController_v1(Node):
     def __init__(self):
         super().__init__('waypoint_controller')
 
-        # self.subscriber = self.create_subscription( ## uncomment to use vicon info
-        #     PoseStamped,
-        #     '/vrpn_mocap/BW_epuck/pose',
-        #     self.listener_callback,
-        #     qos_profile = QoSProfile(
-        #     reliability=ReliabilityPolicy.BEST_EFFORT,
-        #     durability=DurabilityPolicy.VOLATILE,
-        #     history=HistoryPolicy.KEEP_LAST,
-        #     depth=10
-        #     # 10,
-        # ))
-        # self.subscriber  # prevent unused variable warning
+        self.subscriber = self.create_subscription( ## uncomment to use vicon info
+            PoseStamped,
+            '/vrpn_mocap/BW_epuck/pose',
+            self.listener_callback,
+            qos_profile = QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            durability=DurabilityPolicy.VOLATILE,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=10
+            # 10,
+        ))
+        self.subscriber  # prevent unused variable warning
 
         self.cmd_pub = self.create_publisher(
             geometry_msgs.msg.Twist, 
@@ -64,18 +64,18 @@ class WaypointController_v1(Node):
         # print(msg.x, msg.y, msg.z)
         # self.get_logger().info(f"subscribing vicon position = {msg.pose.position}")
 
-        print(msg.pose.position)
-        print("\n\n\n")
-        print(msg.pose)
+        # print(msg.pose.position)
+        # print("\n\n\n")
+        # print(msg.pose)
 
         ## Extract pose position from vicon topic
         self.x = msg.pose.position.x
         self.y = msg.pose.position.y
         self.z = msg.pose.position.z
 
-        ## Extract orientation from vicon topic using quaternion
-        orientation_q = msg.pose.pose.orientation
-        _, _, self.theta = self.euler_from_quaternion(orientation_q)
+        # ## Extract orientation from vicon topic using quaternion
+        # orientation_q = msg.pose.orientation
+        # _, _, self.theta = self.euler_from_quaternion(orientation_q)
         # print(msg)
         # self.get_logger().info
 
@@ -88,18 +88,20 @@ class WaypointController_v1(Node):
     def send_twist_message(self):
         "calcualte twist message to send using current pose and next waypoint"
         # waypoint = self.path_planner.get_next_waypoint()
-        waypoint = [10.0,
+        waypoint = [1.0,
                     0.0]
         if waypoint is None:
             # self.stop_robot()
             return
 
-        ## Hardcode pose - comment out when using vicon
-        self.x = 1.0
-        self.y = 0.0
+        # ## Hardcode pose - comment out when using vicon
+        # self.x = 1.0
+        # self.y = 0.0
         ## calculate velocities
         dx = waypoint[0] - self.x
         dy = waypoint[1] - self.y
+        print(f"self,x {self.x}, self.y {self.y}")
+
         distance = mth.sqrt(dx**2 + dy**2)
         print("distance", distance)
         angle_to_waypoint = mth.atan2(dy, dx)
