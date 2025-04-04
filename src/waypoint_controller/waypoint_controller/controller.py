@@ -3,17 +3,15 @@ from rclpy.node import Node
 import geometry_msgs.msg
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 from geometry_msgs.msg import PoseStamped
-import tf_transformations
+import tf2_ros
+# import tf_transformations
 import math as mth
 from math import sqrt, atan2, pi
 import numpy as np
 
 def main():
-    print("hi")
     rclpy.init()
-    
     waypoint_controller = WaypointController_v1()
-    print("hey")
     # Run the control loop
     rclpy.spin(waypoint_controller)
     # # Shutdown
@@ -50,7 +48,10 @@ class WaypointController_v1(Node):
         self.declare_parameter('linear.x',0.0)
         self.declare_parameter('angular.z',0.0)
         self.create_timer(1.0, self.send_twist_message) #send message every second
-        ## Robot's curernt orientation
+        ## Robot's curernt pose and orientation
+        self.x = 0.0
+        self.y = 0.0
+        self.z = 0.0
         self.theta = 0.0
         ## Robot's partition information
         self.start_angle = 0.0
@@ -63,18 +64,15 @@ class WaypointController_v1(Node):
         # print(msg.x, msg.y, msg.z)
         # self.get_logger().info(f"subscribing vicon position = {msg.pose.position}")
 
-        # print(msg.pose.position)
-        # print("\n\n\n")
-        # print(msg.pose)
+        print(msg.pose.position)
+        print("\n\n\n")
+        print(msg.pose)
 
         ## Extract pose position from vicon topic
-        # self.x = msg.pose.position.x
-        # self.y = msg.pose.position.y
-        # self.z = msg.pose.position.z
-        ## Hardcode pose
-        self.x = 0.0
-        self.y = 0.0
-        self.z = 0.0
+        self.x = msg.pose.position.x
+        self.y = msg.pose.position.y
+        self.z = msg.pose.position.z
+
         ## Extract orientation from vicon topic using quaternion
         orientation_q = msg.pose.pose.orientation
         _, _, self.theta = self.euler_from_quaternion(orientation_q)
@@ -82,24 +80,28 @@ class WaypointController_v1(Node):
         # self.get_logger().info
 
     def euler_from_quaternion(self, q):
-            """Convert quaternion (x, y, z, w) to euler angles (roll, pitch, yaw)."""
-            quaternion = (q.x, q.y, q.z, q.w)
-            euler = tf_transformations.euler_from_quaternion(quaternion)
-            return euler  # Returns roll, pitch, yaw (we use yaw as theta)
+        """Convert quaternion (x, y, z, w) to euler angles (roll, pitch, yaw)."""
+        quaternion = (q.x, q.y, q.z, q.w)
+        euler = tf2_ros.transformations.euler_from_quaternion(quaternion)
+        return euler  # Returns roll, pitch, yaw (we use yaw as theta)
 
     def send_twist_message(self):
         "calcualte twist message to send using current pose and next waypoint"
         # waypoint = self.path_planner.get_next_waypoint()
-        waypoint = [1.0,
+        waypoint = [10.0,
                     0.0]
         if waypoint is None:
             # self.stop_robot()
             return
 
+        ## Hardcode pose - comment out when using vicon
+        self.x = 1.0
+        self.y = 0.0
         ## calculate velocities
         dx = waypoint[0] - self.x
         dy = waypoint[1] - self.y
         distance = mth.sqrt(dx**2 + dy**2)
+        print("distance", distance)
         angle_to_waypoint = mth.atan2(dy, dx)
         angle_diff = angle_to_waypoint - self.theta
 
@@ -134,15 +136,15 @@ class WaypointController_v1(Node):
         self.cmd_pub.publish(twist)
         self.get_logger().info('Robot stopped for interaction')
 
-    # def generate_initial_waypoints(self):
-    #     """Generate initial waypoints for the robot to follow."""
-    #     return generate_circumference_waypoints(
-    #         start_angle=0,
-    #         end_angle=2 * pi,
-    #         radius=10,
-    #         num_waypoints=25,
-    #         center=(0, 0)
-    #     )
+    def generate_initial_waypoints(self):
+        """Generate initial waypoints for the robot to follow."""
+        return generate_circumference_waypoints(
+            start_angle=0,
+            end_angle=2 * pi,
+            radius=10,
+            num_waypoints=25,
+            center=(0, 0)
+        )
 
 #Step3: Path planner - robot to patrol given area
 
@@ -175,7 +177,7 @@ def generate_circumference_waypoints(start_angle, end_angle, radius = 10, num_wa
         x = center[0] + radius * np.cos(theta)
         y = center[1] + radius * np.sin(theta)
         waypoints.append((x, y))
-    print("waypoints", waypoints)
+
     return waypoints
 
 class SimplePathPlanner:
