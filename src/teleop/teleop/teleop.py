@@ -58,6 +58,7 @@ class Teleop(rclpy.node.Node):
             twist.linear.x *= 2.0
             twist.angular.z *= 2.0
 
+        self.get_logger().info(f"sending teleop command: twist = {twist}")
         self.cmd_pub.publish(twist)
 
     def on_press(self, key):

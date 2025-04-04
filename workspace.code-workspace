@@ -20,6 +20,10 @@
 			"-j=16"
 		],
 		"cSpell.enabled": false,
+		"files.associations": {
+			"compare": "cpp",
+			"cstdint": "cpp"
+		},
 	},
 	"launch": {
 		"version": "0.2.0",
