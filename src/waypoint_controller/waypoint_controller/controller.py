@@ -25,9 +25,25 @@ class WaypointController_v1(Node):
     def __init__(self):
         super().__init__('waypoint_controller')
 
+        self.declare_parameter('namespace', '~')
+        self.declare_parameter('robot_id', 0)
+        self.declare_parameter('manager_robot_tf_prefix', 'epuck2_robot_')
+        self.declare_parameter('manager_robot_tf_suffix', '')
+        self.declare_parameter('manager_robot_tf_frame', '/base_link')
+        self.declare_parameter('min_linear_vel', 0.0)
+        self.declare_parameter('max_linear_vel', 0.1)
+        self.declare_parameter('min_angular_vel', 0.0)
+        self.declare_parameter('max_angular_vel', 1.0)
+        self.declare_parameter('slow_distance', 0.2)
+        self.declare_parameter('slow_angle', 0.2)
+        self.declare_parameter('threshold_distance', 0.05)
+        self.declare_parameter('threshold_angle', 0.05)
+
+
         self.subscriber = self.create_subscription( ## uncomment to use vicon info
             PoseStamped,
-            '/vrpn_mocap/BW_epuck0/pose',
+            # '/vrpn_mocap/BW_epuck0/pose',
+            self.get_parameter('namespace').value + '/pose',
             self.listener_callback,
             qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -39,14 +55,12 @@ class WaypointController_v1(Node):
         self.subscriber  # prevent unused variable warning
 
         self.cmd_pub = self.create_publisher(
-            geometry_msgs.msg.Twist, 
-            'mobile_base/cmd_vel', 
-            10,    
+            geometry_msgs.msg.Twist,
+            'mobile_base/cmd_vel',
+            10,
         )
 
         ## Robot current velocity twist msgs
-        self.declare_parameter('linear.x',0.0)
-        self.declare_parameter('angular.z',0.0)
         self.create_timer(0.01, self.send_twist_message) #send message every second
         ## Robot's curernt pose and orientation
         self.x = 0.0
@@ -61,7 +75,7 @@ class WaypointController_v1(Node):
         self.path_planner = SimplePathPlanner(self.generate_initial_waypoints())
 
         self.prnt_msg = 0
-        
+
     def listener_callback(self, msg):
         # print(msg.x, msg.y, msg.z)
         # self.get_logger().info(f"subscribing vicon position = {msg.pose.position}")
@@ -85,7 +99,7 @@ class WaypointController_v1(Node):
         # self.prnt_msg += 1
         # if self.prnt_msg % 100 == 0:
         #     self.get_logger().info("x: {:10.3f}   y: {:10.3f}   z: {:10.3f}   theta: {:10.3f}".format(self.x, self.y, self.z, self.theta))
-        
+
 
         # print(msg)
         # self.get_logger().info
@@ -95,7 +109,7 @@ class WaypointController_v1(Node):
     #     quaternion = (q.x, q.y, q.z, q.w)
     #     euler = tf2_ros.transformations.euler_from_quaternion(quaternion)
     #     return euler  # Returns roll, pitch, yaw (we use yaw as theta)
-    
+
     def euler_from_quaternion(self, quaternion):
         """
         Converts quaternion (w in last place) to euler roll, pitch, yaw
@@ -120,15 +134,8 @@ class WaypointController_v1(Node):
         # self.get_logger().info(f"yaw = {yaw}")
         return roll, pitch, yaw
 
-    def send_twist_message(self):
-        "calcualte twist message to send using current pose and next waypoint"
-        # waypoint = self.path_planner.get_next_waypoint()
-        waypoint = [1.0,
-                    0.0]
-        if waypoint is None:
-            # self.stop_robot()
-            return
-
+    def calculate_velocities(self, waypoint):
+        """Calculate the linear and angular velocities to reach the next waypoint."""
         # ## Hardcode pose - comment out when using vicon
         # self.x = 1.0
         # self.y = 0.0
@@ -144,8 +151,38 @@ class WaypointController_v1(Node):
         # angle_diff = angle_to_waypoint - self.theta
         # angle_diff = mth.atan2(mth.sin(angle_diff), mth.cos(angle_diff))  # Normalize angle to [-pi, pi]
 
-        linear_velocity = 0.05 * distance
-        angular_velocity = 0.5 * angle_diff
+        linear_velocity = 0.0
+        angular_velocity = 0.0
+
+        if distance <= self.get_parameter('threshold_distance').value:
+            # stop robot
+            return linear_velocity, angular_velocity
+
+        if distance <= self.get_parameter('slow_distance').value:
+            # slow down linearly between min and max velocity
+            linear_velocity_range = self.get_parameter('max_linear_vel').value - self.get_parameter('min_linear_vel').value
+            linear_closeness = distance / self.get_parameter('slow_distance').value
+            linear_velocity = linear_velocity_range * linear_closeness + self.get_parameter('min_linear_vel').value
+        else:
+            linear_velocity = self.get_parameter('max_linear_vel').value
+
+        if abs(angle_diff) <= self.get_parameter('slow_angle').value:
+            angular_velocity_range = self.get_parameter('max_angular_vel').value - self.get_parameter('min_angular_vel').value
+            angular_closeness = abs(angle_diff) / self.get_parameter('slow_angle').value
+            angular_velocity = (angle_diff/abs(angle_diff)) * (angular_velocity_range * angular_closeness + self.get_parameter('min_angular_vel').value)
+        else:
+            angular_velocity = (angle_diff/abs(angle_diff)) * self.get_parameter('max_angular_vel').value
+
+        return linear_velocity, angular_velocity
+
+    def send_twist_message(self):
+        "calcualte twist message to send using current pose and next waypoint"
+        # waypoint = self.path_planner.get_next_waypoint()
+        waypoint = [0.0,
+                    0.0]
+        if waypoint is None:
+            # self.stop_robot()
+            return
 
         # hardcoded velocities
         # linear_velocity = 0.1
@@ -154,6 +191,8 @@ class WaypointController_v1(Node):
         # # use current velocity - dynamic
         # linear_velocity = self.get_parameter('linear.x').value
         # angular_velocity = self.get_parameter('angular.z').value
+
+        linear_velocity, angular_velocity = self.calculate_velocities(waypoint)
 
         twist = geometry_msgs.msg.Twist()
         twist.linear.x = linear_velocity
@@ -169,7 +208,7 @@ class WaypointController_v1(Node):
         self.prnt_msg += 1
         if self.prnt_msg % 100 == 0:
             self.get_logger().info("x: {:7.3f}  y: {:7.3f}  z: {:7.3f}  theta: {:7.3f} linear_velocity: {:7.3f}  angular_z: {:7.3} pi".format(self.x, self.y, self.z, self.theta, linear_velocity, angular_velocity/np.pi))
-        
+
 
 
         # self.get_logger().info(f"sending forward twist command: linear.x = {linear_velocity}, angular.z = {angular_velocity}")
@@ -255,7 +294,7 @@ class SimplePathPlanner:
 
         # Placeholder for partitioning logic
         new_start_angle, new_end_angle = 0.0, 2*np.pi####################################################################################### insert stuff here for algorithm
-        
+
         new_waypoints = generate_circumference_waypoints(new_start_angle, new_end_angle)
         self.update_waypoints(new_waypoints)
 
