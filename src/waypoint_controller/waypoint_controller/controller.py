@@ -21,6 +21,8 @@ def main():
 #Step 1: hardcode waypoint controller, just send constant twist message forwards
 #Step2: introduce currrent position of robot - send robot to specific location
 
+# Robot 5653 Z rotation offset: -135.240 degrees, -2.360 rad
+
 class WaypointController_v1(Node):
     def __init__(self):
         super().__init__('waypoint_controller')
@@ -42,8 +44,8 @@ class WaypointController_v1(Node):
 
         self.subscriber = self.create_subscription( ## uncomment to use vicon info
             PoseStamped,
-            # '/vrpn_mocap/BW_epuck0/pose',
-            self.get_parameter('namespace').value + '/pose',
+            '/vrpn_mocap/BW_epuck1/pose',
+            # self.get_parameter('namespace').value + '/pose',
             self.listener_callback,
             qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -72,10 +74,14 @@ class WaypointController_v1(Node):
         self.end_angle = 2 * np.pi
         self.agent_number = 1
         ## Path planner instance
-        self.path_planner = SimplePathPlanner(self.generate_initial_waypoints())
-
+        # self.get_logger().info("SimplePathPlanner")
+        self.path_planner = SimplePathPlanner(self.generate_initial_waypoints()) #triggered when robot interact or when robot reaches its waypoint, or 
+    
+        self.current_waypoint = self.path_planner.get_next_waypoint()
+        # self.get_logger().info(f"self.current_waypoint {self.current_waypoint}")
         self.prnt_msg = 0
 
+        
     def listener_callback(self, msg):
         # print(msg.x, msg.y, msg.z)
         # self.get_logger().info(f"subscribing vicon position = {msg.pose.position}")
@@ -94,6 +100,7 @@ class WaypointController_v1(Node):
         orientation_q = msg.pose.orientation
         # self.get_logger().info(f"orientation_q = {orientation_q}")
         _, _, self.theta = self.euler_from_quaternion(orientation_q)
+        self.theta -= -2.360
 
 
         # self.prnt_msg += 1
@@ -104,11 +111,6 @@ class WaypointController_v1(Node):
         # print(msg)
         # self.get_logger().info
 
-    # def euler_from_quaternion(self, q):
-    #     """Convert quaternion (x, y, z, w) to euler angles (roll, pitch, yaw)."""
-    #     quaternion = (q.x, q.y, q.z, q.w)
-    #     euler = tf2_ros.transformations.euler_from_quaternion(quaternion)
-    #     return euler  # Returns roll, pitch, yaw (we use yaw as theta)
 
     def euler_from_quaternion(self, quaternion):
         """
@@ -139,15 +141,32 @@ class WaypointController_v1(Node):
         # ## Hardcode pose - comment out when using vicon
         # self.x = 1.0
         # self.y = 0.0
+
+        if self.current_waypoint is None:
+            self.stop_robot()
+            return
+
         ## calculate velocities
-        dx = waypoint[0] - self.x
-        dy = waypoint[1] - self.y
+        dx = self.current_waypoint[0] - self.x
+        dy = self.current_waypoint[1] - self.y
         # print(f"self,x {self.x}, self.y {self.y}")
 
         distance = mth.sqrt(dx**2 + dy**2)
         # print("distance", distance)
+
         angle_to_waypoint = mth.atan2(dy, dx)
-        angle_diff = ((angle_to_waypoint - self.theta) % 2*np.pi) - np.pi
+        # self.get_logger().info(f"angle_to_waypoint {angle_to_waypoint}\n")
+
+        angle_diff = ((angle_to_waypoint - self.theta) % (2*np.pi))
+        # self.get_logger().info(f"angle_diff (1) {angle_diff}\n")
+
+        if angle_diff > np.pi:
+            angle_diff -= 2*np.pi
+        # self.get_logger().info(f"angle_diff (2) {angle_diff}\n")
+
+        
+
+        # angle_diff = ((angle_to_waypoint - self.theta) % 2*np.pi) - np.pi
         # angle_diff = angle_to_waypoint - self.theta
         # angle_diff = mth.atan2(mth.sin(angle_diff), mth.cos(angle_diff))  # Normalize angle to [-pi, pi]
 
@@ -158,7 +177,7 @@ class WaypointController_v1(Node):
             # stop robot
             return linear_velocity, angular_velocity
 
-        if distance <= self.get_parameter('slow_distance').value:
+        if False or distance <= self.get_parameter('slow_distance').value:
             # slow down linearly between min and max velocity
             linear_velocity_range = self.get_parameter('max_linear_vel').value - self.get_parameter('min_linear_vel').value
             linear_closeness = distance / self.get_parameter('slow_distance').value
@@ -166,12 +185,12 @@ class WaypointController_v1(Node):
         else:
             linear_velocity = self.get_parameter('max_linear_vel').value
 
-        if abs(angle_diff) <= self.get_parameter('slow_angle').value:
+        if False or abs(angle_diff) <= self.get_parameter('slow_angle').value:
             angular_velocity_range = self.get_parameter('max_angular_vel').value - self.get_parameter('min_angular_vel').value
             angular_closeness = abs(angle_diff) / self.get_parameter('slow_angle').value
-            angular_velocity = (angle_diff/abs(angle_diff)) * (angular_velocity_range * angular_closeness + self.get_parameter('min_angular_vel').value)
+            angular_velocity = (angle_diff/abs(angle_diff) if abs(angle_diff) > 0.001 else 1) * (angular_velocity_range * angular_closeness + self.get_parameter('min_angular_vel').value)
         else:
-            angular_velocity = (angle_diff/abs(angle_diff)) * self.get_parameter('max_angular_vel').value
+            angular_velocity = (angle_diff/abs(angle_diff) if abs(angle_diff) > 0.001 else 1) * self.get_parameter('max_angular_vel').value
 
         return linear_velocity, angular_velocity
 
@@ -183,10 +202,28 @@ class WaypointController_v1(Node):
         if waypoint is None:
             # self.stop_robot()
             return
+        
+        # self.current_waypoint = [0, 1]
+        
+        distance_to_waypoint = np.linalg.norm(np.array(self.current_waypoint) - np.array([self.x, self.y]))
+        dx = self.current_waypoint[0] - self.x
+        dy = self.current_waypoint[1] - self.y
+        angle_to_waypoint = mth.atan2(dy, dx)
+        angle_diff = ((angle_to_waypoint - self.theta) % (2*np.pi))
+        if angle_diff > np.pi:
+            angle_diff -= 2*np.pi
+        if distance_to_waypoint < 0.05:
+            self.get_logger().info(f"Reached waypoint {self.current_waypoint}")
+            self.current_waypoint = self.path_planner.get_next_waypoint()
+            self.get_logger().info(f"Moving to new waypoint {self.current_waypoint}")
+
+        # self.current_waypoint = [0, 1]
 
         # hardcoded velocities
         # linear_velocity = 0.1
         # angular_velocity = 0.0
+        # linear_velocity = 0.05 * distance
+        # angular_velocity = 1.0 * angle_diff
 
         # # use current velocity - dynamic
         # linear_velocity = self.get_parameter('linear.x').value
@@ -196,19 +233,15 @@ class WaypointController_v1(Node):
 
         twist = geometry_msgs.msg.Twist()
         twist.linear.x = linear_velocity
-        # twist.linear.y = linear_y
-        # twist.linear.z = linear_z
-
-        # twist.angular.x = angular_x
-        # twist.angular.y = angular_y
         twist.angular.z = angular_velocity
         self.cmd_pub.publish(twist)
 
-
         self.prnt_msg += 1
-        if self.prnt_msg % 100 == 0:
+        if self.prnt_msg % 10 == 0:
+            self.get_logger().info(f"self.current_waypoint {self.current_waypoint}")
+            self.get_logger().info(f"Dist to wp: {distance_to_waypoint}")
             self.get_logger().info("x: {:7.3f}  y: {:7.3f}  z: {:7.3f}  theta: {:7.3f} linear_velocity: {:7.3f}  angular_z: {:7.3} pi".format(self.x, self.y, self.z, self.theta, linear_velocity, angular_velocity/np.pi))
-
+            self.get_logger().info("angle_to_waypoint: {:7.3f}    robot_angle: {:7.3f}    angle_diff: {:7.3f}".format(angle_to_waypoint,self.theta,angle_diff))
 
 
         # self.get_logger().info(f"sending forward twist command: linear.x = {linear_velocity}, angular.z = {angular_velocity}")
@@ -223,20 +256,91 @@ class WaypointController_v1(Node):
 
     def generate_initial_waypoints(self):
         """Generate initial waypoints for the robot to follow."""
-        return generate_circumference_waypoints(
+        self.get_logger().info("generate_initial_waypoints")
+        initial_waypoints=generate_circumference_waypoints(
             start_angle=0,
-            end_angle=2 * pi,
-            radius=10,
-            num_waypoints=25,
+            end_angle= 2*np.pi, ########################################################################
+            radius=1,
+            num_waypoints=10,
             center=(0, 0)
         )
 
+        self.get_logger().info(f"initial_waypoints {initial_waypoints}")
+        return initial_waypoints
+    
+    def turn_around(self):
+        """Turn the robot around before following new waypoints."""
+        turn_angle = pi  # 180 degrees
+        self.send_twist_message(0.0, turn_angle)
+        self.get_logger().info('Turning around after interaction')
+    
+
+    def control_loop(self):
+        """Main control loop for the robot."""
+        current_position = (self.x, self.y)
+        current_orientation = self.theta
+
+        # Plan the next movement
+        self.path_planner.plan(current_position, current_orientation)
+
+        # Check for other robots' positions via tf2 instead of proximity sensors
+        # other_robot_frame = 'other_robot_base_link'  # Example frame of the other robot .####################################################################################### uncomment
+        # other_robot_info = self.get_other_robot_info(other_robot_frame)
+        other_robot_info = None
+
+        if other_robot_info: #if detect other robots
+            other_x, other_y, other_theta = other_robot_info
+
+            # Example: Check if another robot is close
+            distance_to_other = sqrt((other_x - self.x)**2 + (other_y - self.y)**2)
+            if distance_to_other < 2.0:  # Adjust threshold as necessary
+                self.stop_robot()
+
+                # Get other robot's partition info
+                other_start_angle, other_end_angle = self.get_other_robot_partition()
+                other_agent_number = self.get_other_robot_agent_number()
+
+                # Call your algorithm with both robots' information
+                self.path_planner.algorithm(
+                    self.start_angle, self.end_angle, self.agent_number,
+                    other_start_angle, other_end_angle, other_agent_number  # Assuming the other robot knows about 2 agents
+                )
+                self.turn_around()
+            else:
+                self.send_twist_message()
+        else:
+            self.send_twist_message()
+
+#    def get_other_robot_position(self, other_robot_frame):
+#         """ Get position and orientation of another robot using tf2. #######################################################################################
+#         Args: other_robot_frame (str): The tf frame ID of the other robot.
+#         Returns: (float, float, float): The x, y position and orientation (theta) of the other robot."""
+#         try:
+#             # Lookup transform from the other robot to the base frame
+#             transform = self.tf_buffer.lookup_transform(
+#                 'base_link', other_robot_frame, rclpy.time.Time())
+#             x = transform.transform.translation.x
+#             y = transform.transform.translation.y
+
+#             # Convert quaternion to yaw angle (theta)
+#             orientation_q = transform.transform.rotation
+#             _, _, theta = self.euler_from_quaternion(orientation_q)
+
+#             return x, y, theta
+#         except:
+#             self.get_logger().warn(f"Could not get transform for {other_robot_frame}")
+#             return None
+
+#     def get_other_robot_partition(self):
+#         """Placeholder function to get another robot's partition info.""" #######################################################################################
+#         return 0.0, np.pi  # Replace with actual logic
+
+#     def get_other_robot_agent_number(self):
+#         """Placeholder function to get another robot's knwon agent number info."""#######################################################################################
+#         return 2  # Replace with actual logic
+
+
 #Step3: Path planner - robot to patrol given area
-
-# from nav_msgs.msg import Odometry
-# from controller import Robot
-# from tf2_ros import TransformListener, Buffer
-
 def generate_circumference_waypoints(start_angle, end_angle, radius = 10, num_waypoints = 25 , center = (0,0)):
     """
     Generate waypoints along the circumference of a circular slice.
@@ -271,9 +375,10 @@ class SimplePathPlanner:
         self.current_waypoint_index = 0
 
     def get_next_waypoint(self):
-        if self.current_waypoint_index < len(self.waypoints):
+        if self.current_waypoint_index < len(self.waypoints)-1:
+            self.current_waypoint_index += 1
             return self.waypoints[self.current_waypoint_index]
-        return None
+        return self.waypoints[-1]
 
     def update_waypoints(self, new_waypoints):
         self.waypoints = new_waypoints
@@ -289,13 +394,16 @@ class SimplePathPlanner:
 
         implement  partitioning logic based on the two robots' partition and known agents.
         """
-        self.get_logger().info(f"My Partition: Start {my_start_angle}, End {my_end_angle}, Agents known: {my_agent_number}")
-        self.get_logger().info(f"Other Partition: Start {other_start_angle}, End {other_end_angle}, Agents known: {other_agent_number}")
+        print("algorithm")
+        print(f"My Partition: Start {my_start_angle}, End {my_end_angle}, Agents known: {my_agent_number}")
+        print(f"Other Partition: Start {other_start_angle}, End {other_end_angle}, Agents known: {other_agent_number}")
 
         # Placeholder for partitioning logic
         new_start_angle, new_end_angle = 0.0, 2*np.pi####################################################################################### insert stuff here for algorithm
 
         new_waypoints = generate_circumference_waypoints(new_start_angle, new_end_angle)
+        print(f"My new_waypoints: {new_waypoints}")
+
         self.update_waypoints(new_waypoints)
 
     def plan(self, current_position, current_orientation):
@@ -304,165 +412,7 @@ class SimplePathPlanner:
         if waypoint is None:
             return  # No more waypoints, stop planning
 
-# class VelocityController(Node):
-#     def __init__(self):
-#         super().__init__('velocity_controller')
 
-#         # Initialize odometry subscriber
-#         self.odom_subscriber = self.create_subscription(
-#             Odometry,
-#             '/odom',
-#             self.odom_callback,
-#             10
-#         )
-
-#         # Initialize publisher for velocity commands
-#         self.publisher = self.create_publisher(Twist, '/cmd_vel', 10)
-
-#         # # Initialize tf2 buffer and listener ###################################################################################### uncomment
-#         # self.tf_buffer = Buffer()
-#         # self.tf_listener = TransformListener(self.tf_buffer, self)
-
-#         # Robot state variables
-#         self.x = 0.0  # Current x position
-#         self.y = 0.0  # Current y position
-#         self.theta = 0.0  # Current orientation (yaw)
-
-#         # Robot's partition information
-#         self.start_angle = 0.0
-#         self.end_angle = 2 * np.pi
-#         self.agent_number = 1
-
-#         # Path planner instance
-#         self.path_planner = SimplePathPlanner(self.generate_initial_waypoints())
-
-#         # Initialize the e-puck robot
-#         self.epuck = EPUCKRobot()
-
-#     def odom_callback(self, msg):
-#         """Callback function to process odometry data."""
-#         self.x = msg.pose.pose.position.x
-#         self.y = msg.pose.pose.position.y
-
-#         # Extract orientation from quaternion
-#         orientation_q = msg.pose.pose.orientation
-#         _, _, self.theta = self.euler_from_quaternion(orientation_q)
-
-#     def euler_from_quaternion(self, q):
-#         """Convert quaternion (x, y, z, w) to euler angles (roll, pitch, yaw)."""
-#         import tf_transformations
-#         quaternion = (q.x, q.y, q.z, q.w)
-#         euler = tf_transformations.euler_from_quaternion(quaternion)
-#         return euler  # Returns roll, pitch, yaw (we use yaw as theta)
-
-#     def get_other_robot_position(self, other_robot_frame):
-#         """ Get position and orientation of another robot using tf2. #######################################################################################
-#         Args: other_robot_frame (str): The tf frame ID of the other robot.
-#         Returns: (float, float, float): The x, y position and orientation (theta) of the other robot."""
-#         try:
-#             # Lookup transform from the other robot to the base frame
-#             transform = self.tf_buffer.lookup_transform(
-#                 'base_link', other_robot_frame, rclpy.time.Time())
-#             x = transform.transform.translation.x
-#             y = transform.transform.translation.y
-
-#             # Convert quaternion to yaw angle (theta)
-#             orientation_q = transform.transform.rotation
-#             _, _, theta = self.euler_from_quaternion(orientation_q)
-
-#             return x, y, theta
-#         except:
-#             self.get_logger().warn(f"Could not get transform for {other_robot_frame}")
-#             return None
-
-#     def get_other_robot_partition(self):
-#         """Placeholder function to get another robot's partition info.""" #######################################################################################
-#         return 0.0, np.pi  # Replace with actual logic
-
-#     def get_other_robot_agent_number(self):
-#         """Placeholder function to get another robot's knwon agent number info."""#######################################################################################
-#         return 2  # Replace with actual logic
-
-#     def control_loop(self):
-#         """Main control loop for the robot."""
-#         current_position = (self.x, self.y)
-#         current_orientation = self.theta
-
-#         # Plan the next movement
-#         self.path_planner.plan(current_position, current_orientation)
-
-#         # Check for other robots' positions via tf2 instead of proximity sensors
-#         # other_robot_frame = 'other_robot_base_link'  # Example frame of the other robot .####################################################################################### uncomment
-#         # other_robot_info = self.get_other_robot_info(other_robot_frame)
-#         other_robot_info = None
-
-#         if other_robot_info: #if detect other robots
-#             other_x, other_y, other_theta = other_robot_info
-
-#             # Example: Check if another robot is close
-#             distance_to_other = sqrt((other_x - self.x)**2 + (other_y - self.y)**2)
-#             if distance_to_other < 2.0:  # Adjust threshold as necessary
-#                 self.stop_robot()
-
-#                 # Get other robot's partition info
-#                 other_start_angle, other_end_angle = self.get_other_robot_partition()
-#                 other_agent_number = self.get_other_robot_agent_number()
-
-#                 # Call your algorithm with both robots' information
-#                 self.path_planner.algorithm(
-#                     self.start_angle, self.end_angle, self.agent_number,
-#                     other_start_angle, other_end_angle, other_agent_number  # Assuming the other robot knows about 2 agents
-#                 )
-#                 self.turn_around()
-#             else:
-#                 self.send_twist_message()
-#         else:
-#             self.send_twist_message()
-
-#     def send_twist_message(self):
-#         """Continue moving towards the next waypoint if no obstacles are detected."""
-#         waypoint = self.path_planner.get_next_waypoint()
-#         if waypoint is None:
-#             self.stop_robot()
-#             return
-
-#         dx = waypoint[0] - self.x
-#         dy = waypoint[1] - self.y
-#         distance = sqrt(dx**2 + dy**2)
-#         angle_to_waypoint = atan2(dy, dx)
-#         angle_diff = angle_to_waypoint - self.theta
-
-#         linear_velocity = self.k_linear * distance
-#         angular_velocity = self.k_angular * angle_diff
-
-#         twist = Twist()
-#         twist.linear.x = linear_velocity
-#         twist.angular.z = angular_velocity
-#         self.publisher.publish(twist)
-
-#     def stop_robot(self):
-#         """Stop the robot."""
-#         twist = Twist()
-#         twist.linear.x = 0.0
-#         twist.angular.z = 0.0
-#         self.publisher.publish(twist)
-#         self.get_logger().info('Robot stopped for interaction')
-
-#     def turn_around(self):
-#         """Turn the robot around before following new waypoints."""
-#         turn_angle = pi  # 180 degrees
-#         self.send_twist_message(0.0, turn_angle)
-#         self.get_logger().info('Turning around after interaction')
-
-#     def generate_initial_waypoints(self):
-#         """Generate initial waypoints for the robot to follow."""
-#         return generate_circumference_waypoints(
-#             start_angle=0,
-#             end_angle=2 * pi,
-#             radius=10,
-#             num_waypoints=25,
-#             center=(0, 0)
-#         )
 
 # def main():
 
