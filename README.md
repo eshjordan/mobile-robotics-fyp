@@ -26,9 +26,9 @@ git submodule update --recursive src epuck/esp-idf
 
 ### Local Installation Development Workflow
 
-#### Install ROS 2 Rolling Ridley on Ubuntu 24.04
+#### Install ROS 2 Jazzy Jalisco on Ubuntu 24.04
 
-Follow the steps at https://docs.ros.org/en/rolling/Installation/Ubuntu-Install-Debians.html
+Follow the steps at https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debians.html
 
 ```bash
 locale
@@ -51,9 +51,9 @@ sudo apt update && sudo apt install ros-dev-tools
 sudo apt update
 sudo apt upgrade
 
-sudo apt install ros-rolling-desktop-full
+sudo apt install ros-jazzy-desktop-full
 
-echo "source /opt/ros/rolling/setup.bash" >> ~/.bashrc
+echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 ```
 

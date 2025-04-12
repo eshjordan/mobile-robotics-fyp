@@ -1,5 +1,5 @@
 # ROS Distribution we want to use
-ARG ROS_DISTRO=rolling
+ARG ROS_DISTRO=jazzy
 
 FROM osrf/ros:${ROS_DISTRO}-desktop-full AS dev
 ENV ROS_DISTRO=${ROS_DISTRO}

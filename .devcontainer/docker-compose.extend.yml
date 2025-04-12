@@ -2,7 +2,7 @@ version: "3"
 services:
   # Developer container
   dev:
-    # image: osrf/ros:rolling-desktop-full
+    # image: osrf/ros:jazzy-desktop-full
     build:
       context: .
       dockerfile: .devcontainer/Dockerfile

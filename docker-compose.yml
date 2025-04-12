@@ -2,4 +2,4 @@ version: "3"
 services:
   # Developer container
   mobile-robotics-fyp:
-    image: osrf/ros:rolling-desktop-full
+    image: osrf/ros:jazzy-desktop-full
