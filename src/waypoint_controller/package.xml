@@ -9,7 +9,7 @@
 
   <depend>tf_transformations</depend>
   <depend>robot_localization</depend>
-  <depend>opennav_coverage_navigator</depend>
+  <!-- <depend>opennav_coverage_navigator</depend> -->
   <exec_depend>agent_local_comms_server</exec_depend>
   <depend>lazy_agent_sim_interfaces</depend>
 
