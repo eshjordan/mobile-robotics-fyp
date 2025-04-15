@@ -1,19 +1,5 @@
-
-import os
 import launch
 import launch_ros.actions
-
-def get_namespace():
-    return (
-        launch.substitutions.LaunchConfiguration(
-            "namespace"),
-        launch.substitutions.LaunchConfiguration(
-            "manager_robot_tf_prefix"),
-        launch.substitutions.LaunchConfiguration(
-            "robot_id"),
-        launch.substitutions.LaunchConfiguration(
-            "manager_robot_tf_suffix"),
-    )
 
 
 def generate_launch_description():
@@ -38,6 +24,7 @@ def generate_launch_description():
                 'slow_angle': '0.2',
                 'threshold_distance': '0.05',
                 'threshold_angle': '0.05',
+                'angular_offset': '0.0',
             }.items(),
         )
     )
@@ -46,7 +33,8 @@ def generate_launch_description():
         launch_args +
         [
             launch_ros.actions.Node(
-                namespace=launch.substitutions.LaunchConfiguration('namespace'),
+                namespace=launch.substitutions.LaunchConfiguration(
+                    'namespace'),
                 package='waypoint_controller',
                 executable='controller',
                 name='waypoint_controller',
@@ -79,6 +67,21 @@ def generate_launch_description():
                         ),
                         'max_angular_vel': launch.substitutions.LaunchConfiguration(
                             'max_angular_vel'
+                        ),
+                        'slow_distance': launch.substitutions.LaunchConfiguration(
+                            'slow_distance'
+                        ),
+                        'slow_angle': launch.substitutions.LaunchConfiguration(
+                            'slow_angle'
+                        ),
+                        'threshold_distance': launch.substitutions.LaunchConfiguration(
+                            'threshold_distance'
+                        ),
+                        'threshold_angle': launch.substitutions.LaunchConfiguration(
+                            'threshold_angle'
+                        ),
+                        'angular_offset': launch.substitutions.LaunchConfiguration(
+                            'angular_offset'
                         ),
                     }
                 ],

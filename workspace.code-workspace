@@ -24,6 +24,9 @@
 			"compare": "cpp",
 			"cstdint": "cpp"
 		},
+		"flake8.args": [
+			"--ignore=C417,CNL100,D100,D101,D102,D103,D107,D202,D205,D400,D401,E226,E501,I100,I101,I201,Q000,W503"
+		],
 	},
 	"launch": {
 		"version": "0.2.0",
