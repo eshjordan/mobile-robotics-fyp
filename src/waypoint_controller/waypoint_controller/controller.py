@@ -5,21 +5,10 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPo
 from geometry_msgs.msg import PoseStamped
 import tf2_ros
 # import tf_transformations
+
 import math as mth
 from math import sqrt, atan2, pi
 import numpy as np
-
-def main():
-    rclpy.init()
-    waypoint_controller = WaypointController_v1()
-    # Run the control loop
-    rclpy.spin(waypoint_controller)
-    # # Shutdown
-    # waypoint_controller.destroy_node()
-    # rclpy.shutdown()
-
-#Step 1: hardcode waypoint controller, just send constant twist message forwards
-#Step2: introduce currrent position of robot - send robot to specific location
 
 # Robot 5653 Z rotation offset: -135.240 degrees, -2.360 rad
 
@@ -42,7 +31,7 @@ class WaypointController_v1(Node):
         self.declare_parameter('threshold_angle', 0.05)
 
 
-        self.subscriber = self.create_subscription( ## uncomment to use vicon info
+        self.subscriber = self.create_subscription( 
             PoseStamped,
             '/vrpn_mocap/BW_epuck1/pose',
             # self.get_parameter('namespace').value + '/pose',
@@ -69,7 +58,7 @@ class WaypointController_v1(Node):
         self.y = 0.0
         self.z = 0.0
         self.theta = 0.0
-        ## Robot's partition information
+        ## Robot's partition information ########################################3
         self.start_angle = 0.0
         self.end_angle = 2 * np.pi
         self.agent_number = 1
@@ -95,18 +84,15 @@ class WaypointController_v1(Node):
         self.y = msg.pose.position.y
         self.z = msg.pose.position.z
 
-
         ## Extract orientation from vicon topic using quaternion
         orientation_q = msg.pose.orientation
         # self.get_logger().info(f"orientation_q = {orientation_q}")
         _, _, self.theta = self.euler_from_quaternion(orientation_q)
         self.theta -= -2.360
 
-
         # self.prnt_msg += 1
         # if self.prnt_msg % 100 == 0:
         #     self.get_logger().info("x: {:10.3f}   y: {:10.3f}   z: {:10.3f}   theta: {:10.3f}".format(self.x, self.y, self.z, self.theta))
-
 
         # print(msg)
         # self.get_logger().info
@@ -257,12 +243,11 @@ class WaypointController_v1(Node):
     def generate_initial_waypoints(self):
         """Generate initial waypoints for the robot to follow."""
         self.get_logger().info("generate_initial_waypoints")
-        initial_waypoints=generate_circumference_waypoints(
-            start_angle=0,
-            end_angle= 2*np.pi, ########################################################################
-            radius=1,
-            num_waypoints=10,
-            center=(0, 0)
+        initial_waypoints = generate_boustrophedon_waypoints(
+            start_angle=0.0, end_angle=np.pi,
+            spacing=0.1, radius=1,
+            center=(0, 0),
+            num_points=10
         )
 
         self.get_logger().info(f"initial_waypoints {initial_waypoints}")
@@ -282,10 +267,6 @@ class WaypointController_v1(Node):
 
         # Plan the next movement
         self.path_planner.plan(current_position, current_orientation)
-
-        # Check for other robots' positions via tf2 instead of proximity sensors
-        # other_robot_frame = 'other_robot_base_link'  # Example frame of the other robot .####################################################################################### uncomment
-        # other_robot_info = self.get_other_robot_info(other_robot_frame)
         other_robot_info = None
 
         if other_robot_info: #if detect other robots
@@ -339,33 +320,57 @@ class WaypointController_v1(Node):
 #         """Placeholder function to get another robot's knwon agent number info."""#######################################################################################
 #         return 2  # Replace with actual logic
 
-
-#Step3: Path planner - robot to patrol given area
-def generate_circumference_waypoints(start_angle, end_angle, radius = 10, num_waypoints = 25 , center = (0,0)):
+def generate_boustrophedon_waypoints(
+    start_angle, end_angle,
+    spacing=0.1, radius=1,
+    center=(0, 0),
+    num_points=10
+):
     """
-    Generate waypoints along the circumference of a circular slice.
+    Generate horizontal boustrophedon-style waypoints across a circular sector.
 
     Parameters:
-    center (tuple): (x, y) center of the circle
-    start_angle (float): Starting angle of the slice (in radians)
-    end_angle (float): Ending angle of the slice (in radians)
-    radius (float): Radius of the circumference
-    num_waypoints (int): Number of waypoints along the circumference
+    - start_angle (float): start angle of sector (radians)
+    - end_angle (float): end angle of sector (radians)
+    - spacing (float): vertical spacing between sweep lines
+    - radius (float): radius of sector
+    - center (tuple): (x, y) center of sector
+    - num_points (int): how many points to use when defining sector boundary
 
     Returns:
-    waypoints (list): List of (x, y) waypoints along the circumference
+    - waypoints (list of (x, y)): ordered boustrophedon sweep waypoints
     """
 
+    # Create points along the circular arc (boundary of the sector)
+    arc_angles = np.linspace(start_angle, end_angle, num_points)
+    arc_points = [(center[0] + radius * np.cos(a), center[1] + radius * np.sin(a)) for a in arc_angles]
+
+    # Get bounding box of the arc
+    all_y = [p[1] for p in arc_points]
+    min_y = max(min(all_y), center[1] - radius)
+    max_y = min(max(all_y), center[1] + radius)
+
+    y_vals = np.arange(min_y, max_y, spacing)
     waypoints = []
+    direction = 1
 
-    # Generate evenly spaced angles along the arc
-    angular_steps = np.linspace(start_angle, end_angle, num_waypoints)
+    for y in y_vals:
+        x_range = []
+        for angle in arc_angles:
+            x = center[0] + radius * np.cos(angle)
+            y_angle = center[1] + radius * np.sin(angle)
+            if abs(y_angle - y) < spacing / 2:
+                x_range.append(x)
 
-    # Convert each angle to Cartesian coordinates and store as waypoints
-    for theta in angular_steps:
-        x = center[0] + radius * np.cos(theta)
-        y = center[1] + radius * np.sin(theta)
-        waypoints.append((x, y))
+        if len(x_range) >= 2:
+            x_min = min(x_range)
+            x_max = max(x_range)
+            sweep_line = np.linspace(x_min, x_max, num_points)
+            if direction % 2 == 0:
+                sweep_line = sweep_line[::-1]
+            for x in sweep_line:
+                waypoints.append((x, y))
+            direction += 1
 
     return waypoints
 
@@ -401,7 +406,7 @@ class SimplePathPlanner:
         # Placeholder for partitioning logic
         new_start_angle, new_end_angle = 0.0, 2*np.pi####################################################################################### insert stuff here for algorithm
 
-        new_waypoints = generate_circumference_waypoints(new_start_angle, new_end_angle)
+        new_waypoints = generate_boustrophedon_waypoints(new_start_angle, new_end_angle)
         print(f"My new_waypoints: {new_waypoints}")
 
         self.update_waypoints(new_waypoints)
@@ -412,21 +417,14 @@ class SimplePathPlanner:
         if waypoint is None:
             return  # No more waypoints, stop planning
 
-
-
-# def main():
-
-#     rclpy.init()
-#     velocity_controller = VelocityController()
-
-#     # Run the control loop
-#     rclpy.spin(velocity_controller)
-
-#     # Shutdown
-#     velocity_controller.destroy_node()
-#     rclpy.shutdown()
-
-
+def main():
+    rclpy.init()
+    waypoint_controller = WaypointController_v1()
+    # Run the control loop
+    rclpy.spin(waypoint_controller)
+    # # Shutdown
+    # waypoint_controller.destroy_node()
+    # rclpy.shutdown()
 
 if __name__ == "__main__":
     main()
