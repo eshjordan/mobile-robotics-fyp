@@ -30,11 +30,14 @@ class WaypointController_v1(Node):
         self.declare_parameter('threshold_distance', 0.05)
         self.declare_parameter('threshold_angle', 0.05)
 
+        robot_id = self.get_parameter('robot_id').get_parameter_value().integer_value
+        vrpn_name = f'BW_epuck{robot_id}'
+        self.get_logger().info(f"vrpn_name {vrpn_name}")
 
         self.subscriber = self.create_subscription( 
             PoseStamped,
-            '/vrpn_mocap/BW_epuck1/pose',
-            # self.get_parameter('namespace').value + '/pose',
+            # "/vrpn_mocap/BW_epuck0/pose",
+            f"/vrpn_mocap/{vrpn_name}/pose",
             self.listener_callback,
             qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -198,7 +201,7 @@ class WaypointController_v1(Node):
         angle_diff = ((angle_to_waypoint - self.theta) % (2*np.pi))
         if angle_diff > np.pi:
             angle_diff -= 2*np.pi
-        if distance_to_waypoint < 0.05:
+        if distance_to_waypoint < 0.08:
             self.get_logger().info(f"Reached waypoint {self.current_waypoint}")
             self.current_waypoint = self.path_planner.get_next_waypoint()
             self.get_logger().info(f"Moving to new waypoint {self.current_waypoint}")
@@ -244,10 +247,10 @@ class WaypointController_v1(Node):
         """Generate initial waypoints for the robot to follow."""
         self.get_logger().info("generate_initial_waypoints")
         initial_waypoints = generate_boustrophedon_waypoints(
-            start_angle=0.0, end_angle=np.pi,
-            spacing=0.1, radius=1,
-            center=(0, 0),
-            num_points=10
+            start_angle = 0.0, end_angle = 2*np.pi/4,
+            line_spacing=0.1,
+            radius=1,
+            center=(0, 0)
         )
 
         self.get_logger().info(f"initial_waypoints {initial_waypoints}")
@@ -322,68 +325,111 @@ class WaypointController_v1(Node):
 
 def generate_boustrophedon_waypoints(
     start_angle, end_angle,
-    spacing=0.1, radius=1,
+    line_spacing=0.1,
+    radius=1,
     center=(0, 0),
-    num_points=10
+    boundary_resolution=500
 ):
     """
-    Generate horizontal boustrophedon-style waypoints across a circular sector.
+    Generate boustrophedon-style waypoints across a circular sector,
+    but only using points on the edge of the sector.
+
 
     Parameters:
-    - start_angle (float): start angle of sector (radians)
-    - end_angle (float): end angle of sector (radians)
-    - spacing (float): vertical spacing between sweep lines
-    - radius (float): radius of sector
-    - center (tuple): (x, y) center of sector
-    - num_points (int): how many points to use when defining sector boundary
+    - start_angle (float): start angle of the sector (radians)
+    - end_angle (float): end angle of the sector (radians)
+    - line_spacing (float): vertical spacing between sweep lines
+    - radius (float): radius of the sector
+    - center (tuple): center (x, y) of the sector
+    - boundary_resolution (int): resolution for sampling arc and radial edges
+
 
     Returns:
-    - waypoints (list of (x, y)): ordered boustrophedon sweep waypoints
+    - waypoints (list of (x, y)): only edge-intersection waypoints in boustrophedon order
     """
 
-    # Create points along the circular arc (boundary of the sector)
-    arc_angles = np.linspace(start_angle, end_angle, num_points)
-    arc_points = [(center[0] + radius * np.cos(a), center[1] + radius * np.sin(a)) for a in arc_angles]
 
-    # Get bounding box of the arc
-    all_y = [p[1] for p in arc_points]
-    min_y = max(min(all_y), center[1] - radius)
-    max_y = min(max(all_y), center[1] + radius)
+    cx, cy = center
 
-    y_vals = np.arange(min_y, max_y, spacing)
+
+    # Sample the arc boundary
+    arc_angles = np.linspace(start_angle, end_angle, boundary_resolution)
+    arc_points = [(cx + radius * np.cos(a), cy + radius * np.sin(a)) for a in arc_angles]
+
+
+    # Sample the two radial edges
+    radial_r = np.linspace(0, radius, boundary_resolution)
+    radial1 = [(cx + r * np.cos(start_angle), cy + r * np.sin(start_angle)) for r in radial_r]
+    radial2 = [(cx + r * np.cos(end_angle), cy + r * np.sin(end_angle)) for r in radial_r]
+
+
+    # Combine all boundary edges
+    boundary_edges = [radial1, arc_points, radial2]
+    all_boundary_points = np.vstack(boundary_edges)
+
+
+    # Find vertical extent
+    ys = all_boundary_points[:, 1]
+    min_y = max(min(ys), cy - radius)
+    max_y = min(max(ys), cy + radius)
+
+
+    y_vals = np.arange(min_y, max_y + line_spacing, line_spacing)
     waypoints = []
     direction = 1
 
-    for y in y_vals:
-        x_range = []
-        for angle in arc_angles:
-            x = center[0] + radius * np.cos(angle)
-            y_angle = center[1] + radius * np.sin(angle)
-            if abs(y_angle - y) < spacing / 2:
-                x_range.append(x)
 
-        if len(x_range) >= 2:
-            x_min = min(x_range)
-            x_max = max(x_range)
-            sweep_line = np.linspace(x_min, x_max, num_points)
+    for y in y_vals:
+        intersections = []
+
+
+        # Check each boundary segment for intersection with this y-level
+        for segment in boundary_edges:
+            for i in range(len(segment) - 1):
+                (x1, y1), (x2, y2) = segment[i], segment[i+1]
+                if (y1 - y) * (y2 - y) <= 0 and y1 != y2:
+                    # Linear interpolation to get intersection x
+                    t = (y - y1) / (y2 - y1)
+                    x = x1 + t * (x2 - x1)
+                    intersections.append((x, y))
+
+
+        if len(intersections) >= 2:
+            # Get left and right edges of this sweep line
+            sorted_pts = sorted(intersections)
+            p1, p2 = sorted_pts[0], sorted_pts[-1]
             if direction % 2 == 0:
-                sweep_line = sweep_line[::-1]
-            for x in sweep_line:
-                waypoints.append((x, y))
+                waypoints.append(p2)
+                waypoints.append(p1)
+            else:
+                waypoints.append(p1)
+                waypoints.append(p2)
             direction += 1
 
+
     return waypoints
+
+
 
 class SimplePathPlanner:
     def __init__(self, waypoints):
         self.waypoints = waypoints
         self.current_waypoint_index = 0
+        self.direction = 1  # 1 for forward, -1 for reverse
+
 
     def get_next_waypoint(self):
-        if self.current_waypoint_index < len(self.waypoints)-1:
-            self.current_waypoint_index += 1
-            return self.waypoints[self.current_waypoint_index]
-        return self.waypoints[-1]
+        # Check if we need to reverse direction
+        if self.current_waypoint_index == len(self.waypoints) - 1:
+            self.direction = -1
+        elif self.current_waypoint_index == 0:
+            self.direction = 1
+
+
+        # Update index
+        self.current_waypoint_index += self.direction
+        return self.waypoints[self.current_waypoint_index]
+
 
     def update_waypoints(self, new_waypoints):
         self.waypoints = new_waypoints
