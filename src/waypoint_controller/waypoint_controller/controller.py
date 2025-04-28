@@ -216,10 +216,11 @@ class WaypointController_v1(Node):
         if angle_diff > np.pi:
             angle_diff -= 2*np.pi
         if distance_to_waypoint < 0.05:
-            self.get_logger().info(f"Reached waypoint {self.current_waypoint}")
+            self.get_logger().info(
+                f"Reached waypoint {self.current_waypoint[0]:.2f}, {self.current_waypoint[1]:.2f}")
             self.current_waypoint = self.path_planner.get_next_waypoint()
             self.get_logger().info(
-                f"Moving to new waypoint {self.current_waypoint}")
+                f"Moving to new waypoint {self.current_waypoint[0]:.2f}, {self.current_waypoint[1]:.2f}")
 
         # self.current_waypoint = [0, 1]
 
@@ -241,11 +242,11 @@ class WaypointController_v1(Node):
         self.cmd_pub.publish(twist)
 
         self.get_logger().info(
-            f"self.current_waypoint {self.current_waypoint}", throttle_duration_sec=1.0)
+            f"self.current_waypoint {self.current_waypoint[0]:.2f}, {self.current_waypoint[1]:.2f}", throttle_duration_sec=1.0)
         self.get_logger().info(
             f"Dist to wp: {distance_to_waypoint}", throttle_duration_sec=1.0)
-        self.get_logger().info("x: {:7.3f}  y: {:7.3f}  z: {:7.3f}  theta: {:7.3f} linear_velocity: {:7.3f}  angular_z: {:7.3} pi".format(
-            self.x, self.y, self.z, self.theta, linear_velocity, angular_velocity/np.pi), throttle_duration_sec=1.0)
+        self.get_logger().info("x: {:7.3f}  y: {:7.3f}".format(
+            self.x, self.y), throttle_duration_sec=1.0)
         self.get_logger().info("angle_to_waypoint: {:7.3f}    robot_angle: {:7.3f}    angle_diff: {:7.3f}".format(
             angle_to_waypoint, self.theta, angle_diff), throttle_duration_sec=1.0)
 
@@ -269,7 +270,10 @@ class WaypointController_v1(Node):
             num_points=10
         )
 
-        self.get_logger().info(f"initial_waypoints {initial_waypoints}")
+        log_str = "initial_waypoints:\n"
+        for waypoint in initial_waypoints:
+            log_str += f"({waypoint[0]:.2f}, {waypoint[1]:.2f})\n"
+        self.get_logger().info(log_str)
         return initial_waypoints
 
     def turn_around(self):
