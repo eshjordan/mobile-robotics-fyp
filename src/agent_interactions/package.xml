@@ -1,20 +1,13 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>waypoint_controller</name>
+  <name>agent_interactions</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="atoo0005@student.monash.edu">ubuntu</maintainer>
+  <maintainer email="lric0018@student.monash.edu">Lachlan Richards</maintainer>
   <license>GPL-3.0-only</license>
 
-  <depend>tf_transformations</depend>
-  <depend>robot_localization</depend>
-  <exec_depend>vrpn_mocap</exec_depend>
-  <!-- <depend>opennav_coverage_navigator</depend> -->
-  <exec_depend>agent_local_comms_server</exec_depend>
-  <depend>lazy_agent_sim_interfaces</depend>
-  <depend>agent_interactions</depend>
-
+  <depend>python3-shapely</depend>
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>

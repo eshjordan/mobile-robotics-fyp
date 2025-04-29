@@ -1,4 +1,5 @@
 import rclpy
+import rclpy.logging
 from rclpy.node import Node
 import geometry_msgs.msg
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
@@ -11,6 +12,9 @@ from math import sqrt, pi
 import numpy as np
 
 # Robot 5653 Z rotation offset: -135.240 degrees, -2.360 rad
+
+# AGENT INTERACTIONS
+import agent_interactions.schemes as schemes
 
 
 class WaypointController_v1(Node):
@@ -42,8 +46,8 @@ class WaypointController_v1(Node):
 
         self.subscriber = self.create_subscription(
             PoseStamped,
-            '/vrpn_mocap/BW_epuck1/pose',
-            # self.get_parameter('namespace').value + '/pose',
+            # '/vrpn_mocap/BW_epuck1/pose',
+            self.get_parameter('namespace').value + '/pose',
             self.listener_callback,
             qos_profile=QoSProfile(
                 reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -76,7 +80,7 @@ class WaypointController_v1(Node):
         # self.get_logger().info("SimplePathPlanner")
         # triggered when robot interact or when robot reaches its waypoint, or
         self.path_planner = SimplePathPlanner(
-            self.generate_initial_waypoints())
+            self.generate_initial_waypoints(), logger=self.get_logger())
 
         self.current_waypoint = self.path_planner.get_next_waypoint()
         # self.get_logger().info(f"self.current_waypoint {self.current_waypoint}")
@@ -215,10 +219,11 @@ class WaypointController_v1(Node):
         if angle_diff > np.pi:
             angle_diff -= 2*np.pi
         if distance_to_waypoint < 0.05:
-            self.get_logger().info(f"Reached waypoint {self.current_waypoint}")
+            self.get_logger().info(
+                f"Reached waypoint {self.current_waypoint[0]:.2f}, {self.current_waypoint[1]:.2f}")
             self.current_waypoint = self.path_planner.get_next_waypoint()
             self.get_logger().info(
-                f"Moving to new waypoint {self.current_waypoint}")
+                f"Moving to new waypoint {self.current_waypoint[0]:.2f}, {self.current_waypoint[1]:.2f}")
 
         # self.current_waypoint = [0, 1]
 
@@ -239,15 +244,14 @@ class WaypointController_v1(Node):
         twist.angular.z = angular_velocity
         self.cmd_pub.publish(twist)
 
-        self.prnt_msg += 1
-        if self.prnt_msg % 10 == 0:
-            self.get_logger().info(
-                f"self.current_waypoint {self.current_waypoint}")
-            self.get_logger().info(f"Dist to wp: {distance_to_waypoint}")
-            self.get_logger().info("x: {:7.3f}  y: {:7.3f}  z: {:7.3f}  theta: {:7.3f} linear_velocity: {:7.3f}  angular_z: {:7.3} pi".format(
-                self.x, self.y, self.z, self.theta, linear_velocity, angular_velocity/np.pi))
-            self.get_logger().info("angle_to_waypoint: {:7.3f}    robot_angle: {:7.3f}    angle_diff: {:7.3f}".format(
-                angle_to_waypoint, self.theta, angle_diff))
+        self.get_logger().info(
+            f"self.current_waypoint {self.current_waypoint[0]:.2f}, {self.current_waypoint[1]:.2f}", throttle_duration_sec=1.0)
+        self.get_logger().info(
+            f"Dist to wp: {distance_to_waypoint}", throttle_duration_sec=1.0)
+        self.get_logger().info("x: {:7.3f}  y: {:7.3f}".format(
+            self.x, self.y), throttle_duration_sec=1.0)
+        self.get_logger().info("angle_to_waypoint: {:7.3f}    robot_angle: {:7.3f}    angle_diff: {:7.3f}".format(
+            angle_to_waypoint, self.theta, angle_diff), throttle_duration_sec=1.0)
 
         # self.get_logger().info(f"sending forward twist command: linear.x = {linear_velocity}, angular.z = {angular_velocity}")
 
@@ -269,7 +273,10 @@ class WaypointController_v1(Node):
             num_points=10
         )
 
-        self.get_logger().info(f"initial_waypoints {initial_waypoints}")
+        log_str = "initial_waypoints:\n"
+        for waypoint in initial_waypoints:
+            log_str += f"({waypoint[0]:.2f}, {waypoint[1]:.2f})\n"
+        self.get_logger().info(log_str)
         return initial_waypoints
 
     def turn_around(self):
@@ -397,10 +404,12 @@ def generate_boustrophedon_waypoints(
     return waypoints
 
 
+
 class SimplePathPlanner:
-    def __init__(self, waypoints):
+    def __init__(self, waypoints, logger=rclpy.logging.get_logger("simple_path_planner")):
         self.waypoints = waypoints
         self.current_waypoint_index = 0
+        self.logger = logger
 
     def get_next_waypoint(self):
         if self.current_waypoint_index < len(self.waypoints)-1:
@@ -412,31 +421,58 @@ class SimplePathPlanner:
         self.waypoints = new_waypoints
         self.current_waypoint_index = 0
 
-    def algorithm(self, my_start_angle, my_end_angle, my_agent_number,
-                  other_start_angle, other_end_angle, other_agent_number):
+    def algorithm(self, agent1, agent2):
         """
-        Algorithm placeholder to calculate partitions based on robot interaction.
-        Parameters:
-        - my_start_angle, my_end_angle, my_agent_number:  info of this robot.
-        - other_start_angle, other_end_angle, other_agent_number: info of the detected robot.
+        TODO: Is this algorithm run centrally ???
 
-        implement  partitioning logic based on the two robots' partition and known agents.
+        Generic agent inputs. Can be a dict or a class, whatever.
+        It just needs to have the attributes required for whichever scheme we are running.
+
+        Uncomment whichever one we are using.
+        We should probably declare these somewhere else so we can utilise the 'test_neighbourhood' method
         """
-        print("algorithm")
-        print(
-            f"My Partition: Start {my_start_angle}, End {my_end_angle}, Agents known: {my_agent_number}")
-        print(
-            f"Other Partition: Start {other_start_angle}, End {other_end_angle}, Agents known: {other_agent_number}")
 
-        # Placeholder for partitioning logic
-        new_start_angle, new_end_angle = 0.0, 2 * \
-            np.pi  # insert stuff here for algorithm
+        # Modified from Vickery paper to maintain boundaries and repartition within them
+        mv1d = schemes.Scheme1dModifiedVickery()
+        mv1d.interact(agent1, agent2, forward=True)
 
-        new_waypoints = generate_boustrophedon_waypoints(
-            new_start_angle, new_end_angle)
-        print(f"My new_waypoints: {new_waypoints}")
+        # # Original algorithm from Vickery paper
+        # v1d = schemes.Scheme1dVickery()
+        # v1d.interact(agent1, agent2, forward=True)
 
-        self.update_waypoints(new_waypoints)
+        # # 2d case with generic polygons
+        # p2d = schemes.Scheme2dPolygons()
+        # p2d.interact(agent1, agent2)
+
+
+
+
+
+    # def algorithm(self, my_start_angle, my_end_angle, my_agent_number,
+    #               other_start_angle, other_end_angle, other_agent_number):
+    #     """
+    #     Algorithm placeholder to calculate partitions based on robot interaction.
+    #     Parameters:
+    #     - my_start_angle, my_end_angle, my_agent_number:  info of this robot.
+    #     - other_start_angle, other_end_angle, other_agent_number: info of the detected robot.
+
+    #     implement  partitioning logic based on the two robots' partition and known agents.
+    #     """
+    #     print("algorithm")
+    #     print(
+    #         f"My Partition: Start {my_start_angle}, End {my_end_angle}, Agents known: {my_agent_number}")
+    #     print(
+    #         f"Other Partition: Start {other_start_angle}, End {other_end_angle}, Agents known: {other_agent_number}")
+
+    #     # Placeholder for partitioning logic
+    #     new_start_angle, new_end_angle = 0.0, 2 * \
+    #         np.pi  # insert stuff here for algorithm
+
+    #     new_waypoints = generate_boustrophedon_waypoints(
+    #         new_start_angle, new_end_angle)
+    #     print(f"My new_waypoints: {new_waypoints}")
+
+    #     self.update_waypoints(new_waypoints)
 
     def plan(self, current_position, current_orientation):
         """Plan the robot's path towards the next waypoint."""
