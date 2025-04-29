@@ -13,6 +13,9 @@ import numpy as np
 
 # Robot 5653 Z rotation offset: -135.240 degrees, -2.360 rad
 
+# AGENT INTERACTIONS
+import agent_interactions.schemes as schemes
+
 
 class WaypointController_v1(Node):
 
@@ -401,6 +404,7 @@ def generate_boustrophedon_waypoints(
     return waypoints
 
 
+
 class SimplePathPlanner:
     def __init__(self, waypoints, logger=rclpy.logging.get_logger("simple_path_planner")):
         self.waypoints = waypoints
@@ -417,31 +421,58 @@ class SimplePathPlanner:
         self.waypoints = new_waypoints
         self.current_waypoint_index = 0
 
-    def algorithm(self, my_start_angle, my_end_angle, my_agent_number,
-                  other_start_angle, other_end_angle, other_agent_number):
+    def algorithm(self, agent1, agent2):
         """
-        Algorithm placeholder to calculate partitions based on robot interaction.
-        Parameters:
-        - my_start_angle, my_end_angle, my_agent_number:  info of this robot.
-        - other_start_angle, other_end_angle, other_agent_number: info of the detected robot.
+        TODO: Is this algorithm run centrally ???
 
-        implement  partitioning logic based on the two robots' partition and known agents.
+        Generic agent inputs. Can be a dict or a class, whatever.
+        It just needs to have the attributes required for whichever scheme we are running.
+
+        Uncomment whichever one we are using.
+        We should probably declare these somewhere else so we can utilise the 'test_neighbourhood' method
         """
-        self.logger.info("algorithm")
-        self.logger.info(
-            f"My Partition: Start {my_start_angle}, End {my_end_angle}, Agents known: {my_agent_number}")
-        self.logger.info(
-            f"Other Partition: Start {other_start_angle}, End {other_end_angle}, Agents known: {other_agent_number}")
 
-        # Placeholder for partitioning logic
-        new_start_angle, new_end_angle = 0.0, 2 * \
-            np.pi  # insert stuff here for algorithm
+        # Modified from Vickery paper to maintain boundaries and repartition within them
+        mv1d = schemes.Scheme1dModifiedVickery()
+        mv1d.interact(agent1, agent2, forward=True)
 
-        new_waypoints = generate_boustrophedon_waypoints(
-            new_start_angle, new_end_angle)
-        self.logger.info(f"My new_waypoints: {new_waypoints}")
+        # # Original algorithm from Vickery paper
+        # v1d = schemes.Scheme1dVickery()
+        # v1d.interact(agent1, agent2, forward=True)
 
-        self.update_waypoints(new_waypoints)
+        # # 2d case with generic polygons
+        # p2d = schemes.Scheme2dPolygons()
+        # p2d.interact(agent1, agent2)
+
+
+
+
+
+    # def algorithm(self, my_start_angle, my_end_angle, my_agent_number,
+    #               other_start_angle, other_end_angle, other_agent_number):
+    #     """
+    #     Algorithm placeholder to calculate partitions based on robot interaction.
+    #     Parameters:
+    #     - my_start_angle, my_end_angle, my_agent_number:  info of this robot.
+    #     - other_start_angle, other_end_angle, other_agent_number: info of the detected robot.
+
+    #     implement  partitioning logic based on the two robots' partition and known agents.
+    #     """
+    #     print("algorithm")
+    #     print(
+    #         f"My Partition: Start {my_start_angle}, End {my_end_angle}, Agents known: {my_agent_number}")
+    #     print(
+    #         f"Other Partition: Start {other_start_angle}, End {other_end_angle}, Agents known: {other_agent_number}")
+
+    #     # Placeholder for partitioning logic
+    #     new_start_angle, new_end_angle = 0.0, 2 * \
+    #         np.pi  # insert stuff here for algorithm
+
+    #     new_waypoints = generate_boustrophedon_waypoints(
+    #         new_start_angle, new_end_angle)
+    #     print(f"My new_waypoints: {new_waypoints}")
+
+    #     self.update_waypoints(new_waypoints)
 
     def plan(self, current_position, current_orientation):
         """Plan the robot's path towards the next waypoint."""
