@@ -1,9 +1,11 @@
 import rclpy
 import rclpy.logging
 from rclpy.node import Node
+import rclpy.time
 import geometry_msgs.msg
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 from geometry_msgs.msg import PoseStamped
+import tf2_py
 import tf2_ros
 # import tf_transformations
 
@@ -44,18 +46,27 @@ class WaypointController_v1(Node):
         self.get_logger().info(
             f"angular_offset: {self.get_parameter('angular_offset').value}")
 
-        self.subscriber = self.create_subscription(
-            PoseStamped,
-            # '/vrpn_mocap/BW_epuck1/pose',
-            self.get_parameter('namespace').value + '/pose',
-            self.listener_callback,
-            qos_profile=QoSProfile(
-                reliability=ReliabilityPolicy.BEST_EFFORT,
-                durability=DurabilityPolicy.VOLATILE,
-                history=HistoryPolicy.KEEP_LAST,
-                depth=10
-            ))
-        self.subscriber  # prevent unused variable warning
+        use_tf = True
+
+        if use_tf:
+            self.tf_buffer = tf2_ros.buffer.Buffer()
+            self.tf_listener = tf2_ros.transform_listener.TransformListener(
+                self.tf_buffer, self)
+            self.update_pose_timer = self.create_timer(
+                1.0/60.0, self.update_pose)
+        else:
+            self.subscriber = self.create_subscription(
+                PoseStamped,
+                # '/vrpn_mocap/BW_epuck1/pose',
+                self.get_parameter('namespace').value + '/pose',
+                self.listener_callback,
+                qos_profile=QoSProfile(
+                    reliability=ReliabilityPolicy.BEST_EFFORT,
+                    durability=DurabilityPolicy.VOLATILE,
+                    history=HistoryPolicy.KEEP_LAST,
+                    depth=10
+                ))
+            self.subscriber  # prevent unused variable warning
 
         self.cmd_pub = self.create_publisher(
             geometry_msgs.msg.Twist,
@@ -85,6 +96,36 @@ class WaypointController_v1(Node):
         self.current_waypoint = self.path_planner.get_next_waypoint()
         # self.get_logger().info(f"self.current_waypoint {self.current_waypoint}")
         self.prnt_msg = 0
+
+    def update_pose(self):
+        robot_frame = (self.get_parameter('manager_robot_tf_prefix').value + str(self.get_parameter('robot_id').value) +
+                       self.get_parameter('manager_robot_tf_suffix').value + self.get_parameter('manager_robot_tf_frame').value)
+
+        try:
+            tf = self.tf_buffer.lookup_transform(
+                'earth', robot_frame, rclpy.time.Time())
+        except tf2_py.LookupException as e:
+            self.get_logger().error(
+                f"LookupException: {e}", throttle_duration_sec=5.0)
+            return
+        except tf2_py.ConnectivityException as e:
+            self.get_logger().error(
+                f"ConnectivityException: {e}", throttle_duration_sec=5.0)
+            return
+        except tf2_py.ExtrapolationException as e:
+            self.get_logger().error(
+                f"ExtrapolationException: {e}", throttle_duration_sec=5.0)
+            return
+
+        # Extract robot pose from /tf
+        self.x = tf.transform.translation.x
+        self.y = tf.transform.translation.y
+        self.z = tf.transform.translation.z
+
+        # Extract robot orientation from /tf
+        orientation_q = tf.transform.rotation
+        _, _, self.theta = self.euler_from_quaternion(orientation_q)
+        self.theta -= self.get_parameter('angular_offset').value
 
     def listener_callback(self, msg):
         # print(msg.x, msg.y, msg.z)
@@ -404,7 +445,6 @@ def generate_boustrophedon_waypoints(
     return waypoints
 
 
-
 class SimplePathPlanner:
     def __init__(self, waypoints, logger=rclpy.logging.get_logger("simple_path_planner")):
         self.waypoints = waypoints
@@ -443,10 +483,6 @@ class SimplePathPlanner:
         # # 2d case with generic polygons
         # p2d = schemes.Scheme2dPolygons()
         # p2d.interact(agent1, agent2)
-
-
-
-
 
     # def algorithm(self, my_start_angle, my_end_angle, my_agent_number,
     #               other_start_angle, other_end_angle, other_agent_number):
