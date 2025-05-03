@@ -278,7 +278,7 @@ class WaypointController_v1(Node):
         angle_diff = (angle_to_waypoint - self.theta) % (2 * np.pi)
         if angle_diff > np.pi:
             angle_diff -= 2 * np.pi
-        if distance_to_waypoint < 0.05:
+        if distance_to_waypoint < self.get_parameter("threshold_distance").value:
             self.get_logger().info(
                 f"Reached waypoint {self.current_waypoint[0]:.2f}, {self.current_waypoint[1]:.2f}"
             )
