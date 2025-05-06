@@ -69,12 +69,24 @@ class WaypointController_v1(Node):
                     depth=10,
                 ),
             )
-            self.subscriber  # prevent unused variable warning
+            self.subscriber  
 
         self.cmd_pub = self.create_publisher(
             geometry_msgs.msg.Twist,
             "mobile_base/cmd_vel",
             10,
+        )
+
+        self.event_subscriber = self.create_subscription(
+            PoseStamped,
+            'events',  # topic name for events?????
+            self.event_callback,
+            qos_profile=QoSProfile(
+                reliability=ReliabilityPolicy.BEST_EFFORT,
+                durability=DurabilityPolicy.VOLATILE,
+                history=HistoryPolicy.KEEP_LAST,
+                depth=10,
+            ),
         )
 
         # Robot current velocity twist msgs
@@ -90,9 +102,7 @@ class WaypointController_v1(Node):
         self.start_angle = 0.0
         self.end_angle = 2 * np.pi
         self.agent_number = 1
-        # Path planner instance
-        # self.get_logger().info("SimplePathPlanner")
-        # triggered when robot interact or when robot reaches its waypoint, or
+        # Path planner instance triggered when robot interact or when robot reaches its waypoint, or
         self.path_planner = SimplePathPlanner(
             self.generate_initial_waypoints(), logger=self.get_logger()
         )
@@ -138,12 +148,7 @@ class WaypointController_v1(Node):
         self.theta -= self.get_parameter("angular_offset").value
 
     def listener_callback(self, msg):
-        # print(msg.x, msg.y, msg.z)
         # self.get_logger().info(f"subscribing vicon position = {msg.pose.position}")
-
-        # print(msg.pose.position)
-        # print("\n\n\n")
-        # print(msg.pose)
 
         # Extract pose position from vicon topic
         self.x = msg.pose.position.x
@@ -162,6 +167,14 @@ class WaypointController_v1(Node):
 
         # print(msg)
         # self.get_logger().info
+
+    def event_callback(self, msg: PoseStamped):
+        event_waypoint = (msg.pose.position.x, msg.pose.position.y)
+        self.get_logger().info(f"Received event waypoint: {event_waypoint}")
+
+        # Replace current waypoint with event location
+        self.path_planner.insert_interrupt_waypoint(event_waypoint)
+        self.current_waypoint = self.path_planner.get_next_waypoint()
 
     def euler_from_quaternion(self, quaternion):
         """
@@ -187,11 +200,8 @@ class WaypointController_v1(Node):
         # self.get_logger().info(f"yaw = {yaw}")
         return roll, pitch, yaw
 
-    def calculate_velocities(self, waypoint):
+    def calculate_velocities(self):
         """Calculate the linear and angular velocities to reach the next waypoint."""
-        # ## Hardcode pose - comment out when using vicon
-        # self.x = 1.0
-        # self.y = 0.0
 
         if self.current_waypoint is None:
             self.stop_robot()
@@ -267,8 +277,6 @@ class WaypointController_v1(Node):
             # self.stop_robot()
             return
 
-        # self.current_waypoint = [0, 1]
-
         distance_to_waypoint = np.linalg.norm(
             np.array(self.current_waypoint) - np.array([self.x, self.y])
         )
@@ -287,19 +295,7 @@ class WaypointController_v1(Node):
                 f"Moving to new waypoint {self.current_waypoint[0]:.2f}, {self.current_waypoint[1]:.2f}"
             )
 
-        # self.current_waypoint = [0, 1]
-
-        # hardcoded velocities
-        # linear_velocity = 0.1
-        # angular_velocity = 0.0
-        # linear_velocity = 0.05 * distance
-        # angular_velocity = 1.0 * angle_diff
-
-        # # use current velocity - dynamic
-        # linear_velocity = self.get_parameter('linear.x').value
-        # angular_velocity = self.get_parameter('angular.z').value
-
-        linear_velocity, angular_velocity = self.calculate_velocities(waypoint)
+        linear_velocity, angular_velocity = self.calculate_velocities() 
 
         twist = geometry_msgs.msg.Twist()
         twist.linear.x = linear_velocity
@@ -393,36 +389,6 @@ class WaypointController_v1(Node):
         else:
             self.send_twist_message()
 
-
-#    def get_other_robot_position(self, other_robot_frame):
-#         """ Get position and orientation of another robot using tf2. #######################################################################################
-#         Args: other_robot_frame (str): The tf frame ID of the other robot.
-#         Returns: (float, float, float): The x, y position and orientation (theta) of the other robot."""
-#         try:
-#             # Lookup transform from the other robot to the base frame
-#             transform = self.tf_buffer.lookup_transform(
-#                 'base_link', other_robot_frame, rclpy.time.Time())
-#             x = transform.transform.translation.x
-#             y = transform.transform.translation.y
-
-#             # Convert quaternion to yaw angle (theta)
-#             orientation_q = transform.transform.rotation
-#             _, _, theta = self.euler_from_quaternion(orientation_q)
-
-#             return x, y, theta
-#         except:
-#             self.get_logger().warn(f"Could not get transform for {other_robot_frame}")
-#             return None
-
-#     def get_other_robot_partition(self):
-#         """Placeholder function to get another robot's partition info.""" #######################################################################################
-#         return 0.0, np.pi  # Replace with actual logic
-
-#     def get_other_robot_agent_number(self):
-#         """Placeholder function to get another robot's knwon agent number info."""#######################################################################################
-#         return 2  # Replace with actual logic
-
-
 def generate_boustrophedon_waypoints(
     start_angle,
     end_angle,
@@ -515,8 +481,21 @@ class SimplePathPlanner:
         self.current_waypoint_index = 0
         self.logger = logger
         self.direction = 1  # 1 for forward, -1 for reverse
+        self.interrupt_waypoint = None
 
     def get_next_waypoint(self):
+        # Handle interrupt first
+        if self.interrupt_waypoint:
+            event_pose = self.interrupt_waypoint
+            self.interrupt_waypoint = None
+            self.logger.info(f"Handling interrupt waypoint: {event_pose}")
+            return event_pose
+
+        # error check
+        if not self.waypoints:
+            self.logger.info(f"No waypoints.")
+            return None
+
         # Check if we need to reverse direction
         if self.current_waypoint_index == len(self.waypoints) - 1:
             self.direction = -1
@@ -525,12 +504,18 @@ class SimplePathPlanner:
 
         # Update index
         self.current_waypoint_index += self.direction
+
         return self.waypoints[self.current_waypoint_index]
 
     def update_waypoints(self, new_waypoints):
         self.waypoints = new_waypoints
         self.current_waypoint_index = 0
 
+    def insert_interrupt_waypoint(self, event_pose):
+        self.interrupt_waypoint = event_pose
+        if self.logger:
+            self.logger.info(f"Interrupt waypoint set: {event_pose}")
+    
     def algorithm(self, agent1, agent2):
         """
         TODO: Is this algorithm run centrally ???
@@ -554,37 +539,11 @@ class SimplePathPlanner:
         # p2d = schemes.Scheme2dPolygons()
         # p2d.interact(agent1, agent2)
 
-    # def algorithm(self, my_start_angle, my_end_angle, my_agent_number,
-    #               other_start_angle, other_end_angle, other_agent_number):
-    #     """
-    #     Algorithm placeholder to calculate partitions based on robot interaction.
-    #     Parameters:
-    #     - my_start_angle, my_end_angle, my_agent_number:  info of this robot.
-    #     - other_start_angle, other_end_angle, other_agent_number: info of the detected robot.
-
-    #     implement  partitioning logic based on the two robots' partition and known agents.
-    #     """
-    #     print("algorithm")
-    #     print(
-    #         f"My Partition: Start {my_start_angle}, End {my_end_angle}, Agents known: {my_agent_number}")
-    #     print(
-    #         f"Other Partition: Start {other_start_angle}, End {other_end_angle}, Agents known: {other_agent_number}")
-
-    #     # Placeholder for partitioning logic
-    #     new_start_angle, new_end_angle = 0.0, 2 * \
-    #         np.pi  # insert stuff here for algorithm
-
-    #     new_waypoints = generate_boustrophedon_waypoints(
-    #         new_start_angle, new_end_angle)
-    #     print(f"My new_waypoints: {new_waypoints}")
-
-    #     self.update_waypoints(new_waypoints)
-
     def plan(self, current_position, current_orientation):
         """Plan the robot's path towards the next waypoint."""
         waypoint = self.get_next_waypoint()
         if waypoint is None:
-            return  # No more waypoints, stop planning
+            return  
 
 
 def main():
