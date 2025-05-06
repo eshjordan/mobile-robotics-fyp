@@ -1,5 +1,5 @@
 import numpy as np
-from agent_interactions.polygons_2d.shape_utils import subtract_polygons_shapely, intersect_polygons_shapely
+from agent_interactions.polygons_2d.shape_utils import subtract_polygons_shapely, intersect_polygons_shapely, remove_duplicate_vertices
 
 # not an actual wedge, needs to be intersected with domain bounds
 def get_wedge(centroid, p, N, centre=[2,2], r=8):
@@ -106,11 +106,6 @@ def generate_annulus_insertion(N, r1=8, r2=1.5, centre=[2,2], circle_resolution=
     agent_vertices = [remove_duplicate_vertices(verts) for verts in agent_vertices]
 
     return agent_vertices
-
-
-def remove_duplicate_vertices(vertices):
-    mask = [np.True_ if i==0 else np.linalg.norm(vertices[i,:]-vertices[i-1,:]) > 1E-10 for i in range(len(vertices))]
-    return vertices[mask]
 
 
 def generate_circle(centre=[2,2], radius=2, circle_resolution = 33):

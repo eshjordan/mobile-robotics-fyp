@@ -1,6 +1,15 @@
 from shapely.geometry import Polygon as ShapelyPolygon
 from scipy.spatial import ConvexHull
 import numpy as np
+from agent_interactions.polygons_2d.merging import Shape as MergingShape
+
+
+def merge_polygons(vertices1, vertices2):
+    return MergingShape.from_points(vertices1).merge(MergingShape.from_points(vertices2)).to_points()
+
+def remove_duplicate_vertices(vertices):
+    mask = [np.True_ if i==0 else np.linalg.norm(vertices[i,:]-vertices[i-1,:]) > 1E-10 for i in range(len(vertices))]
+    return vertices[mask]
 
 
 def centre_of_polygon(vertices):
@@ -121,67 +130,67 @@ class PolygonError(Exception):
     pass
 
 
-def merge_polygons_shapely(vertices1, vertices2):
-    """
-    Merges two potentially concave polygons into their union using Shapely.
-    Assumes vertices are ordered counter-clockwise.
+# def merge_polygons_shapely(vertices1, vertices2):
+#     """
+#     Merges two potentially concave polygons into their union using Shapely.
+#     Assumes vertices are ordered counter-clockwise.
     
-    Args:
-        vertices1 (np.array): Vertices of first polygon
-        vertices2 (np.array): Vertices of second polygon
+#     Args:
+#         vertices1 (np.array): Vertices of first polygon
+#         vertices2 (np.array): Vertices of second polygon
     
-    Returns:
-        merged_vertices (np.array): Vertices of merged polygon
-    """
-    # from shapely.geometry import Polygon
-    # from shapely import buffer
+#     Returns:
+#         merged_vertices (np.array): Vertices of merged polygon
+#     """
+#     # from shapely.geometry import Polygon
+#     # from shapely import buffer
     
-    # Convert vertex arrays to Shapely polygons
+#     # Convert vertex arrays to Shapely polygons
 
-    # Buffer to avoid multiple geometries from neighbouring polygons
-    poly1 = ShapelyPolygon(vertices1)
-    poly2 = ShapelyPolygon(vertices2)
-    # Compute union
-    union = poly1.union(poly2)
+#     # Buffer to avoid multiple geometries from neighbouring polygons
+#     poly1 = ShapelyPolygon(vertices1)
+#     poly2 = ShapelyPolygon(vertices2)
+#     # Compute union
+#     union = poly1.union(poly2)
 
-    # Handle potential multi-polygon result
-    if union.geom_type == 'MultiPolygon':
+#     # Handle potential multi-polygon result
+#     if union.geom_type == 'MultiPolygon':
 
-        # Buffer to avoid multiple geometries from neighbouring polygons
-        poly1 = ShapelyPolygon(vertices1).buffer(distance=1E-10, join_style=2)
-        poly2 = ShapelyPolygon(vertices2).buffer(distance=1E-10, join_style=2)
-        # Compute union
-        union = poly1.union(poly2)
+#         # Buffer to avoid multiple geometries from neighbouring polygons
+#         poly1 = ShapelyPolygon(vertices1).buffer(distance=1E-10, join_style=2)
+#         poly2 = ShapelyPolygon(vertices2).buffer(distance=1E-10, join_style=2)
+#         # Compute union
+#         union = poly1.union(poly2)
 
-        if union.geom_type == 'MultiPolygon':
-            raise PolygonError("Multiple polygons returned")
+#         if union.geom_type == 'MultiPolygon':
+#             raise PolygonError("Multiple polygons returned")
 
-        # Take the polygon with largest area if multiple are returned
-        # union = max(union.geoms, key=lambda x: x.area)
-        # plt.show()
+#         # Take the polygon with largest area if multiple are returned
+#         # union = max(union.geoms, key=lambda x: x.area)
+#         # plt.show()
 
-        # fig, ax = plt.subplots(1,1,figsize=(18, 18))
-        # polygon1_coords = union.geoms[0].buffer(distance=1E-10, join_style=2).exterior.coords[:-1]
-        # polygon2_coords = union.geoms[1].buffer(distance=1E-10, join_style=2).exterior.coords[:-1]
-        # ax.fill(*zip(*polygon1_coords), color='red', alpha=0.5, edgecolor='black')
-        # ax.fill(*zip(*polygon2_coords), color='blue', alpha=0.5, edgecolor='black')
-        # ax.set_aspect('equal')
-        # ax.scatter(*zip(*polygon1_coords), color='red', marker='o')
-        # ax.scatter(*zip(*polygon2_coords), color='blue', marker='o')
-        # plt.show()
+#         # fig, ax = plt.subplots(1,1,figsize=(18, 18))
+#         # polygon1_coords = union.geoms[0].buffer(distance=1E-10, join_style=2).exterior.coords[:-1]
+#         # polygon2_coords = union.geoms[1].buffer(distance=1E-10, join_style=2).exterior.coords[:-1]
+#         # ax.fill(*zip(*polygon1_coords), color='red', alpha=0.5, edgecolor='black')
+#         # ax.fill(*zip(*polygon2_coords), color='blue', alpha=0.5, edgecolor='black')
+#         # ax.set_aspect('equal')
+#         # ax.scatter(*zip(*polygon1_coords), color='red', marker='o')
+#         # ax.scatter(*zip(*polygon2_coords), color='blue', marker='o')
+#         # plt.show()
         
     
-    # Extract vertices from the union
-    merged_vertices = np.array(union.exterior.coords[:-1])  # Remove duplicate last point
+#     # Extract vertices from the union
+#     merged_vertices = np.array(union.exterior.coords[:-1])  # Remove duplicate last point
 
-    return merged_vertices
+#     return merged_vertices
     
-    # Order vertices counter-clockwise
-    # center = np.mean(merged_vertices, axis=0)
-    # angles = np.arctan2(merged_vertices[:,1] - center[1],
-    #                    merged_vertices[:,0] - center[0])
+#     # Order vertices counter-clockwise
+#     # center = np.mean(merged_vertices, axis=0)
+#     # angles = np.arctan2(merged_vertices[:,1] - center[1],
+#     #                    merged_vertices[:,0] - center[0])
     
-    # return merged_vertices[np.argsort(angles)]
+#     # return merged_vertices[np.argsort(angles)]
 
 
 def intersect_polygons_shapely(vertices1, vertices2):
@@ -337,7 +346,20 @@ def split_polygon_by_line(vertices, abc):
     #             max_pair = intersections[i:i+2]
 
     elif len(intersections) != 2:
-        raise PolygonError("Not 2 intersections for line {:.2}x + {:.2}y + {:.2} = 0 through polygon\nIntersections:\n{}".format(a,b,c,intersections))
+        # import matplotlib.pyplot as plt
+        # from agent_interactions.polygons_2d.interactions import visualise_regions
+        # fig, ax = plt.subplots(1,1)
+        # visualise_regions([vertices], vertices, ax=ax)
+        # # Draw itxs
+        # ax.scatter([x[0][0] for x in intersections], [x[0][1] for x in intersections], s=20)
+        # # Draw line
+        # xlim = ax.get_xlim()
+        # x = np.array(xlim)
+        # y = (-a * x - c) / b
+        # ax.plot(x, y, '--', color='black', alpha=0.5, zorder=1)
+        # # Show plot
+        # plt.show()
+        raise PolygonError("Not 2 intersections for line {:.2}x + {:.2}y + {:.2} = 0 through polygon\nIntersections:\n{}".format(a,b,c,"\n".join([f"({round(float(x[0][0]),1),round(float(x[0][1]),1)})" for x in intersections])))
 
         
     # Sort vertices into two polygons
@@ -442,10 +464,17 @@ def split_polygon_exactly_50_50(merged_poly, agent_centre_1, agent_centre_2):
 
     while True:
 
-        c = 0.5 * (c1 + c2)
-        new_poly1, new_poly2 = split_polygon_by_line(merged_poly, (a,b,c))
-        if new_poly1 is None or new_poly2 is None:
-            raise PolygonError("Can't split merged polygon")
+        try:
+            c = 0.5 * (c1 + c2)
+            new_poly1, new_poly2 = split_polygon_by_line(merged_poly, (a,b,c))
+            if new_poly1 is None or new_poly2 is None:
+                raise PolygonError("Can't split merged polygon")
+            
+        except PolygonError as e:
+            raise e
+            # # Convert to convex hull and redo
+            # print("WARNING: CONVERTING TO CONVEX HULL")
+            # return split_polygon_exactly_50_50(merged_poly[ConvexHull(merged_poly).vertices], agent_centre_1, agent_centre_2)
         
         # Ensure polys are assigned to the correct agent
         agent1_side = a*x1+b*y1+c
@@ -469,6 +498,4 @@ def split_polygon_exactly_50_50(merged_poly, agent_centre_1, agent_centre_2):
             continue
     
     return new_poly1, new_poly2, (a,b,c)
-
-
 

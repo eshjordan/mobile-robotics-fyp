@@ -1,7 +1,8 @@
-from agent_interactions.polygons_2d.shape_utils import centre_of_polygon, merge_polygons_shapely, clean_polygon, split_polygon_exactly_50_50, PolygonError, polygon_area
+from agent_interactions.polygons_2d.shape_utils import centre_of_polygon, merge_polygons, clean_polygon, split_polygon_exactly_50_50, PolygonError, polygon_area
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Polygon
+from agent_interactions.polygons_2d.merging import ShapeError
 
 
 def test_neighbourhood(vertices1, vertices2):
@@ -9,10 +10,20 @@ def test_neighbourhood(vertices1, vertices2):
     Test neighbourhood by merging and testing if the result is two separate geometries
     """
     try:
-        result = merge_polygons_shapely(vertices1, vertices2)
+        result = merge_polygons(vertices1, vertices2)
         return True
-    except PolygonError:
+    except ShapeError:
         return False
+
+# def test_neighbourhood(vertices1, vertices2):
+#     """
+#     Test neighbourhood by merging and testing if the result is two separate geometries
+#     """
+#     try:
+#         result = merge_polygons_shapely(vertices1, vertices2)
+#         return True
+#     except PolygonError:
+#         return False
 
 
 def interact(agent_vertices, agent1, agent2):
@@ -38,7 +49,7 @@ def interact_polygons(agent_vertices_1, agent_vertices_2):
     agent_centre_2 = centre_of_polygon(agent_vertices_2)
 
     # Get union of new polygon
-    merged_polys = merge_polygons_shapely(agent_vertices_1, agent_vertices_2)
+    merged_polys = merge_polygons(agent_vertices_1, agent_vertices_2)
     merged_polys_cleaned = clean_polygon(merged_polys)
 
     new_poly1, new_poly2, (a,b,c) = split_polygon_exactly_50_50(merged_polys_cleaned, agent_centre_1, agent_centre_2)
@@ -78,7 +89,7 @@ def visualise_regions(agent_vertices, domain_vertices, interaction=None, ax=None
 
         agent1, agent2 = interaction
 
-        merged_polys = clean_polygon(merge_polygons_shapely(agent_vertices[agent1], agent_vertices[agent2]))
+        merged_polys = clean_polygon(merge_polygons(agent_vertices[agent1], agent_vertices[agent2]))
 
         polygon = Polygon(merged_polys, alpha=0.4, facecolor='none', edgecolor='black',
                     hatch='///', fill=True, linewidth=2)
