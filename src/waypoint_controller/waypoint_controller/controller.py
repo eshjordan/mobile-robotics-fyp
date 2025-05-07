@@ -13,6 +13,7 @@ import tf2_ros
 import math as mth
 from math import sqrt, pi
 import numpy as np
+import time
 
 # Robot 5653 Z rotation offset: -135.240 degrees, -2.360 rad
 
@@ -109,6 +110,11 @@ class WaypointController_v1(Node):
         self.z = 0.0
         self.theta = 0.0
 
+        #event variables
+        self.event_waypoint = (0.0, 0.0)
+        self.event_waiting = False
+        self.event_wait_start_time = None
+
         # Robot's partition information
         self.start_angle = 0.0
         self.end_angle = 2 * np.pi
@@ -184,9 +190,15 @@ class WaypointController_v1(Node):
         self.get_logger().info(f"Received event waypoint: {event_waypoint}")
 
         # Replace current waypoint with event location
+        self.event_waypoint = event_waypoint
         self.path_planner.insert_interrupt_waypoint(event_waypoint)
         self.current_waypoint = self.path_planner.get_next_waypoint()
-
+    
+    def is_event_waypoint(self):
+        current_position = np.array([self.x, self.y])
+        target_position = np.array(self.event_waypoint)
+        return np.linalg.norm(current_position - target_position) < 0.05
+    
     # def boundary_callback(self, msg: Polygon):
     #     self.get_logger().info(f"Received new boundary: {msg}")
 
@@ -311,6 +323,22 @@ class WaypointController_v1(Node):
             self.get_logger().info(
                 f"Reached waypoint {self.current_waypoint[0]:.2f}, {self.current_waypoint[1]:.2f}"
             )
+
+            #event waypoint - wait a bit for interaction
+            if self.is_event_waypoint(self.current_waypoint): # Check if it's the event waypoint
+                if not self.event_waiting:
+                    self.event_waiting = True
+                    self.event_wait_start_time = time.time()
+                    self.get_logger().info("Reached event waypoint. Waiting for 10 seconds.")
+                    return  # Exit to wait before moving on
+
+                # Wait until 10 seconds have passed
+                if time.time() - self.event_wait_start_time < 10:
+                    return  # Still waiting, skip motion update
+                else:
+                    self.event_waiting = False
+                    self.get_logger().info("Done waiting at event waypoint. Proceeding.")
+
             self.current_waypoint = self.path_planner.get_next_waypoint()
             self.get_logger().info(
                 f"Moving to new waypoint {self.current_waypoint[0]:.2f}, {self.current_waypoint[1]:.2f}"
