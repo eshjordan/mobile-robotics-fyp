@@ -16,9 +16,6 @@ import numpy as np
 
 # Robot 5653 Z rotation offset: -135.240 degrees, -2.360 rad
 
-# AGENT INTERACTIONS
-import agent_interactions.schemes as schemes
-
 
 class WaypointController_v1(Node):
 

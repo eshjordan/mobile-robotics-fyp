@@ -46,7 +46,7 @@ class LocalCommsManager(rclpy.node.Node):
 
         self.knowledge_request_client = None
         self.knowledge_request_timer = self.create_timer(
-            1.0, self.request_knowledge, autostart=False
+            1.0, self.request_knowledge_tmr_cb, autostart=False
         )
         self.knowledge_request_publisher = self.create_publisher(
             EpuckKnowledgePacketMsg, "~/knowledge", 10
@@ -178,13 +178,13 @@ class LocalCommsManager(rclpy.node.Node):
                     # Find neighbouring robots
                     known_frames = [
                         (
-                            id,
-                            knowledge_host,
-                            knowledge_exchange_port,
-                            manager.robot_frame_name(id, False),
+                            robot.robot_id,
+                            robot.robot_knowledge_host,
+                            robot.robot_knowledge_exchange_port,
+                            manager.robot_frame_name(robot.robot_id, False),
                         )
-                        for id, _, _, knowledge_host, knowledge_exchange_port in manager.known_robots
-                        if id != heartbeat.robot_id
+                        for robot in manager.known_robots.values()
+                        if robot.robot_id != heartbeat.robot_id
                     ]
 
                 # Get all transforms to known frames
@@ -387,11 +387,12 @@ class LocalCommsManager(rclpy.node.Node):
 
             robot = self.known_robots[robot_id]
             robot.seq_ = response.seq
-            robot.centroid_ = response.centroid
-            robot.boundary_ = response.boundary
             robot.known_ids_ = {
                 record.robot_id: record for record in response.known_ids
             }
+            robot_record = robot.known_ids_[robot.robot_id]
+            robot.centroid_ = robot_record.centroid
+            robot.boundary_ = robot_record.boundary
 
     def knowledge_packet_to_msg(
         self, packet: EpuckKnowledgePacket
