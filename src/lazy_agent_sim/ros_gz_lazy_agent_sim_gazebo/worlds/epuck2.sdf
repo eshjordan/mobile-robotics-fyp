@@ -1,0 +1,373 @@
+<?xml version="1.0"?>
+<!--
+  Try sending commands:
+    gz topic -t "/model/epuck2/cmd_vel" -m gz.msgs.Twist -p "linear: {x: 1.0}, angular: {z: -0.1}"
+    ros2 topic pub /epuck2/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 5.0, y: 0.0, z: 0.0}, angular:
+{x: 0.0, y: 0.0, z: -0.1}}"
+  Listen to odometry:
+    gz topic -e -t /model/epuck2/odometry
+    ros2 topic echo /model/epuck2/odometry
+-->
+<sdf version="1.11">
+  <world name="earth">
+    <plugin
+      filename="gz-sim-physics-system"
+      name="gz::sim::systems::Physics">
+    </plugin>
+    <plugin
+      filename="gz-sim-sensors-system"
+      name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <plugin filename="gz-sim-imu-system"
+      name="gz::sim::systems::Imu">
+    </plugin>
+    <plugin
+      filename="gz-sim-scene-broadcaster-system"
+      name="gz::sim::systems::SceneBroadcaster">
+    </plugin>
+    <plugin
+      filename="gz-sim-user-commands-system"
+      name="gz::sim::systems::UserCommands">
+    </plugin>
+    <plugin
+      filename="gz-sim-rf-comms-system"
+      name="gz::sim::systems::RFComms">
+      <range_config>
+        <max_range>20.0</max_range>
+        <fading_exponent>2.6</fading_exponent>
+        <l0>40</l0>
+        <sigma>10.0</sigma>
+      </range_config>
+      <radio_config>
+        <capacity>1000000</capacity>
+        <tx_power>20</tx_power>
+        <noise_floor>-90</noise_floor>
+        <modulation>QPSK</modulation>
+      </radio_config>
+    </plugin>
+    <plugin
+      filename="BasicSystem"
+      name="ros_gz_lazy_agent_sim_gazebo::BasicSystem">
+    </plugin>
+    <plugin
+      filename="FullSystem"
+      name="ros_gz_lazy_agent_sim_gazebo::FullSystem">
+    </plugin>
+
+    <light name="sun" type="directional">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+            <specular>0.8 0.8 0.8 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+
+    <model name="epuck2_robot_0">
+      <self_collide>false</self_collide>
+      <pose>-0.1 -0.1 0.001 0 0 0</pose>
+
+      <include merge="true">
+        <uri>package://ros_gz_lazy_agent_sim_description/models/epuck2</uri>
+      </include>
+
+      <!-- RF Comms -->
+      <plugin
+        filename="gz-sim-comms-endpoint-system"
+        name="gz::sim::systems::CommsEndpoint">
+        <address>aa:bb:cc:dd:ee:00</address>
+        <topic>aa:bb:cc:dd:ee:00/rx</topic>
+        <broker>
+          <bind_service>/broker/bind</bind_service>
+          <unbind_service>/broker/unbind</unbind_service>
+        </broker>
+      </plugin>
+
+    </model>
+
+
+    <model name="epuck2_robot_1">
+      <self_collide>false</self_collide>
+      <pose>-0.1 0.1 0.001 0 0 0</pose>
+
+      <include merge="true">
+        <uri>package://ros_gz_lazy_agent_sim_description/models/epuck2</uri>
+      </include>
+
+      <!-- RF Comms -->
+      <plugin
+        filename="gz-sim-comms-endpoint-system"
+        name="gz::sim::systems::CommsEndpoint">
+        <address>aa:bb:cc:dd:ee:01</address>
+        <topic>aa:bb:cc:dd:ee:01/rx</topic>
+        <broker>
+          <bind_service>/broker/bind</bind_service>
+          <unbind_service>/broker/unbind</unbind_service>
+        </broker>
+      </plugin>
+
+    </model>
+
+
+    <model name="epuck2_robot_2">
+      <self_collide>false</self_collide>
+      <pose>0.1 -0.1 0.001 0 0 0</pose>
+
+      <include merge="true">
+        <uri>package://ros_gz_lazy_agent_sim_description/models/epuck2</uri>
+      </include>
+
+      <!-- RF Comms -->
+      <plugin
+        filename="gz-sim-comms-endpoint-system"
+        name="gz::sim::systems::CommsEndpoint">
+        <address>aa:bb:cc:dd:ee:02</address>
+        <topic>aa:bb:cc:dd:ee:02/rx</topic>
+        <broker>
+          <bind_service>/broker/bind</bind_service>
+          <unbind_service>/broker/unbind</unbind_service>
+        </broker>
+      </plugin>
+
+    </model>
+
+
+    <model name="epuck2_robot_3">
+      <self_collide>false</self_collide>
+      <pose>0.1 0.1 0.001 0 0 0</pose>
+
+      <include merge="true">
+        <uri>package://ros_gz_lazy_agent_sim_description/models/epuck2</uri>
+      </include>
+
+      <!-- RF Comms -->
+      <plugin
+        filename="gz-sim-comms-endpoint-system"
+        name="gz::sim::systems::CommsEndpoint">
+        <address>aa:bb:cc:dd:ee:03</address>
+        <topic>aa:bb:cc:dd:ee:03/rx</topic>
+        <broker>
+          <bind_service>/broker/bind</bind_service>
+          <unbind_service>/broker/unbind</unbind_service>
+        </broker>
+      </plugin>
+
+    </model>
+
+
+    <gui fullscreen="0">
+
+      <!-- Main scene window -->
+      <plugin filename="MinimalScene" name="3D View">
+        <gz-gui>
+          <title>3D View</title>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+        <engine>ogre2</engine>
+        <scene>scene</scene>
+        <ambient_light>0.4 0.4 0.4</ambient_light>
+        <background_color>0.8 0.8 0.8</background_color>
+        <camera_pose>-0.3 0 0.3 0 0.5 0</camera_pose>
+      </plugin>
+
+
+      <!-- Menu sections -->
+      <plugin filename="ComponentInspector" name="Component inspector">
+        <gz-gui>
+          <property key="state" type="string">docked</property>
+        </gz-gui>
+      </plugin>
+
+      <plugin filename="EntityTree" name="Entity tree">
+        <gz-gui>
+          <property key="state" type="string">docked</property>
+        </gz-gui>
+      </plugin>
+
+      <plugin filename="ImageDisplay" name="Image display">
+        <gz-gui>
+          <property key="state" type="string">docked_collapsed</property>
+        </gz-gui>
+        <topic>/world/arena/model/epuck2_robot_0/link/base_link/sensor/camera/image</topic>
+      </plugin>
+
+      <plugin filename="VisualizeLidar" name="Lidar Visualizer">
+        <gz-gui>
+          <property key="state" type="string">docked_collapsed</property>
+        </gz-gui>
+      </plugin>
+
+      <plugin filename="Teleop" name="Teleop">
+        <gz-gui>
+          <property key="state" type="string">docked_collapsed</property>
+        </gz-gui>
+        <topic>/model/epuck2_robot_0/cmd_vel</topic>
+      </plugin>
+
+
+      <!-- Additional plugins -->
+      <plugin filename="EntityContextMenuPlugin" name="Entity context menu">
+        <gz-gui>
+          <property key="height" type="double">0</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+
+      <plugin filename="GzSceneManager" name="Scene Manager">
+        <gz-gui>
+          <property key="height" type="double">0</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+
+      <plugin filename="InteractiveViewControl" name="Interactive view control">
+        <gz-gui>
+          <property key="height" type="double">0</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+
+      <plugin filename="CameraTracking" name="Camera Tracking">
+        <gz-gui>
+          <property key="height" type="double">0</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+
+      <plugin filename="MarkerManager" name="Marker manager">
+        <gz-gui>
+          <property key="height" type="double">0</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+
+      <plugin filename="SelectEntities" name="Select Entities">
+        <gz-gui>
+          <property key="height" type="double">0</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+
+      <plugin filename="Spawn" name="Spawn Entities">
+        <gz-gui>
+          <property key="height" type="double">0</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+
+      <plugin filename="VisualizationCapabilities" name="Visualization Capabilities">
+        <gz-gui>
+          <property key="height" type="double">0</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+
+      <plugin filename="WorldControl" name="World control">
+        <play_pause>true</play_pause>
+        <step>true</step>
+        <start_paused>true</start_paused>
+        <use_event>true</use_event>
+        <gz-gui>
+          <title>World control</title>
+          <anchors target="3D View">
+            <line own="left" target="left" />
+            <line own="bottom" target="bottom" />
+          </anchors>
+          <property key="x" type="double">0</property>
+          <property key="y" type="double">725</property>
+          <property key="z" type="double">1</property>
+          <property key="width" type="double">1199</property>
+          <property key="height" type="double">72</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+          <property key="resizable" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+
+      <plugin filename="WorldStats" name="World stats">
+        <sim_time>true</sim_time>
+        <real_time>true</real_time>
+        <real_time_factor>true</real_time_factor>
+        <iterations>true</iterations>
+        <gz-gui>
+          <title>World stats</title>
+          <anchors target="3D View">
+            <line own="right" target="right" />
+            <line own="bottom" target="bottom" />
+          </anchors>
+          <property key="x" type="double">291</property>
+          <property key="y" type="double">687</property>
+          <property key="z" type="double">1</property>
+          <property key="width" type="double">290</property>
+          <property key="height" type="double">110</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+          <property key="resizable" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+
+      <plugin filename="TransformControl" name="Transform control">
+        <gz-gui>
+          <property key="width" type="double">250</property>
+          <property key="height" type="double">50</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+          <property key="resizable" type="bool">false</property>
+          <property key="cardBackground" type="string">#777777</property>
+        </gz-gui>
+      </plugin>
+
+      <plugin filename="CopyPaste" name="CopyPaste">
+        <gz-gui>
+          <property key="height" type="double">0</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+
+    </gui>
+
+  </world>
+</sdf>

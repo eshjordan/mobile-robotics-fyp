@@ -1,0 +1,106 @@
+@startuml
+
+!theme sunlust
+
+!$enable_digital_twin = 1
+
+node "Mocap Camera"
+
+node "Centralised Controller PC" as PC {
+  component "LocalCommsManager"
+
+  component "High-level Controller"
+
+  component "epuck_cpp_driver"
+
+  component "Mocap ROS Driver"
+}
+
+node "e-puck 0" {
+  !if ($enable_digital_twin == 0)
+    component "RobotCommsModel" as epuck0RobotCommsModel
+    component "UDPKnowledgeServer" as epuck0UDPKnowledgeServer
+    component "UDPKnowledgeClient" as epuck0UDPKnowledgeClient
+    component "Advanced Sercom v2" as epuck0AdvancedSercom
+  !endif
+}
+
+node "e-puck 1" {
+  !if ($enable_digital_twin == 0)
+    component "RobotCommsModel" as epuck1RobotCommsModel
+    component "UDPKnowledgeServer" as epuck1UDPKnowledgeServer
+    component "UDPKnowledgeClient" as epuck1UDPKnowledgeClient
+    component "Advanced Sercom v2" as epuck1AdvancedSercom
+  !endif
+}
+
+"Mocap Camera" <-- "e-puck 0": Position
+"Mocap Camera" <-- "e-puck 1": Position
+"Mocap Camera" --> "Mocap ROS Driver": Positions
+"Mocap ROS Driver" --> "High-level Controller": Groundtruth
+
+' Simplify the diagram by hiding the UDP knowledge server and client connections if the digital twin is disabled
+!if ($enable_digital_twin == 0)
+  "High-level Controller" --> "epuck_cpp_driver": State & Controls
+  "High-level Controller" <-- "LocalCommsManager": Knowledge
+  PC -[hidden]-> "e-puck 0"
+  PC -[hidden]-> "e-puck 1"
+  "e-puck 0" -[hidden]> "e-puck 1"
+
+  "epuck_cpp_driver" <--> epuck0AdvancedSercom: State & Controls
+  "epuck_cpp_driver" <--> epuck1AdvancedSercom: State & Controls
+  "LocalCommsManager" <--> epuck0RobotCommsModel: Heartbeats & Knowledge\n\n\n
+  "LocalCommsManager" <--> epuck1RobotCommsModel: Heartbeats & Knowledge
+  epuck0RobotCommsModel <--> epuck0UDPKnowledgeServer: Knowledge
+  epuck0RobotCommsModel <--> epuck0UDPKnowledgeClient: Knowledge
+  epuck1RobotCommsModel <--> epuck1UDPKnowledgeClient: Knowledge
+  epuck1RobotCommsModel <--> epuck1UDPKnowledgeServer: Knowledge
+  epuck0UDPKnowledgeServer <-> epuck1UDPKnowledgeClient: Knowledge
+  epuck0UDPKnowledgeClient -[hidden]> epuck0UDPKnowledgeServer
+  epuck1UDPKnowledgeClient -[hidden]> epuck1UDPKnowledgeServer
+!else
+  "epuck_cpp_driver" <-- "High-level Controller": State & Controls
+  "High-level Controller" <- "LocalCommsManager": Knowledge
+  "epuck_cpp_driver" <-> "e-puck 0": State & Controls
+  "epuck_cpp_driver" <-down-> "e-puck 1": State & Controls
+  "LocalCommsManager" <-up-> "e-puck 0": Heartbeats & Knowledge
+  "LocalCommsManager" <-> "e-puck 1": Heartbeats & Knowledge
+  "e-puck 0" <--> "e-puck 1": Knowledge
+!endif
+
+
+
+' Only show the Gazebo digital twin if enabled
+!if ($enable_digital_twin == 1)
+  node "Gazebo Digital Twin" as Gazebo {
+    component "LocalCommsManager" as gzLocalCommsManager
+
+    node "e-puck 0" as simEpuck0 {
+      component "RobotCommsModel" as simEpuck0RobotCommsModel
+      component "GZKnowledgeServer" as simEpuck0GZKnowledgeServer
+      component "GZKnowledgeClient" as simEpuck0GZKnowledgeClient
+    }
+
+    node "e-puck 1" as simEpuck1 {
+      component "RobotCommsModel" as simEpuck1RobotCommsModel
+      component "GZKnowledgeServer" as simEpuck1GZKnowledgeServer
+      component "GZKnowledgeClient" as simEpuck1GZKnowledgeClient
+    }
+  }
+
+  "High-level Controller" --> Gazebo: State & Controls
+
+  gzLocalCommsManager <--> simEpuck0RobotCommsModel: Heartbeats & Knowledge
+  gzLocalCommsManager <--> simEpuck1RobotCommsModel: Heartbeats & Knowledge
+  simEpuck0RobotCommsModel <--> simEpuck0GZKnowledgeServer: Knowledge
+  simEpuck0RobotCommsModel <--> simEpuck0GZKnowledgeClient: Knowledge
+  simEpuck1RobotCommsModel <--> simEpuck1GZKnowledgeClient: Knowledge
+  simEpuck1RobotCommsModel <--> simEpuck1GZKnowledgeServer: Knowledge
+  simEpuck0GZKnowledgeServer <-> simEpuck1GZKnowledgeClient: Knowledge
+
+  simEpuck0 -[hidden]> simEpuck1
+  simEpuck0GZKnowledgeClient -[hidden]> simEpuck0GZKnowledgeServer
+  simEpuck1GZKnowledgeClient -[hidden]> simEpuck1GZKnowledgeServer
+!endif
+
+@enduml

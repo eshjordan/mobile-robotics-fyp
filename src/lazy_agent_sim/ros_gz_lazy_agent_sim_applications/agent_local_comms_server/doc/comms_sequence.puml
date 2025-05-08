@@ -1,0 +1,73 @@
+@startuml
+
+!theme sunlust
+
+participant "Robot[N] Server"
+participant "Robot[N] Client"
+participant "Local Comms Manager"
+participant "Robot[N+1] Client"
+participant "Robot[N+1] Server"
+
+"Local Comms Manager" -> "Local Comms Manager" : Listen
+
+...
+
+"Robot[N] Server" -> "Robot[N] Server" : Listen
+"Robot[N] Client" -> "Local Comms Manager" : Connect
+activate "Local Comms Manager"
+
+par Runs continously on a timer
+loop
+"Robot[N] Client" --> "Local Comms Manager": EpuckHeartbeatPacket {\n\tID(N), Host(N), Port(N)\n}
+"Local Comms Manager" --> "Robot[N] Client": EpuckHeartbeatResponsePacket { }
+end
+end
+
+...
+
+"Robot[N+1] Server" <- "Robot[N+1] Server" : Listen
+"Robot[N+1] Client" -> "Local Comms Manager" : Connect
+activate "Local Comms Manager"
+
+par Runs continously on a timer
+loop
+"Robot[N+1] Client" --> "Local Comms Manager": EpuckHeartbeatPacket {\n\tID(N+1), Host(N+1), Port(N+1)\n}
+"Local Comms Manager" --> "Robot[N+1] Client": EpuckHeartbeatResponsePacket { }
+end
+end
+
+...
+
+note right of "Robot[N+1] Client"
+Robot[N+1] may spawn multiple
+clients to connect to multiple
+robots, as long as their IDs
+are less than N+1.
+end note
+
+loop
+alt Robot[N+1] sees Robot[N] is within comms range
+"Robot[N+1] Client" --> "Local Comms Manager": EpuckHeartbeatPacket {\n\tID(N+1), Host(N+1), Port(N+1)\n}
+"Local Comms Manager" --> "Robot[N+1] Client": EpuckHeartbeatResponsePacket {\n\t(ID(N), Host(N), Port(N), Dist(N+1, N)), (...) \n}
+par
+"Robot[N+1] Client" -> "Robot[N] Server": Connect
+activate "Robot[N] Server"
+loop
+"Robot[N+1] Client" --> "Robot[N] Server": EpuckKnowledgePacket {...}
+"Robot[N] Server" --> "Robot[N+1] Client": EpuckKnowledgePacket {...}
+end
+end
+...Robot[N+1] sees Robot[N] go out of comms range...
+
+"Robot[N+1] Client" --> "Local Comms Manager": EpuckHeartbeatPacket {\n\tID(N+1), Host(N+1), Port(N+1)\n}
+"Local Comms Manager" --> "Robot[N+1] Client": EpuckHeartbeatResponsePacket {}
+"Robot[N+1] Client" -> "Robot[N] Server": Close
+deactivate "Robot[N] Server"
+
+else Robot[N+1] sees Robot[N] is out of comms range
+"Robot[N+1] Client" --> "Local Comms Manager": EpuckHeartbeatPacket {\n\tID(N+1), Host(N+1), Port(N+1)\n}
+"Local Comms Manager" --> "Robot[N+1] Client": EpuckHeartbeatResponsePacket {}
+end
+end
+
+@enduml

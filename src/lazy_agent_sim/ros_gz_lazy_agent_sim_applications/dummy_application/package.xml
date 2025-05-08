@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>dummy_application</name>
+  <version>0.0.0</version>
+  <description>Application-specific implementations for the lazy_agent_sim project</description>
+  <maintainer email="esh.jordan@gmail.com">Jordan Esh</maintainer>
+  <license>GPL-3.0-only</license>
+  <author>Jordan Esh</author>
+
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+
+  <depend>rclcpp_components</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

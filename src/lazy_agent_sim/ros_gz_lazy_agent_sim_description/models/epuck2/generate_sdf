@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# To generate patch files, run the following command:
+# git diff --patch --no-prefix > XX-NAME.patch
+
+find -L ${COLCON_PREFIX_PATH} -name epuck_urdf.xml -exec cp -f {} ./epuck2.urdf \; || true
+gz sdf -p ./epuck2.urdf > ./epuck2.sdf
+
+# Find all patches in the current directory and apply them
+for patch in `ls *.patch`; do
+    patch < $patch
+done
