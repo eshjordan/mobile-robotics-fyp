@@ -1,0 +1,2 @@
+lazy_agent_sim_interfaces/EpuckKnowledgePacket this_robot
+lazy_agent_sim_interfaces/EpuckKnowledgePacket other_robot
