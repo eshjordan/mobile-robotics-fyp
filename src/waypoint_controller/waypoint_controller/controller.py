@@ -4,7 +4,7 @@ from rclpy.node import Node
 import rclpy.time
 import geometry_msgs.msg
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Polygon, Point32
 import tf2_py
 import tf2_ros
 
@@ -13,6 +13,7 @@ import tf2_ros
 import math as mth
 from math import sqrt, pi
 import numpy as np
+import time
 
 # Robot 5653 Z rotation offset: -135.240 degrees, -2.360 rad
 
@@ -69,7 +70,7 @@ class WaypointController_v1(Node):
                     depth=10,
                 ),
             )
-            self.subscriber  # prevent unused variable warning
+            self.subscriber  
 
         self.cmd_pub = self.create_publisher(
             geometry_msgs.msg.Twist,
@@ -77,22 +78,48 @@ class WaypointController_v1(Node):
             10,
         )
 
+        self.event_subscriber = self.create_subscription(
+            PoseStamped,
+            'events',  # topic name for events?????
+            self.event_callback,
+            qos_profile=QoSProfile(
+                reliability=ReliabilityPolicy.BEST_EFFORT,
+                durability=DurabilityPolicy.VOLATILE,
+                history=HistoryPolicy.KEEP_LAST,
+                depth=10,
+            ),
+        )
+
+        # self.boundary_subscriber = self.create_subscription(
+        #     Polygon,
+        #     'assigned_boundary', # topic name for boundaries from repartioner?????
+        #     self.boundary_callback,
+        #     qos_profile=QoSProfile(
+        #         reliability=ReliabilityPolicy.BEST_EFFORT,
+        #         durability=DurabilityPolicy.VOLATILE,
+        #         history=HistoryPolicy.KEEP_LAST,
+        #         depth=10,
+        #     ),
+        # )
+
         # Robot current velocity twist msgs
-        # send message every second
-        self.create_timer(0.01, self.send_twist_message)
+        self.create_timer(0.01, self.send_twist_message) # send message every second
         # Robot's curernt pose and orientation
         self.x = 0.0
         self.y = 0.0
         self.z = 0.0
         self.theta = 0.0
 
+        #event variables
+        self.event_waypoint = (0.0, 0.0)
+        self.event_waiting = False
+        self.event_wait_start_time = None
+
         # Robot's partition information
         self.start_angle = 0.0
         self.end_angle = 2 * np.pi
         self.agent_number = 1
-        # Path planner instance
-        # self.get_logger().info("SimplePathPlanner")
-        # triggered when robot interact or when robot reaches its waypoint, or
+        # Path planner instance triggered when robot interact or when robot reaches its waypoint, or event
         self.path_planner = SimplePathPlanner(
             self.generate_initial_waypoints(), logger=self.get_logger()
         )
@@ -138,12 +165,7 @@ class WaypointController_v1(Node):
         self.theta -= self.get_parameter("angular_offset").value
 
     def listener_callback(self, msg):
-        # print(msg.x, msg.y, msg.z)
         # self.get_logger().info(f"subscribing vicon position = {msg.pose.position}")
-
-        # print(msg.pose.position)
-        # print("\n\n\n")
-        # print(msg.pose)
 
         # Extract pose position from vicon topic
         self.x = msg.pose.position.x
@@ -162,6 +184,30 @@ class WaypointController_v1(Node):
 
         # print(msg)
         # self.get_logger().info
+
+    def event_callback(self, msg: PoseStamped):
+        event_waypoint = (msg.pose.position.x, msg.pose.position.y)
+        self.get_logger().info(f"Received event waypoint: {event_waypoint}")
+
+        # Replace current waypoint with event location
+        self.event_waypoint = event_waypoint
+        self.path_planner.insert_interrupt_waypoint(event_waypoint)
+        self.current_waypoint = self.path_planner.get_next_waypoint()
+    
+    def is_event_waypoint(self):
+        current_position = np.array([self.x, self.y])
+        target_position = np.array(self.event_waypoint)
+        return np.linalg.norm(current_position - target_position) < 0.05
+    
+    # def boundary_callback(self, msg: Polygon):
+    #     self.get_logger().info(f"Received new boundary: {msg}")
+
+    #     # Generate internal waypoints from boundary
+    #     new_waypoints = self.generate_boustrophedon_waypoints_from_ros_polygon(
+    #         polygon=msg,
+    #         line_spacing=0.1,
+    #     )
+    #     self.path_planner.update_waypoints(new_waypoints)
 
     def euler_from_quaternion(self, quaternion):
         """
@@ -187,11 +233,8 @@ class WaypointController_v1(Node):
         # self.get_logger().info(f"yaw = {yaw}")
         return roll, pitch, yaw
 
-    def calculate_velocities(self, waypoint):
+    def calculate_velocities(self):
         """Calculate the linear and angular velocities to reach the next waypoint."""
-        # ## Hardcode pose - comment out when using vicon
-        # self.x = 1.0
-        # self.y = 0.0
 
         if self.current_waypoint is None:
             self.stop_robot()
@@ -267,8 +310,6 @@ class WaypointController_v1(Node):
             # self.stop_robot()
             return
 
-        # self.current_waypoint = [0, 1]
-
         distance_to_waypoint = np.linalg.norm(
             np.array(self.current_waypoint) - np.array([self.x, self.y])
         )
@@ -282,24 +323,28 @@ class WaypointController_v1(Node):
             self.get_logger().info(
                 f"Reached waypoint {self.current_waypoint[0]:.2f}, {self.current_waypoint[1]:.2f}"
             )
+
+            #event waypoint - wait a bit for interaction
+            if self.is_event_waypoint(self.current_waypoint): # Check if it's the event waypoint
+                if not self.event_waiting:
+                    self.event_waiting = True
+                    self.event_wait_start_time = time.time()
+                    self.get_logger().info("Reached event waypoint. Waiting for 10 seconds.")
+                    return  # Exit to wait before moving on
+
+                # Wait until 10 seconds have passed
+                if time.time() - self.event_wait_start_time < 10:
+                    return  # Still waiting, skip motion update
+                else:
+                    self.event_waiting = False
+                    self.get_logger().info("Done waiting at event waypoint. Proceeding.")
+
             self.current_waypoint = self.path_planner.get_next_waypoint()
             self.get_logger().info(
                 f"Moving to new waypoint {self.current_waypoint[0]:.2f}, {self.current_waypoint[1]:.2f}"
             )
 
-        # self.current_waypoint = [0, 1]
-
-        # hardcoded velocities
-        # linear_velocity = 0.1
-        # angular_velocity = 0.0
-        # linear_velocity = 0.05 * distance
-        # angular_velocity = 1.0 * angle_diff
-
-        # # use current velocity - dynamic
-        # linear_velocity = self.get_parameter('linear.x').value
-        # angular_velocity = self.get_parameter('angular.z').value
-
-        linear_velocity, angular_velocity = self.calculate_velocities(waypoint)
+        linear_velocity, angular_velocity = self.calculate_velocities() 
 
         twist = geometry_msgs.msg.Twist()
         twist.linear.x = linear_velocity
@@ -333,6 +378,18 @@ class WaypointController_v1(Node):
         self.cmd_pub.publish(twist)
         self.get_logger().info("Robot stopped for interaction")
 
+    def create_circular_polygon(radius=1.0, center_x=0.0, center_y=0.0, num_points=20):
+        polygon = Polygon()
+        angle_step = 2 * mth.pi / num_points
+
+        for i in range(num_points):
+            angle = i * angle_step
+            x = center_x + radius * mth.cos(angle)
+            y = center_y + radius * mth.sin(angle)
+            polygon.points.append(Point32(x=x, y=y, z=0.0))
+
+        return polygon
+    
     def generate_initial_waypoints(self):
         """Generate initial waypoints for the robot to follow."""
         self.get_logger().info("generate_initial_waypoints")
@@ -344,84 +401,73 @@ class WaypointController_v1(Node):
             center=(0, 0),
         )
 
+        # initial_waypoints = generate_boustrophedon_waypoints_from_ros_polygon(
+        #     polygon=create_circular_polygon(),
+        #     line_spacing=0.1,
+        # )
+
         log_str = "initial_waypoints:\n"
         for waypoint in initial_waypoints:
             log_str += f"({waypoint[0]:.2f}, {waypoint[1]:.2f})\n"
         self.get_logger().info(log_str)
         return initial_waypoints
 
-    def turn_around(self):
-        """Turn the robot around before following new waypoints."""
-        turn_angle = pi  # 180 degrees
-        self.send_twist_message(0.0, turn_angle)
-        self.get_logger().info("Turning around after interaction")
+    # def generate_boustrophedon_waypoints_from_ros_polygon(
+    #     ros_polygon: Polygon,
+    #     line_spacing=0.1
+    # ):
+    #     """
+    #     Generate boustrophedon-style waypoints from a ROS geometry_msgs/Polygon.
 
-    def control_loop(self):
-        """Main control loop for the robot."""
-        current_position = (self.x, self.y)
-        current_orientation = self.theta
+    #     Parameters:
+    #     - ros_polygon (geometry_msgs.msg.Polygon): The polygon message defining the boundary
+    #     - line_spacing (float): vertical spacing between sweep lines
 
-        # Plan the next movement
-        self.path_planner.plan(current_position, current_orientation)
-        other_robot_info = None
+    #     Returns:
+    #     - waypoints (list of (x, y)): only edge-intersection waypoints in boustrophedon order
+    #     """
 
-        if other_robot_info:  # if detect other robots
-            other_x, other_y, other_theta = other_robot_info
+    #     # Extract boundary points from the ROS polygon
+    #     boundary_points = [(p.x, p.y) for p in ros_polygon.points]
 
-            # Example: Check if another robot is close
-            distance_to_other = sqrt((other_x - self.x) ** 2 + (other_y - self.y) ** 2)
-            if distance_to_other < 2.0:  # Adjust threshold as necessary
-                self.stop_robot()
+    #     # Ensure the polygon is closed (first point == last point)
+    #     if boundary_points[0] != boundary_points[-1]:
+    #         boundary_points.append(boundary_points[0])
 
-                # Get other robot's partition info
-                other_start_angle, other_end_angle = self.get_other_robot_partition()
-                other_agent_number = self.get_other_robot_agent_number()
+    #     # Find vertical extent of the polygon
+    #     min_y = min(p[1] for p in boundary_points)
+    #     max_y = max(p[1] for p in boundary_points)
 
-                # Call your algorithm with both robots' information
-                self.path_planner.algorithm(
-                    self.start_angle,
-                    self.end_angle,
-                    self.agent_number,
-                    # Assuming the other robot knows about 2 agents
-                    other_start_angle,
-                    other_end_angle,
-                    other_agent_number,
-                )
-                self.turn_around()
-            else:
-                self.send_twist_message()
-        else:
-            self.send_twist_message()
+    #     # Generate horizontal scan lines
+    #     y_vals = np.arange(min_y, max_y + line_spacing, line_spacing)
+    #     waypoints = []
+    #     direction = 1
 
+    #     for y in y_vals:
+    #         intersections = []
 
-#    def get_other_robot_position(self, other_robot_frame):
-#         """ Get position and orientation of another robot using tf2. #######################################################################################
-#         Args: other_robot_frame (str): The tf frame ID of the other robot.
-#         Returns: (float, float, float): The x, y position and orientation (theta) of the other robot."""
-#         try:
-#             # Lookup transform from the other robot to the base frame
-#             transform = self.tf_buffer.lookup_transform(
-#                 'base_link', other_robot_frame, rclpy.time.Time())
-#             x = transform.transform.translation.x
-#             y = transform.transform.translation.y
+    #         # Find intersections between scan line and polygon edges
+    #         for i in range(len(boundary_points) - 1):
+    #             (x1, y1), (x2, y2) = boundary_points[i], boundary_points[i + 1]
 
-#             # Convert quaternion to yaw angle (theta)
-#             orientation_q = transform.transform.rotation
-#             _, _, theta = self.euler_from_quaternion(orientation_q)
+    #             if (y1 - y) * (y2 - y) <= 0 and y1 != y2:
+    #                 # Compute intersection x using linear interpolation
+    #                 t = (y - y1) / (y2 - y1)
+    #                 x = x1 + t * (x2 - x1)
+    #                 intersections.append((x, y))
 
-#             return x, y, theta
-#         except:
-#             self.get_logger().warn(f"Could not get transform for {other_robot_frame}")
-#             return None
+    #         if len(intersections) >= 2:
+    #             sorted_pts = sorted(intersections)
+    #             p1, p2 = sorted_pts[0], sorted_pts[-1]
+    #             if direction % 2 == 0:
+    #                 waypoints.append(p2)
+    #                 waypoints.append(p1)
+    #             else:
+    #                 waypoints.append(p1)
+    #                 waypoints.append(p2)
+    #             direction += 1
 
-#     def get_other_robot_partition(self):
-#         """Placeholder function to get another robot's partition info.""" #######################################################################################
-#         return 0.0, np.pi  # Replace with actual logic
-
-#     def get_other_robot_agent_number(self):
-#         """Placeholder function to get another robot's knwon agent number info."""#######################################################################################
-#         return 2  # Replace with actual logic
-
+    #     return waypoints
 
 def generate_boustrophedon_waypoints(
     start_angle,
@@ -430,7 +476,7 @@ def generate_boustrophedon_waypoints(
     radius=1,
     center=(0, 0),
     boundary_resolution=500,
-):
+    ):
     """
     Generate boustrophedon-style waypoints across a circular sector,
     but only using points on the edge of the sector.
@@ -515,8 +561,21 @@ class SimplePathPlanner:
         self.current_waypoint_index = 0
         self.logger = logger
         self.direction = 1  # 1 for forward, -1 for reverse
+        self.interrupt_waypoint = None
 
     def get_next_waypoint(self):
+        # Handle interrupt first
+        if self.interrupt_waypoint:
+            event_pose = self.interrupt_waypoint
+            self.interrupt_waypoint = None
+            self.logger.info(f"Handling interrupt waypoint: {event_pose}")
+            return event_pose
+
+        # error check
+        if not self.waypoints:
+            self.logger.info(f"No waypoints.")
+            return None
+
         # Check if we need to reverse direction
         if self.current_waypoint_index == len(self.waypoints) - 1:
             self.direction = -1
@@ -525,15 +584,21 @@ class SimplePathPlanner:
 
         # Update index
         self.current_waypoint_index += self.direction
+
         return self.waypoints[self.current_waypoint_index]
 
     def update_waypoints(self, new_waypoints):
         self.waypoints = new_waypoints
         self.current_waypoint_index = 0
 
+    def insert_interrupt_waypoint(self, event_pose):
+        self.interrupt_waypoint = event_pose
+        if self.logger:
+            self.logger.info(f"Interrupt waypoint set: {event_pose}")
+    
     def algorithm(self, agent1, agent2):
         """
-        TODO: Is this algorithm run centrally ???
+        TODO: Is this algorithm run centrally ??? ######################################################3
 
         Generic agent inputs. Can be a dict or a class, whatever.
         It just needs to have the attributes required for whichever scheme we are running.
@@ -553,38 +618,6 @@ class SimplePathPlanner:
         # # 2d case with generic polygons
         # p2d = schemes.Scheme2dPolygons()
         # p2d.interact(agent1, agent2)
-
-    # def algorithm(self, my_start_angle, my_end_angle, my_agent_number,
-    #               other_start_angle, other_end_angle, other_agent_number):
-    #     """
-    #     Algorithm placeholder to calculate partitions based on robot interaction.
-    #     Parameters:
-    #     - my_start_angle, my_end_angle, my_agent_number:  info of this robot.
-    #     - other_start_angle, other_end_angle, other_agent_number: info of the detected robot.
-
-    #     implement  partitioning logic based on the two robots' partition and known agents.
-    #     """
-    #     print("algorithm")
-    #     print(
-    #         f"My Partition: Start {my_start_angle}, End {my_end_angle}, Agents known: {my_agent_number}")
-    #     print(
-    #         f"Other Partition: Start {other_start_angle}, End {other_end_angle}, Agents known: {other_agent_number}")
-
-    #     # Placeholder for partitioning logic
-    #     new_start_angle, new_end_angle = 0.0, 2 * \
-    #         np.pi  # insert stuff here for algorithm
-
-    #     new_waypoints = generate_boustrophedon_waypoints(
-    #         new_start_angle, new_end_angle)
-    #     print(f"My new_waypoints: {new_waypoints}")
-
-    #     self.update_waypoints(new_waypoints)
-
-    def plan(self, current_position, current_orientation):
-        """Plan the robot's path towards the next waypoint."""
-        waypoint = self.get_next_waypoint()
-        if waypoint is None:
-            return  # No more waypoints, stop planning
 
 
 def main():
