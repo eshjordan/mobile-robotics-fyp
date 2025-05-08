@@ -1,0 +1,186 @@
+@startuml
+
+!theme sunlust
+
+abstract class BaseKnowledgeServer {
+  + BaseKnowledgeServer(std::shared_ptr<BaseRobotCommsModel> robot_model)
+  + {abstract} void start()
+  + {abstract} void stop()
+  # std::shared_ptr<BaseRobotCommsModel> robot_model
+}
+
+abstract class BaseKnowledgeClient {
+  + BaseKnowledgeClient(EpuckNeighbourPacket neighbour, std::function<bool()> running, std::shared_ptr<BaseRobotCommsModel> robot_model)
+  + {abstract} void start()
+  + {abstract} void stop()
+  # EpuckNeighbourPacket neighbour
+  # {field} std::function<bool()> running
+  # std::shared_ptr<BaseRobotCommsModel> robot_model
+}
+
+abstract class BaseRobotCommsModel {
+  + uint16_t ROBOT_ID
+  + std::string MANAGER_HOST
+  + uint16_t MANAGER_PORT
+  + std::string ROBOT_COMMS_HOST
+  + uint16_t ROBOT_COMMS_REQUEST_PORT
+  + std::string ROBOT_KNOWLEDGE_HOST
+  + uint16_t ROBOT_KNOWLEDGE_EXCHANGE_PORT
+  - std::map<uint16_t, EpuckKnowledgeRecord> known_ids
+  - Centroid centroid
+  - Boundary boundary
+  - uint16_t seq
+
+  + BaseRobotCommsModel(...)
+  + {abstract} void start()
+  + {abstract} void stop()
+  + uint16_t get_seq()
+  + EpuckKnowledgeRecord* known_ids_begin()
+  + EpuckKnowledgeRecord* known_ids_end()
+  + size_t known_ids_size()
+  + size_t insert_known_ids(EpuckKnowledgeRecord *begin, EpuckKnowledgeRecord *end)
+  + EpuckKnowledgePacket create_knowledge_packet()
+  + void set_centroid(const Centroid &centroid)
+  + void set_boundary(const Boundary &boundary)
+  + const Centroid &get_centroid()
+  + const Boundary &get_boundary()
+}
+
+
+struct EpuckHeartbeatPacket {
+  +{static} uint8_t ID
+  +uint16_t robot_id
+  +std::array<char, MAX_HOST_LEN + 1> robot_comms_host
+  +uint16_t robot_comms_request_port
+  +std::array<char, MAX_HOST_LEN + 1> robot_knowledge_host
+  +uint16_t robot_knowledge_exchange_port
+}
+
+struct EpuckNeighbourPacket {
+  +{static} uint8_t ID
+  +uint16_t robot_id
+  +std::array<char, MAX_HOST_LEN + 1> host
+  +uint16_t port
+  +float distance
+}
+
+struct EpuckHeartbeatResponsePacket {
+  +{static} uint8_t ID
+  +uint8_t num_neighbours
+  +std::array<EpuckNeighbourPacket, MAX_ROBOTS> neighbours
+}
+
+struct Centroid {
+  +float x
+  +float y
+  +float z
+}
+
+struct Boundary {
+  +std::array<float, MAX_BOUNDARY_X_POINTS> x_points
+  +std::array<float, MAX_BOUNDARY_Y_POINTS> y_points
+  +std::array<float, MAX_BOUNDARY_Z_POINTS> z_points
+}
+
+struct EpuckKnowledgeRecord {
+  +uint16_t robot_id
+  +Centroid centroid
+  +Boundary boundary
+  +uint16_t seq
+}
+
+struct EpuckKnowledgePacket {
+  +{static} uint8_t ID
+  +uint16_t robot_id
+  +uint16_t seq
+  +uint8_t N
+  +std::array<EpuckKnowledgeRecord, MAX_ROBOTS> known_ids
+}
+
+
+class RobotCommsModel <T : BaseKnowledgeServer\nU : BaseKnowledgeClient> {
+  + RobotCommsModel<T, U>(...)
+  + void start()
+  + void stop()
+  - void launch_exchange_heartbeats()
+  - void exchange_heartbeats()
+  - void launch_handle_knowledge_requests()
+  - void handle_knowledge_requests()
+  - asio::io_context io_context_
+  - std::shared_ptr<T> knowledge_server_
+  - std::map<uint16_t, U> knowledge_clients_
+  - bool running_
+  - std::thread heartbeat_thread_
+  - std::thread knowledge_request_thread_
+  - asio::ip::udp::socket *knowledge_request_socket_
+  - {static} char* TAG
+}
+
+
+class UDPKnowledgeServer <T : BaseRobotCommsModel> {
+  + UDPKnowledgeServer(std::shared_ptr<T> robot_model)
+  + void start()
+  + void stop()
+  - void launch_start_receive()
+  - void start_receive()
+  - void handle_receive(asio::ip::udp::endpoint client, std::array<uint8_t, sizeof(EpuckKnowledgePacket)> data)
+  - asio::io_context io_context_
+  - asio::ip::udp::socket *socket_
+  - std::thread heartbeat_thread_
+  - bool running_
+  - {static} char* TAG
+}
+
+class UDPKnowledgeClient <T : BaseRobotCommsModel> {
+  + UDPKnowledgeClient(EpuckNeighbourPacket neighbour, std::function<bool()> running, std::shared_ptr<T> robot_model)
+  + void start()
+  + void stop()
+  - void launch_send_knowledge()
+  - void send_knowledge()
+  - asio::io_context io_context_
+  - asio::ip::udp::socket *client_
+  - std::thread thread_
+  - bool stopping_
+  - {static} char* TAG
+}
+
+
+class GZKnowledgeServer <T : BaseRobotCommsModel> {
+  + GZKnowledgeServer(std::shared_ptr<T> robot_model)
+  + void start()
+  + void stop()
+  - void on_knowledge(const gz_msgs::Dataframe &msg)
+  - gz_transport::Node node
+  - gz_transport::Publisher pub_knowledge
+  - bool running_
+  - {static} char* TAG
+}
+
+class GZKnowledgeClient <T : BaseRobotCommsModel> {
+  + GZKnowledgeClient(EpuckNeighbourPacket neighbour, std::function<bool()> running, std::shared_ptr<T> robot_model)
+  + void start()
+  + void stop()
+  - void send_knowledge()
+  - gz_transport::Node node
+  - gz_transport::Publisher pub_knowledge
+  - std::thread thread_
+  - {static} char* TAG
+}
+
+
+BaseRobotCommsModel <|-- RobotCommsModel
+BaseKnowledgeServer <|-- UDPKnowledgeServer
+BaseKnowledgeClient <|-- UDPKnowledgeClient
+BaseKnowledgeServer <|-- GZKnowledgeServer
+BaseKnowledgeClient <|-- GZKnowledgeClient
+
+RobotCommsModel <|-[hidden]- BaseKnowledgeServer
+RobotCommsModel <|-[hidden]- BaseKnowledgeClient
+
+BaseRobotCommsModel -[hidden]left-> EpuckHeartbeatPacket
+RobotCommsModel -[hidden]left-> EpuckHeartbeatResponsePacket
+BaseRobotCommsModel -[hidden]right-> EpuckNeighbourPacket
+RobotCommsModel -[hidden]right-> EpuckKnowledgePacket
+RobotCommsModel -[hidden]right-> EpuckKnowledgeRecord
+
+@enduml

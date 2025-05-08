@@ -1,0 +1,4 @@
+uint16 robot_id
+lazy_agent_sim_interfaces/Centroid centroid
+lazy_agent_sim_interfaces/Boundary boundary
+uint16 seq

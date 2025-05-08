@@ -1,0 +1,92 @@
+diff --git ros_gz_lazy_agent_sim_description/models/epuck2/epuck2.sdf ros_gz_lazy_agent_sim_description/models/epuck2/epuck2.sdf
+index c7daafa..c184bd4 100644
+--- ros_gz_lazy_agent_sim_description/models/epuck2/epuck2.sdf
++++ ros_gz_lazy_agent_sim_description/models/epuck2/epuck2.sdf
+@@ -10,6 +10,7 @@
+       <sensor name='prox0' type='gpu_lidar'>
+         <always_on>true</always_on>
+         <update_rate>100.00</update_rate>
++        <visualize>true</visualize>
+         <pose relative_to='prox0'>0 0 0 0 0 0</pose>
+         <lidar>
+           <scan>
+@@ -41,6 +42,7 @@
+       <sensor name='prox1' type='gpu_lidar'>
+         <always_on>true</always_on>
+         <update_rate>100.00</update_rate>
++        <visualize>true</visualize>
+         <pose relative_to='prox1'>0 0 0 0 0 0</pose>
+         <lidar>
+           <scan>
+@@ -72,6 +73,7 @@
+       <sensor name='prox2' type='gpu_lidar'>
+         <always_on>true</always_on>
+         <update_rate>100.00</update_rate>
++        <visualize>true</visualize>
+         <pose relative_to='prox2'>0 0 0 0 0 0</pose>
+         <lidar>
+           <scan>
+@@ -103,6 +106,7 @@
+       <sensor name='prox3' type='gpu_lidar'>
+         <always_on>true</always_on>
+         <update_rate>100.00</update_rate>
++        <visualize>true</visualize>
+         <pose relative_to='prox3'>0 0 0 0 0 0</pose>
+         <lidar>
+           <scan>
+@@ -134,6 +138,7 @@
+       <sensor name='prox4' type='gpu_lidar'>
+         <always_on>true</always_on>
+         <update_rate>100.00</update_rate>
++        <visualize>true</visualize>
+         <pose relative_to='prox4'>0 0 0 0 0 0</pose>
+         <lidar>
+           <scan>
+@@ -165,6 +170,7 @@
+       <sensor name='prox5' type='gpu_lidar'>
+         <always_on>true</always_on>
+         <update_rate>100.00</update_rate>
++        <visualize>true</visualize>
+         <pose relative_to='prox5'>0 0 0 0 0 0</pose>
+         <lidar>
+           <scan>
+@@ -196,6 +202,7 @@
+       <sensor name='prox6' type='gpu_lidar'>
+         <always_on>true</always_on>
+         <update_rate>100.00</update_rate>
++        <visualize>true</visualize>
+         <pose relative_to='prox6'>0 0 0 0 0 0</pose>
+         <lidar>
+           <scan>
+@@ -227,6 +234,7 @@
+       <sensor name='prox7' type='gpu_lidar'>
+         <always_on>true</always_on>
+         <update_rate>100.00</update_rate>
++        <visualize>true</visualize>
+         <pose relative_to='prox7'>0 0 0 0 0 0</pose>
+         <lidar>
+           <scan>
+@@ -258,6 +266,7 @@
+       <sensor name='camera' type='camera'>
+         <always_on>true</always_on>
+         <update_rate>10.00</update_rate>
++        <visualize>true</visualize>
+         <pose relative_to='camera'>0 0 0 0 0 0</pose>
+         <camera>
+           <horizontal_fov>0.84</horizontal_fov>
+@@ -281,6 +290,7 @@
+       <sensor name='tof' type='gpu_lidar'>
+         <always_on>true</always_on>
+         <update_rate>100.00</update_rate>
++        <visualize>true</visualize>
+         <pose relative_to='tof'>0 0 0 0 0 0</pose>
+         <lidar>
+           <scan>
+@@ -312,6 +322,7 @@
+       <sensor name='imu' type='imu'>
+         <always_on>true</always_on>
+         <update_rate>100.00</update_rate>
++        <visualize>true</visualize>
+         <pose relative_to='imu'>0 0 0 0 0 0</pose>
+         <imu>
+           <linear_acceleration>

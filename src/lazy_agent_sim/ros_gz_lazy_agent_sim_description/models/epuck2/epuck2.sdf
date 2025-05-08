@@ -1,0 +1,790 @@
+<sdf
+  version='1.11'
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="http://sdformat.org/schemas/root.xsd"
+>
+  <model name='epuck2'>
+
+    <plugin
+      filename="gz-sim-diff-drive-system"
+      name="gz::sim::systems::DiffDrive">
+      <left_joint>base_link_left_wheel</left_joint>
+      <right_joint>base_link_right_wheel</right_joint>
+      <wheel_separation>0.052</wheel_separation>
+      <wheel_radius>0.02</wheel_radius>
+    </plugin>
+
+    <plugin
+      filename="gz-sim-joint-state-publisher-system"
+      name="gz::sim::systems::JointStatePublisher">
+    </plugin>
+
+    <plugin
+      filename="gz-sim-pose-publisher-system"
+      name="gz::sim::systems::PosePublisher">
+      <publish_link_pose>false</publish_link_pose>
+      <publish_visual_pose>false</publish_visual_pose>
+      <publish_collision_pose>false</publish_collision_pose>
+      <publish_sensor_pose>false</publish_sensor_pose>
+      <publish_model_pose>true</publish_model_pose>
+      <publish_nested_model_pose>true</publish_nested_model_pose>
+      <use_pose_vector_msg>false</use_pose_vector_msg>
+      <update_frequency>60</update_frequency>
+      <static_publisher>false</static_publisher>
+      <static_update_frequency>60</static_update_frequency>
+    </plugin>
+
+    <link name='base_link'>
+
+      <pose>0 0 0 0 0 0</pose>
+
+
+      <!-- Sensors -->
+      <!-- <sensor name='prox0' type='gpu_lidar'>
+        <always_on>true</always_on>
+        <update_rate>100.00</update_rate>
+        <visualize>true</visualize>
+        <pose relative_to='prox0'>0 0 0 0 0 0</pose>
+        <lidar>
+          <scan>
+            <horizontal>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.005</min>
+            <max>0.06</max>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0</mean>
+            <stddev>0.005</stddev>
+          </noise>
+        </lidar>
+      </sensor>
+
+      <sensor name='prox1' type='gpu_lidar'>
+        <always_on>true</always_on>
+        <update_rate>100.00</update_rate>
+        <visualize>true</visualize>
+        <pose relative_to='prox1'>0 0 0 0 0 0</pose>
+        <lidar>
+          <scan>
+            <horizontal>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.005</min>
+            <max>0.06</max>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0</mean>
+            <stddev>0.005</stddev>
+          </noise>
+        </lidar>
+      </sensor>
+
+      <sensor name='prox2' type='gpu_lidar'>
+        <always_on>true</always_on>
+        <update_rate>100.00</update_rate>
+        <visualize>true</visualize>
+        <pose relative_to='prox2'>0 0 0 0 0 0</pose>
+        <lidar>
+          <scan>
+            <horizontal>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.005</min>
+            <max>0.06</max>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0</mean>
+            <stddev>0.005</stddev>
+          </noise>
+        </lidar>
+      </sensor>
+
+      <sensor name='prox3' type='gpu_lidar'>
+        <always_on>true</always_on>
+        <update_rate>100.00</update_rate>
+        <visualize>true</visualize>
+        <pose relative_to='prox3'>0 0 0 0 0 0</pose>
+        <lidar>
+          <scan>
+            <horizontal>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.005</min>
+            <max>0.06</max>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0</mean>
+            <stddev>0.005</stddev>
+          </noise>
+        </lidar>
+      </sensor>
+
+      <sensor name='prox4' type='gpu_lidar'>
+        <always_on>true</always_on>
+        <update_rate>100.00</update_rate>
+        <visualize>true</visualize>
+        <pose relative_to='prox4'>0 0 0 0 0 0</pose>
+        <lidar>
+          <scan>
+            <horizontal>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.005</min>
+            <max>0.06</max>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0</mean>
+            <stddev>0.005</stddev>
+          </noise>
+        </lidar>
+      </sensor>
+
+      <sensor name='prox5' type='gpu_lidar'>
+        <always_on>true</always_on>
+        <update_rate>100.00</update_rate>
+        <visualize>true</visualize>
+        <pose relative_to='prox5'>0 0 0 0 0 0</pose>
+        <lidar>
+          <scan>
+            <horizontal>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.005</min>
+            <max>0.06</max>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0</mean>
+            <stddev>0.005</stddev>
+          </noise>
+        </lidar>
+      </sensor>
+
+      <sensor name='prox6' type='gpu_lidar'>
+        <always_on>true</always_on>
+        <update_rate>100.00</update_rate>
+        <visualize>true</visualize>
+        <pose relative_to='prox6'>0 0 0 0 0 0</pose>
+        <lidar>
+          <scan>
+            <horizontal>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.005</min>
+            <max>0.06</max>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0</mean>
+            <stddev>0.005</stddev>
+          </noise>
+        </lidar>
+      </sensor>
+
+      <sensor name='prox7' type='gpu_lidar'>
+        <always_on>true</always_on>
+        <update_rate>100.00</update_rate>
+        <visualize>true</visualize>
+        <pose relative_to='prox7'>0 0 0 0 0 0</pose>
+        <lidar>
+          <scan>
+            <horizontal>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.005</min>
+            <max>0.06</max>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0</mean>
+            <stddev>0.005</stddev>
+          </noise>
+        </lidar>
+      </sensor>
+
+      <sensor name='camera' type='camera'>
+        <always_on>true</always_on>
+        <update_rate>10.00</update_rate>
+        <visualize>true</visualize>
+        <pose relative_to='camera'>0 0 0 0 0 0</pose>
+        <camera>
+          <horizontal_fov>0.84</horizontal_fov>
+          <image>
+            <width>40</width>
+            <height>40</height>
+            <format>R8G8B8</format>
+            <anti_aliasing>0</anti_aliasing>
+          </image>
+          <clip>
+            <near>0.01</near>
+            <far>20</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <stddev>0.1</stddev>
+          </noise>
+        </camera>
+      </sensor>
+
+      <sensor name='tof' type='gpu_lidar'>
+        <always_on>true</always_on>
+        <update_rate>100.00</update_rate>
+        <visualize>true</visualize>
+        <pose relative_to='tof'>0 0 0 0 0 0</pose>
+        <lidar>
+          <scan>
+            <horizontal>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.005</min>
+            <max>2.0</max>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0</mean>
+            <stddev>0.001</stddev>
+          </noise>
+        </lidar>
+      </sensor> -->
+
+      <sensor name='imu' type='imu'>
+        <always_on>true</always_on>
+        <update_rate>100.00</update_rate>
+        <visualize>true</visualize>
+        <pose relative_to='imu'>0 0 0 0 0 0</pose>
+        <imu>
+          <linear_acceleration>
+            <x>
+              <noise type='gaussian'>
+                <mean>0</mean>
+                <stddev>0.01</stddev>
+              </noise>
+            </x>
+            <y>
+              <noise type='gaussian'>
+                <mean>0</mean>
+                <stddev>0.01</stddev>
+              </noise>
+            </y>
+            <z>
+              <noise type='gaussian'>
+                <mean>0</mean>
+                <stddev>0.01</stddev>
+              </noise>
+            </z>
+          </linear_acceleration>
+          <angular_velocity>
+            <x>
+              <noise type='gaussian'>
+                <mean>0</mean>
+                <stddev>0.01</stddev>
+              </noise>
+            </x>
+            <y>
+              <noise type='gaussian'>
+                <mean>0</mean>
+                <stddev>0.01</stddev>
+              </noise>
+            </y>
+            <z>
+              <noise type='gaussian'>
+                <mean>0</mean>
+                <stddev>0.01</stddev>
+              </noise>
+            </z>
+          </angular_velocity>
+          <enable_orientation>false</enable_orientation>
+        </imu>
+      </sensor>
+
+
+      <inertial>
+        <pose>0 0 0.014999999999999999 0 0 0</pose>
+        <mass>0.13</mass>
+        <inertia>
+          <ixx>9.7858500000000005e-05</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>8.6433300000014065e-05</iyy>
+          <iyz>3.8494222059248888e-12</iyz>
+          <izz>8.748689999998595e-05</izz>
+        </inertia>
+      </inertial>
+      <collision name='base_link_collision'>
+        <pose>0 0 0.021999999999999999 3.1415890000000002 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.040000000000000001</length>
+            <radius>0.036999999999999998</radius>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name='base_link_collision_1'>
+        <pose>0 0 0.0051000000000000004 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.050000000000000003 0.040000000000000001 0.01</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name='base_link_visual'>
+        <pose>0 0 0.021999999999999999 3.1415890000000002 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.032000000000000001</length>
+            <radius>0.036999999999999998</radius>
+          </cylinder>
+        </geometry>
+        <material>
+          <diffuse>1 1 1 0.300000012</diffuse>
+          <ambient>1 1 1 0.300000012</ambient>
+        </material>
+      </visual>
+      <visual name='base_link_visual_1'>
+        <pose>0 0 0.0051000000000000004 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.050000000000000003 0.040000000000000001 0.01</size>
+          </box>
+        </geometry>
+      </visual>
+      <visual name='base_link_fixed_joint_lump__body_top_visual_2'>
+        <pose>0 0 0.0373 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.002</length>
+            <radius>0.036999999999999998</radius>
+          </cylinder>
+        </geometry>
+        <material>
+          <diffuse>0.287499994 0.5 0.199999988 1</diffuse>
+          <ambient>0.287499994 0.5 0.199999988 1</ambient>
+        </material>
+      </visual>
+      <visual name='base_link_fixed_joint_lump__body_columns_visual_3'>
+        <pose>0.025399999999999999 0.019300000000000001 0.042299999999999997 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.0080000000000000002</length>
+            <radius>0.0022499999999999998</radius>
+          </cylinder>
+        </geometry>
+        <material>
+          <diffuse>1 1 1 1</diffuse>
+          <ambient>1 1 1 1</ambient>
+        </material>
+      </visual>
+      <visual name='base_link_fixed_joint_lump__body_columns_visual_4'>
+        <pose>0.025399999999999999 -0.019300000000000001 0.042299999999999997 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.0080000000000000002</length>
+            <radius>0.0022499999999999998</radius>
+          </cylinder>
+        </geometry>
+        <material>
+          <diffuse>1 1 1 1</diffuse>
+          <ambient>1 1 1 1</ambient>
+        </material>
+      </visual>
+      <visual name='base_link_fixed_joint_lump__body_columns_visual_5'>
+        <pose>-0.032000000000000001 0 0.042299999999999997 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.0080000000000000002</length>
+            <radius>0.0022499999999999998</radius>
+          </cylinder>
+        </geometry>
+        <material>
+          <diffuse>1 1 1 1</diffuse>
+          <ambient>1 1 1 1</ambient>
+        </material>
+      </visual>
+    </link>
+    <joint name='base_link_left_wheel' type='revolute'>
+      <pose relative_to='base_link'>0 0.025999999999999999 0.02 0 0 0</pose>
+      <parent>base_link</parent>
+      <child>left_wheel</child>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <effort>10</effort>
+          <velocity>7.5359999999999996</velocity>
+          <lower>-inf</lower>
+          <upper>inf</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='left_wheel'>
+      <pose relative_to='base_link_left_wheel'>0 0 0 0 0 0</pose>
+      <inertial>
+        <pose>0 0 0 1.5707959999999999 0 0</pose>
+        <mass>0.0050000000000000001</mass>
+        <inertia>
+          <ixx>5.1041666670000001e-07</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>5.1041666670000001e-07</iyy>
+          <iyz>0</iyz>
+          <izz>9.9999999999999995e-07</izz>
+        </inertia>
+      </inertial>
+      <collision name='left_wheel_collision'>
+        <pose>0 0 0 1.5707959999999999 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.0050000000000000001</length>
+            <radius>0.02</radius>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name='left_wheel_visual'>
+        <pose>0 0 0 1.5707959999999999 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.0050000000000000001</length>
+            <radius>0.02</radius>
+          </cylinder>
+        </geometry>
+        <material>
+          <diffuse>0 0 0 1</diffuse>
+          <ambient>0 0 0 1</ambient>
+        </material>
+      </visual>
+    </link>
+    <joint name='base_link_right_wheel' type='revolute'>
+      <pose relative_to='base_link'>0 -0.025999999999999999 0.02 0 0 0</pose>
+      <parent>base_link</parent>
+      <child>right_wheel</child>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <effort>10</effort>
+          <velocity>7.5359999999999996</velocity>
+          <lower>-inf</lower>
+          <upper>inf</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='right_wheel'>
+      <pose relative_to='base_link_right_wheel'>0 0 0 0 0 0</pose>
+      <inertial>
+        <pose>0 0 0 1.5707959999999999 0 0</pose>
+        <mass>0.0050000000000000001</mass>
+        <inertia>
+          <ixx>5.1041666670000001e-07</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>5.1041666670000001e-07</iyy>
+          <iyz>0</iyz>
+          <izz>9.9999999999999995e-07</izz>
+        </inertia>
+      </inertial>
+      <collision name='right_wheel_collision'>
+        <pose>0 0 0 1.5707959999999999 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.0050000000000000001</length>
+            <radius>0.02</radius>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name='right_wheel_visual'>
+        <pose>0 0 0 1.5707959999999999 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.0050000000000000001</length>
+            <radius>0.02</radius>
+          </cylinder>
+        </geometry>
+        <material>
+          <diffuse>0 0 0 1</diffuse>
+          <ambient>0 0 0 1</ambient>
+        </material>
+      </visual>
+    </link>
+    <frame name='body_top_body_columns' attached_to='body_top'>
+      <pose>0 0 0.0050000000000000001 0 0 0</pose>
+    </frame>
+    <frame name='body_columns' attached_to='body_top_body_columns'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='body_top_led0' attached_to='body_top'>
+      <pose>0.033700000000000001 0 0.001 0 0 0</pose>
+    </frame>
+    <frame name='led0' attached_to='body_top_led0'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='body_top_led1' attached_to='body_top'>
+      <pose>0.021999999999999999 -0.025000000000000001 0.001 0 0 -0.78318500000000002</pose>
+    </frame>
+    <frame name='led1' attached_to='body_top_led1'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='body_top_led2' attached_to='body_top'>
+      <pose>0 -0.033700000000000001 0.001 0 0 1.5700000000000001</pose>
+    </frame>
+    <frame name='led2' attached_to='body_top_led2'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='body_top_led3' attached_to='body_top'>
+      <pose>-0.027 -0.0201 0.001 0 0 0.633185</pose>
+    </frame>
+    <frame name='led3' attached_to='body_top_led3'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='body_top_led4' attached_to='body_top'>
+      <pose>-0.033000000000000002 0 0.001 0 0 0</pose>
+    </frame>
+    <frame name='led4' attached_to='body_top_led4'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='body_top_led5' attached_to='body_top'>
+      <pose>-0.027 0.0201 0.001 0 0 -0.633185</pose>
+    </frame>
+    <frame name='led5' attached_to='body_top_led5'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='body_top_led6' attached_to='body_top'>
+      <pose>0 0.033700000000000001 0.001 0 0 1.5700000000000001</pose>
+    </frame>
+    <frame name='led6' attached_to='body_top_led6'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='body_top_led7' attached_to='body_top'>
+      <pose>0.021999999999999999 0.025000000000000001 0.001 0 0 0.78318500000000002</pose>
+    </frame>
+    <frame name='led7' attached_to='body_top_led7'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='body_top_led8' attached_to='body_top'>
+      <pose>0 0 0.001 0 0 -1.570786</pose>
+    </frame>
+    <frame name='led8' attached_to='body_top_led8'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='base_link_body_top' attached_to='base_link'>
+      <pose>0 0 0.0373 0 0 0</pose>
+    </frame>
+    <frame name='body_top' attached_to='base_link_body_top'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='base_link_camera' attached_to='base_link'>
+      <pose>0.034000000000000002 0 0.028000000000000001 0 0 0</pose>
+    </frame>
+    <frame name='camera' attached_to='base_link_camera'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='base_link_emitter' attached_to='base_link'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='emitter' attached_to='base_link_emitter'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='base_link_imu' attached_to='base_link'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='imu' attached_to='base_link_imu'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='base_link_led9' attached_to='base_link'>
+      <pose>0.031 -0.012500000000000001 0.028000000000000001 0 0 0</pose>
+    </frame>
+    <frame name='led9' attached_to='base_link_led9'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='base_link_mass_link' attached_to='base_link'>
+      <pose>0 0 0.014999999999999999 3.1415890000000002 0 0</pose>
+    </frame>
+    <frame name='mass_link' attached_to='base_link_mass_link'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='base_link_prox0' attached_to='base_link'>
+      <pose>0.032254999999999999 -0.010751999999999999 0.033000000000000002 1.5708070000000001 0
+        -0.30080000000000001</pose>
+    </frame>
+    <frame name='prox0' attached_to='base_link_prox0'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='base_link_prox1' attached_to='base_link'>
+      <pose>0.022460999999999998 -0.025524000000000002 0.033000000000000002 1.5708060000000001
+        4.9999999999425673e-06 -0.80079999999999996</pose>
+    </frame>
+    <frame name='prox1' attached_to='base_link_prox1'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='base_link_prox2' attached_to='base_link'>
+      <pose>0 -0.034000000000000002 0.033000000000000002 1.5708 1.0000000000343202e-05 -1.5708</pose>
+    </frame>
+    <frame name='prox2' attached_to='base_link_prox2'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='base_link_prox3' attached_to='base_link'>
+      <pose>-0.030411000000000001 -0.015205 0.033000000000000002 1.5707880000000001
+        7.0000000000364113e-06 -2.6439859999999999</pose>
+    </frame>
+    <frame name='prox3' attached_to='base_link_prox3'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='base_link_prox4' attached_to='base_link'>
+      <pose>-0.030411000000000001 0.015205 0.033000000000000002 1.5707869999999999
+        -3.0000000000352557e-06 2.6392000000000002</pose>
+    </frame>
+    <frame name='prox4' attached_to='base_link_prox4'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='base_link_prox5' attached_to='base_link'>
+      <pose>0 0.034000000000000002 0.033000000000000002 1.5707929999999999 -1.1000000000427123e-05
+        1.5707899999999999</pose>
+    </frame>
+    <frame name='prox5' attached_to='base_link_prox5'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='base_link_prox6' attached_to='base_link'>
+      <pose>0.022460999999999998 0.025524000000000002 0.033000000000000002 1.5708009999999999
+        -9.9999999999546236e-06 0.79920000000000002</pose>
+    </frame>
+    <frame name='prox6' attached_to='base_link_prox6'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='base_link_prox7' attached_to='base_link'>
+      <pose>0.032254999999999999 0.010751999999999999 0.033000000000000002 1.5708059999999999
+        -6.9999999999809001e-06 0.29920000000000024</pose>
+    </frame>
+    <frame name='prox7' attached_to='base_link_prox7'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='base_link_receiver' attached_to='base_link'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='receiver' attached_to='base_link_receiver'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='base_link_speaker' attached_to='base_link'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='speaker' attached_to='base_link_speaker'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+    <frame name='base_link_tof' attached_to='base_link'>
+      <pose>0.034000000000000002 -0.0018 0.033000000000000002 1.5708070000000001
+        -3.9999999999998135e-06 -0.00080000000000000004</pose>
+    </frame>
+    <frame name='tof' attached_to='base_link_tof'>
+      <pose>0 0 0 0 0 0</pose>
+    </frame>
+  </model>
+</sdf>

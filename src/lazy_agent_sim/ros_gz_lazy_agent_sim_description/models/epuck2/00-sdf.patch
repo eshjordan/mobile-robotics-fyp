@@ -1,0 +1,370 @@
+diff --git ros_gz_lazy_agent_sim_description/models/epuck2/epuck2.sdf ros_gz_lazy_agent_sim_description/models/epuck2/epuck2.sdf
+index 394b654..b433e37 100644
+--- ros_gz_lazy_agent_sim_description/models/epuck2/epuck2.sdf
++++ ros_gz_lazy_agent_sim_description/models/epuck2/epuck2.sdf
+@@ -1,6 +1,364 @@
+-<sdf version='1.12'>
++<sdf
++  version='1.12'
++  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++  xsi:noNamespaceSchemaLocation="http://sdformat.org/schemas/root.xsd"
++>
+   <model name='epuck2'>
+     <link name='base_link'>
++
++      <!-- Sensors -->
++      <sensor name='prox0' type='gpu_lidar'>
++        <always_on>true</always_on>
++        <update_rate>100.00</update_rate>
++        <pose relative_to='prox0'>0 0 0 0 0 0</pose>
++        <lidar>
++          <scan>
++            <horizontal>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </horizontal>
++            <vertical>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </vertical>
++          </scan>
++          <range>
++            <min>0.005</min>
++            <max>0.06</max>
++          </range>
++          <noise>
++            <type>gaussian</type>
++            <mean>0</mean>
++            <stddev>0.005</stddev>
++          </noise>
++        </lidar>
++      </sensor>
++
++      <sensor name='prox1' type='gpu_lidar'>
++        <always_on>true</always_on>
++        <update_rate>100.00</update_rate>
++        <pose relative_to='prox1'>0 0 0 0 0 0</pose>
++        <lidar>
++          <scan>
++            <horizontal>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </horizontal>
++            <vertical>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </vertical>
++          </scan>
++          <range>
++            <min>0.005</min>
++            <max>0.06</max>
++          </range>
++          <noise>
++            <type>gaussian</type>
++            <mean>0</mean>
++            <stddev>0.005</stddev>
++          </noise>
++        </lidar>
++      </sensor>
++
++      <sensor name='prox2' type='gpu_lidar'>
++        <always_on>true</always_on>
++        <update_rate>100.00</update_rate>
++        <pose relative_to='prox2'>0 0 0 0 0 0</pose>
++        <lidar>
++          <scan>
++            <horizontal>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </horizontal>
++            <vertical>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </vertical>
++          </scan>
++          <range>
++            <min>0.005</min>
++            <max>0.06</max>
++          </range>
++          <noise>
++            <type>gaussian</type>
++            <mean>0</mean>
++            <stddev>0.005</stddev>
++          </noise>
++        </lidar>
++      </sensor>
++
++      <sensor name='prox3' type='gpu_lidar'>
++        <always_on>true</always_on>
++        <update_rate>100.00</update_rate>
++        <pose relative_to='prox3'>0 0 0 0 0 0</pose>
++        <lidar>
++          <scan>
++            <horizontal>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </horizontal>
++            <vertical>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </vertical>
++          </scan>
++          <range>
++            <min>0.005</min>
++            <max>0.06</max>
++          </range>
++          <noise>
++            <type>gaussian</type>
++            <mean>0</mean>
++            <stddev>0.005</stddev>
++          </noise>
++        </lidar>
++      </sensor>
++
++      <sensor name='prox4' type='gpu_lidar'>
++        <always_on>true</always_on>
++        <update_rate>100.00</update_rate>
++        <pose relative_to='prox4'>0 0 0 0 0 0</pose>
++        <lidar>
++          <scan>
++            <horizontal>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </horizontal>
++            <vertical>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </vertical>
++          </scan>
++          <range>
++            <min>0.005</min>
++            <max>0.06</max>
++          </range>
++          <noise>
++            <type>gaussian</type>
++            <mean>0</mean>
++            <stddev>0.005</stddev>
++          </noise>
++        </lidar>
++      </sensor>
++
++      <sensor name='prox5' type='gpu_lidar'>
++        <always_on>true</always_on>
++        <update_rate>100.00</update_rate>
++        <pose relative_to='prox5'>0 0 0 0 0 0</pose>
++        <lidar>
++          <scan>
++            <horizontal>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </horizontal>
++            <vertical>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </vertical>
++          </scan>
++          <range>
++            <min>0.005</min>
++            <max>0.06</max>
++          </range>
++          <noise>
++            <type>gaussian</type>
++            <mean>0</mean>
++            <stddev>0.005</stddev>
++          </noise>
++        </lidar>
++      </sensor>
++
++      <sensor name='prox6' type='gpu_lidar'>
++        <always_on>true</always_on>
++        <update_rate>100.00</update_rate>
++        <pose relative_to='prox6'>0 0 0 0 0 0</pose>
++        <lidar>
++          <scan>
++            <horizontal>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </horizontal>
++            <vertical>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </vertical>
++          </scan>
++          <range>
++            <min>0.005</min>
++            <max>0.06</max>
++          </range>
++          <noise>
++            <type>gaussian</type>
++            <mean>0</mean>
++            <stddev>0.005</stddev>
++          </noise>
++        </lidar>
++      </sensor>
++
++      <sensor name='prox7' type='gpu_lidar'>
++        <always_on>true</always_on>
++        <update_rate>100.00</update_rate>
++        <pose relative_to='prox7'>0 0 0 0 0 0</pose>
++        <lidar>
++          <scan>
++            <horizontal>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </horizontal>
++            <vertical>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </vertical>
++          </scan>
++          <range>
++            <min>0.005</min>
++            <max>0.06</max>
++          </range>
++          <noise>
++            <type>gaussian</type>
++            <mean>0</mean>
++            <stddev>0.005</stddev>
++          </noise>
++        </lidar>
++      </sensor>
++
++      <sensor name='camera' type='camera'>
++        <always_on>true</always_on>
++        <update_rate>10.00</update_rate>
++        <pose relative_to='camera'>0 0 0 0 0 0</pose>
++        <camera>
++          <horizontal_fov>0.84</horizontal_fov>
++          <image>
++            <width>40</width>
++            <height>40</height>
++            <format>R8G8B8</format>
++            <anti_aliasing>0</anti_aliasing>
++          </image>
++          <clip>
++            <near>0.01</near>
++            <far>20</far>
++          </clip>
++          <noise>
++            <type>gaussian</type>
++            <stddev>0.1</stddev>
++          </noise>
++        </camera>
++      </sensor>
++
++      <sensor name='tof' type='gpu_lidar'>
++        <always_on>true</always_on>
++        <update_rate>100.00</update_rate>
++        <pose relative_to='tof'>0 0 0 0 0 0</pose>
++        <lidar>
++          <scan>
++            <horizontal>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </horizontal>
++            <vertical>
++              <samples>1</samples>
++              <resolution>1</resolution>
++              <min_angle>0</min_angle>
++              <max_angle>0</max_angle>
++            </vertical>
++          </scan>
++          <range>
++            <min>0.005</min>
++            <max>2.0</max>
++          </range>
++          <noise>
++            <type>gaussian</type>
++            <mean>0</mean>
++            <stddev>0.001</stddev>
++          </noise>
++        </lidar>
++      </sensor>
++
++      <sensor name='imu' type='imu'>
++        <always_on>true</always_on>
++        <update_rate>100.00</update_rate>
++        <pose relative_to='imu'>0 0 0 0 0 0</pose>
++        <imu>
++          <linear_acceleration>
++            <x>
++              <noise type='gaussian'>
++                <mean>0</mean>
++                <stddev>0.01</stddev>
++              </noise>
++            </x>
++            <y>
++              <noise type='gaussian'>
++                <mean>0</mean>
++                <stddev>0.01</stddev>
++              </noise>
++            </y>
++            <z>
++              <noise type='gaussian'>
++                <mean>0</mean>
++                <stddev>0.01</stddev>
++              </noise>
++            </z>
++          </linear_acceleration>
++          <angular_velocity>
++            <x>
++              <noise type='gaussian'>
++                <mean>0</mean>
++                <stddev>0.01</stddev>
++              </noise>
++            </x>
++            <y>
++              <noise type='gaussian'>
++                <mean>0</mean>
++                <stddev>0.01</stddev>
++              </noise>
++            </y>
++            <z>
++              <noise type='gaussian'>
++                <mean>0</mean>
++                <stddev>0.01</stddev>
++              </noise>
++            </z>
++          </angular_velocity>
++          <enable_orientation>false</enable_orientation>
++        </imu>
++      </sensor>
++
++
+       <inertial>
+         <pose>0 0 0.014999999999999999 0 0 0</pose>
+         <mass>0.13</mass>
