@@ -9,6 +9,7 @@ ament_auto_find_build_dependencies()
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Centroid.msg"
   "msg/Boundary.msg"
+  "msg/EpuckInteraction.msg"
   "msg/EpuckKnowledgeRecord.msg"
   "msg/EpuckKnowledgePacket.msg"
 )
