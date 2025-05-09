@@ -44,7 +44,6 @@ class LocalCommsManager(rclpy.node.Node):
         self.declare_parameter("remap_ids/2", 2)
         self.declare_parameter("remap_ids/3", 3)
 
-        self.knowledge_request_client = None
         self.knowledge_request_timer = self.create_timer(
             1.0, self.request_knowledge_tmr_cb, autostart=False
         )
@@ -84,7 +83,8 @@ class LocalCommsManager(rclpy.node.Node):
 
         server_host = self.get_parameter("server_host").value
         server_port = self.get_parameter("server_port").value
-        self.get_logger().info(f"Starting server on {server_host}:{server_port}")
+        self.get_logger().info(
+            f"Starting server on {server_host}:{server_port}")
         self.server = ThreadingUDPServer(
             (server_host, server_port), self.create_request_handler()
         )
@@ -95,12 +95,10 @@ class LocalCommsManager(rclpy.node.Node):
         self.server_thread.daemon = True
         self.server_thread.start()
 
-        self.knowledge_request_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.knowledge_request_timer.reset()
 
     def stop(self):
         self.knowledge_request_timer.cancel()
-        self.knowledge_request_client = None
 
         if self.server is None:
             return
@@ -112,7 +110,8 @@ class LocalCommsManager(rclpy.node.Node):
         id_str = str(id)
 
         if remap:
-            remappings = self.get_parameters([f"remap_ids/{id}" for id in range(4)])
+            remappings = self.get_parameters(
+                [f"remap_ids/{id}" for id in range(4)])
 
             for remapping in remappings:
                 if remapping.value == id:
@@ -251,7 +250,8 @@ class LocalCommsManager(rclpy.node.Node):
 
                 # Publish to the interaction topic
                 if len(new_in_range) > 0:
-                    this_robot_knowledge = manager.request_knowledge(heartbeat.robot_id)
+                    this_robot_knowledge = manager.request_knowledge(
+                        heartbeat.robot_id)
                     this_robot_knowledge_msg = manager.knowledge_packet_to_msg(
                         this_robot_knowledge
                     )
@@ -260,11 +260,7 @@ class LocalCommsManager(rclpy.node.Node):
                         known_robots_copy = manager.known_robots.copy()
 
                     for id in new_in_range:
-                        other_robot = None
-                        for robot in known_robots_copy:
-                            if id == robot[0]:
-                                other_robot = robot
-                                break
+                        other_robot = known_robots_copy[id]
 
                         other_robot_knowledge = manager.request_knowledge(
                             other_robot.robot_id
@@ -334,7 +330,9 @@ class LocalCommsManager(rclpy.node.Node):
 
         self.get_logger().debug("Knowledge packet packed")
 
-        self.knowledge_request_client.sendto(
+        client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        client.sendto(
             request,
             (robot.robot_comms_host, robot.robot_comms_request_port),
         )
@@ -343,7 +341,7 @@ class LocalCommsManager(rclpy.node.Node):
 
         # Wait for response
         ready_to_read, _, _ = select.select(
-            [self.knowledge_request_client], [], [], 1.0
+            [client], [], [], 1.0
         )
 
         if not ready_to_read or len(ready_to_read) == 0:
@@ -352,7 +350,7 @@ class LocalCommsManager(rclpy.node.Node):
             )
             return None
 
-        data, retaddr = self.knowledge_request_client.recvfrom(
+        data, retaddr = client.recvfrom(
             EpuckKnowledgePacket.calcsize()
         )
 
@@ -366,7 +364,7 @@ class LocalCommsManager(rclpy.node.Node):
 
         response = EpuckKnowledgePacket.unpack(data)
         self.get_logger().debug(
-            f"Received knowledge request response from {robot.robot_id}: {response}"
+            f"Received knowledge request response from {robot_id} ({robot.robot_id} - {robot.robot_comms_host}:{robot.robot_comms_request_port}): {response}"
         )
 
         self.update_robot_model(robot.robot_id, response)
@@ -375,7 +373,7 @@ class LocalCommsManager(rclpy.node.Node):
 
         self.knowledge_request_publisher.publish(msg_response)
 
-        return msg_response
+        return response
 
     def update_robot_model(self, robot_id: int, response: EpuckKnowledgePacket) -> None:
         with self.known_robots_mut:
@@ -400,7 +398,7 @@ class LocalCommsManager(rclpy.node.Node):
         return EpuckKnowledgePacketMsg(
             robot_id=packet.robot_id,
             seq=packet.seq,
-            N=packet.N,
+            n=packet.N,
             known_ids=[
                 EpuckKnowledgeRecordMsg(
                     robot_id=record.robot_id,
