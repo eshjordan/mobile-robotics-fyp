@@ -1,30 +1,11 @@
 import rclpy
-import rclpy.logging
 from rclpy.node import Node
-import rclpy.time
-# from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 from geometry_msgs.msg import PoseStamped
 from lazy_agent_sim_interfaces.msg import EpuckInteraction, EpuckKnowledgePacket, EpuckKnowledgeRecord, Boundary, Centroid
 import numpy as np
-import typing
 
 # AGENT INTERACTIONS
 import agent_interactions.schemes as schemes
-
-"""
-
-Plan:
- - Listens to /.../repartition/scheme1/request
- - Listens to /.../repartition/scheme2/request
- 
- ...
- 
- - Publishes to /.../repartition/scheme1/response
- - Publishes to /.../repartition/scheme2/response
- 
- ...
-
-"""
 
 scheme_data = {
     "vickery_1d" : {
@@ -40,6 +21,18 @@ scheme_data = {
 }
 
 
+
+
+"""
+launch with:
+
+    ros2 launch agent_interactions repartitioner.launch.py scheme_name:=polygons_2d robot_id:=0
+
+where 'scheme_name' is one of the names in 'scheme_data'
+and 'robot_id' is the id of hte robot whose knowledge packet will be updated by the interaction
+
+"""
+
 class Repartitioner(Node):
 
     def __init__(self):
@@ -47,9 +40,6 @@ class Repartitioner(Node):
 
         self.declare_parameter("namespace", "~")
         self.declare_parameter("robot_id", 0)
-        # self.declare_parameter("manager_robot_tf_prefix", "epuck2_robot_")
-        # self.declare_parameter("manager_robot_tf_suffix", "")
-        # self.declare_parameter("manager_robot_tf_frame", "/base_link")
         self.declare_parameter("scheme_name", "vicker_1d")
 
         self.get_logger().info(f"Namespace: {self.get_parameter('namespace').value}")
@@ -62,7 +52,6 @@ class Repartitioner(Node):
         self.subscriber = self.create_subscription(
             EpuckInteraction,
             "/repartition/request",
-            # self.get_parameter("namespace").value + "/repartition/request",
             self.listener_callback,
             10
         ),
@@ -70,13 +59,21 @@ class Repartitioner(Node):
         self.response = self.create_publisher(
             EpuckKnowledgePacket,
             "/repartition/response",
-            # self.get_parameter("namespace").value + "/repartition/response",
             10
         )
 
-
     def listener_callback(self, interaction_msg):
-        # pass
+
+        """
+        Both agents should receive EXACTLY the same EpuckInteraction msg.
+
+        'this' and 'other' is useful because in some schemes the ordering of the agents matters.
+
+        The below function will pick out if either 'this' or 'other' refers to this robot and then:
+         - Computes the repartition for 'this' or 'other' only, respectively.
+         - Publishes the new knowledge packet for either 'this' or 'other' robot only, respectively
+
+        """
 
         this_packet = interaction_msg.this_robot
         other_packet = interaction_msg.other_robot
@@ -84,7 +81,6 @@ class Repartitioner(Node):
         if self.get_parameter("robot_id").value not in [this_packet.robot_id, other_packet.robot_id]:
             # id's don't match. ignore packet
             return
-        
         
         this_idx_this = [record.robot_id for record in this_packet.known_ids].index(this_packet.robot_id)
         this_idx_other = [record.robot_id for record in this_packet.known_ids].index(other_packet.robot_id)
@@ -97,31 +93,17 @@ class Repartitioner(Node):
         this_agent = self.scheme_handler.agent_from_record(this_packet.known_ids[this_idx_this], this_packet.n)
         other_agent = self.scheme_handler.agent_from_record(other_packet.known_ids[other_idx_other], other_packet.n)
 
-        self.get_logger().info("\n\n")
-        self.get_logger().info("BEFORE")
-        self.get_logger().info("this_agent")
-        self.get_logger().info(f"vertices: {this_agent["vertices"]}")
-        self.get_logger().info("other_agent")
-        self.get_logger().info(f"vertices: {other_agent["vertices"]}")
+        # self.get_logger().info("\n\n")
+        # self.get_logger().info("BEFORE")
+        # self.get_logger().info("this_agent")
+        # self.get_logger().info(f"vertices: {this_agent["vertices"]}")
+        # self.get_logger().info("other_agent")
+        # self.get_logger().info(f"vertices: {other_agent["vertices"]}")
         # self.get_logger().info(f"th_l: {other_agent["theta_l"]},  th_u: {other_agent["theta_u"]},   eps: {other_agent["epsilon"]}")
 
         new_this_agent, new_other_agent = self.scheme_handler.interact(this_agent, other_agent)
         new_this_centroid, new_this_boundary, new_this_n = self.scheme_handler.new_centroid_boundary_n(new_this_agent)
         new_other_centroid, new_other_boundary, new_other_n = self.scheme_handler.new_centroid_boundary_n(new_other_agent)
-
-        # self.get_logger().info("\n")
-        # self.get_logger().info("AFTER")
-        # self.get_logger().info("this_agent")
-        # self.get_logger().info(f"th_l: {new_this_agent.theta_l},  th_u: {new_this_agent.theta_u}")
-        # self.get_logger().info("other_agent")
-        # self.get_logger().info(f"th_l: {new_other_agent.theta_l},  th_u: {new_other_agent.theta_u}")
-
-        self.get_logger().info("\n\n")
-        self.get_logger().info("BEFORE")
-        self.get_logger().info("this_agent")
-        self.get_logger().info(f"vertices: {new_this_agent["vertices"]}")
-        self.get_logger().info("other_agent")
-        self.get_logger().info(f"vertices: {new_other_agent["vertices"]}")
 
         # Update record and republish
         if self.get_parameter("robot_id").value == this_packet.robot_id:
@@ -141,20 +123,23 @@ class Repartitioner(Node):
             self.response.publish(other_packet)
 
         else:
+            # if this fires something has gone seriously wrong ...
             raise ValueError("Robot is not this or other agent...")
-        
-
-        # new_bounds_1, new_bounds_2 = self.scheme_handler.interact(agent1, agent2)
-        # # TODO update packet with new boundaries info
-        # new_packet = self.scheme_handler.new_knowledge_packet(repartition_request, new_bounds_1, new_bounds_2)
-        # self.get_logger().info("\nnew_bounds_1: {}\nnew_bounds_2:{}\n".format(new_bounds_1, new_bounds_2))
-        # self.response.publish(new_packet)
 
 
 def main():
     rclpy.init()
     repartitioner = Repartitioner()
-    
+
+    TESTING = False
+
+    if not TESTING:
+        rclpy.spin(repartitioner)
+
+
+
+
+
     # Create a dummy publisher to send EpuckKnowledgePacket messages
     publisher = repartitioner.create_publisher(
         EpuckInteraction,
