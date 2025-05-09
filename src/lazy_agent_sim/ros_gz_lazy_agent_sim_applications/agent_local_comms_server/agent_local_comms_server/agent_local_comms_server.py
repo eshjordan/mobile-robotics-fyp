@@ -12,8 +12,14 @@ import rclpy.time
 import rclpy.duration
 import rclpy.node
 from agent_local_comms_server.packets import (
+    EPUCK_COMMAND_REQUEST_KNOWLEDGE,
+    EPUCK_COMMAND_SET_KNOWLEDGE,
+    Boundary,
+    Centroid,
+    EpuckCommandPacket,
     EpuckHeartbeatPacket,
     EpuckHeartbeatResponsePacket,
+    EpuckKnowledgeRecord,
     EpuckNeighbourPacket,
     EpuckKnowledgePacket,
 )
@@ -53,6 +59,13 @@ class LocalCommsManager(rclpy.node.Node):
 
         self.interaction_publisher = self.create_publisher(
             EpuckInteractionMsg, "~/interaction", 10
+        )
+
+        self.repartition_subscriber = self.create_subscription(
+            EpuckKnowledgePacketMsg,
+            "~/repartition",
+            self.repartition_callback,
+            10,
         )
 
         self.tf_buffer = tf2_ros.buffer.Buffer()
@@ -321,23 +334,19 @@ class LocalCommsManager(rclpy.node.Node):
 
             robot = self.known_robots[robot_id]
 
-        request = EpuckKnowledgePacket(
-            robot_id=robot.robot_id,
-            seq=0,
-            N=0,
-            known_ids=[],
-        ).pack()
+        command = EpuckCommandPacket(
+            command=EPUCK_COMMAND_REQUEST_KNOWLEDGE, data=[]).pack()
 
-        self.get_logger().debug("Knowledge packet packed")
+        self.get_logger().debug("Command packet packed")
 
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         client.sendto(
-            request,
+            command,
             (robot.robot_comms_host, robot.robot_comms_request_port),
         )
 
-        self.get_logger().debug("Knowledge packet sent")
+        self.get_logger().debug("Command packet sent")
 
         # Wait for response
         ready_to_read, _, _ = select.select(
@@ -417,6 +426,74 @@ class LocalCommsManager(rclpy.node.Node):
                 for record in packet.known_ids
             ],
         )
+
+    def msg_to_knowledge_packet(
+        self, msg: EpuckKnowledgePacketMsg
+    ) -> EpuckKnowledgePacket:
+        return EpuckKnowledgePacket(
+            robot_id=msg.robot_id,
+            seq=msg.seq,
+            N=msg.n,
+            known_ids=[
+                EpuckKnowledgeRecord(
+                    robot_id=record.robot_id,
+                    centroid=Centroid(
+                        x=record.centroid.x,
+                        y=record.centroid.y,
+                        z=record.centroid.z,
+                    ),
+                    boundary=Boundary(
+                        x_points=record.boundary.x_points,
+                        y_points=record.boundary.y_points,
+                        z_points=record.boundary.z_points,
+                    ),
+                    seq=record.seq,
+                )
+                for record in msg.known_ids
+            ],
+        )
+
+    def repartition_callback(
+        self, msg: EpuckKnowledgePacketMsg
+    ) -> None:
+        self.get_logger().debug(
+            f"Repartition callback received: {msg}"
+        )
+
+        self.get_logger().debug(f"Sending knowledge to {msg.robot_id}")
+
+        with self.known_robots_mut:
+            if msg.robot_id not in self.known_robots:
+                self.get_logger().warning(
+                    f"Robot {msg.robot_id} not found in known robots, cannot set knowledge"
+                )
+                return None
+
+            robot = self.known_robots[msg.robot_id]
+
+        command = EpuckCommandPacket(
+            command=EPUCK_COMMAND_SET_KNOWLEDGE, data=[]).pack()
+
+        self.get_logger().debug("Command packet packed")
+
+        client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        client.sendto(
+            command,
+            (robot.robot_comms_host, robot.robot_comms_request_port),
+        )
+
+        self.get_logger().debug("Command packet sent")
+
+        knowledge = self.msg_to_knowledge_packet(msg)
+
+        data = knowledge.pack()
+        self.get_logger().debug("Knowledge packet packed")
+        client.sendto(
+            data,
+            (robot.robot_knowledge_host, robot.robot_knowledge_exchange_port),
+        )
+        self.get_logger().debug("Knowledge packet sent")
 
 
 def main():

@@ -97,6 +97,12 @@ struct EpuckKnowledgePacket {
   +std::array<EpuckKnowledgeRecord, MAX_ROBOTS> known_ids
 }
 
+struct EpuckCommandPacket {
+  +{static} uint8_t ID
+  +uint8_t command
+  +std::array<uint8_t, 8> data
+}
+
 
 class RobotCommsModel <T : BaseKnowledgeServer\nU : BaseKnowledgeClient> {
   + RobotCommsModel<T, U>(...)

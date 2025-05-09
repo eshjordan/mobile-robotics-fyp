@@ -350,3 +350,39 @@ class EpuckKnowledgePacket:
             struct.calcsize(EPUCK_KNOWLEDGE_PACKET_FMT_STR)
             + EpuckKnowledgeRecord.calcsize() * MAX_ROBOTS
         )
+
+
+EPUCK_COMMAND_PACKET_FMT_STR: str = ENDIAN_FMT + \
+    "BB8B"  # There is a number 8 here!
+
+EPUCK_COMMAND_REQUEST_KNOWLEDGE: int = 0x0
+EPUCK_COMMAND_SET_KNOWLEDGE: int = 0x1
+
+
+@dataclass
+class EpuckCommandPacket:
+    data: list[int]  # list of bytes
+    id: int = 0x23
+    command: int = 0x0  # byte
+
+    def pack(self):
+        return struct.pack(
+            EPUCK_COMMAND_PACKET_FMT_STR,
+            self.id,
+            self.command,
+            *self.data,
+        )
+
+    @classmethod
+    def unpack(cls, buffer: bytes):
+        if buffer[0] != 0x23:
+            raise ValueError(
+                f"Invalid message id: {buffer[0]}, expected {EPUCK_COMMAND_PACKET_FMT_STR}"
+            )
+        args = struct.unpack(EPUCK_COMMAND_PACKET_FMT_STR, buffer)
+        obj = cls(*args)
+        return obj
+
+    @classmethod
+    def calcsize(cls):
+        return struct.calcsize(EPUCK_COMMAND_PACKET_FMT_STR)
