@@ -354,6 +354,7 @@ class EpuckKnowledgePacket:
 
 EPUCK_COMMAND_PACKET_FMT_STR: str = ENDIAN_FMT + \
     "BB8B"  # There is a number 8 here!
+EPUCK_COMMAND_PACKET_ID: int = 0x23
 
 EPUCK_COMMAND_REQUEST_KNOWLEDGE: int = 0x0
 EPUCK_COMMAND_SET_KNOWLEDGE: int = 0x1
@@ -362,7 +363,7 @@ EPUCK_COMMAND_SET_KNOWLEDGE: int = 0x1
 @dataclass
 class EpuckCommandPacket:
     data: list[int]  # list of bytes
-    id: int = 0x23
+    id: int = 0x23  # byte
     command: int = 0x0  # byte
 
     def pack(self):
@@ -370,18 +371,20 @@ class EpuckCommandPacket:
             EPUCK_COMMAND_PACKET_FMT_STR,
             self.id,
             self.command,
-            *self.data,
+            *[self.data[i] if i < len(self.data) else 0 for i in range(8)],
         )
 
     @classmethod
     def unpack(cls, buffer: bytes):
-        if buffer[0] != 0x23:
+        if buffer[0] != EPUCK_COMMAND_PACKET_ID:
             raise ValueError(
-                f"Invalid message id: {buffer[0]}, expected {EPUCK_COMMAND_PACKET_FMT_STR}"
+                f"Invalid message id: {buffer[0]}, expected {EPUCK_COMMAND_PACKET_ID}"
             )
-        args = struct.unpack(EPUCK_COMMAND_PACKET_FMT_STR, buffer)
-        obj = cls(*args)
-        return obj
+        start_len = struct.calcsize(EPUCK_COMMAND_PACKET_FMT_STR)
+        id, command, *data = struct.unpack(
+            EPUCK_COMMAND_PACKET_FMT_STR, buffer[:start_len]
+        )
+        return cls(id=id, command=command, data=list(data))
 
     @classmethod
     def calcsize(cls):

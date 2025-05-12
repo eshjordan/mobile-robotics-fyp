@@ -55,7 +55,7 @@ class Repartitioner(Node):
             self.listener_callback,
             10
         ),
-    
+
         self.response = self.create_publisher(
             EpuckKnowledgePacket,
             "/repartition/response",
@@ -81,7 +81,7 @@ class Repartitioner(Node):
         if self.get_parameter("robot_id").value not in [this_packet.robot_id, other_packet.robot_id]:
             # id's don't match. ignore packet
             return
-        
+
         this_idx_this = [record.robot_id for record in this_packet.known_ids].index(this_packet.robot_id)
         this_idx_other = [record.robot_id for record in this_packet.known_ids].index(other_packet.robot_id)
         other_idx_other = [record.robot_id for record in other_packet.known_ids].index(other_packet.robot_id)
@@ -180,7 +180,7 @@ def main():
         knowledge_packet_2.known_ids = [record1, record2]
         knowledge_packet_2.n = 20
         # knowledge_packet_2.n = len(knowledge_packet_2.known_ids)
-        
+
         msg = EpuckInteraction()
         msg.this_robot = knowledge_packet_1
         msg.other_robot = knowledge_packet_2
@@ -213,7 +213,7 @@ def main():
         knowledge_packet_2.seq = 0
         knowledge_packet_2.known_ids = [record1, record2]
         knowledge_packet_2.n = 20
-        
+
         msg = EpuckInteraction()
         msg.this_robot = knowledge_packet_1
         msg.other_robot = knowledge_packet_2
@@ -223,7 +223,7 @@ def main():
 
 
     timer_period = 1.0
-    
+
       # seconds
     repartitioner.create_timer(timer_period, timer_callback_2)
 
