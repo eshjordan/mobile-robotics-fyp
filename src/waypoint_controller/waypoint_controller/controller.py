@@ -4,7 +4,7 @@ from rclpy.node import Node
 import rclpy.time
 import geometry_msgs.msg
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
-from geometry_msgs.msg import PoseStamped, Polygon, Point32
+from geometry_msgs.msg import PoseStamped, PointStamped, Polygon, Point32
 import tf2_py
 import tf2_ros
 
@@ -79,7 +79,7 @@ class WaypointController_v1(Node):
         )
 
         self.event_subscriber = self.create_subscription(
-            PoseStamped,
+            PointStamped,
             'events',  # topic name for events?????
             self.event_callback,
             qos_profile=QoSProfile(
@@ -185,8 +185,8 @@ class WaypointController_v1(Node):
         # print(msg)
         # self.get_logger().info
 
-    def event_callback(self, msg: PoseStamped):
-        event_waypoint = (msg.pose.position.x, msg.pose.position.y)
+    def event_callback(self, msg: PointStamped):
+        event_waypoint = (msg.point.x, msg.point.y)
         self.get_logger().info(f"Received event waypoint: {event_waypoint}")
 
         # Replace current waypoint with event location
