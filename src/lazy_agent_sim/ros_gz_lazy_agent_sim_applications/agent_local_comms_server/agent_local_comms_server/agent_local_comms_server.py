@@ -98,9 +98,15 @@ class LocalCommsManager(rclpy.node.Node):
         server_port = self.get_parameter("server_port").value
         self.get_logger().info(
             f"Starting server on {server_host}:{server_port}")
-        self.server = ThreadingUDPServer(
-            (server_host, server_port), self.create_request_handler()
-        )
+
+        try:
+            self.server = ThreadingUDPServer(
+                (server_host, server_port), self.create_request_handler()
+            )
+        except OSError as e:
+            raise RuntimeError(
+                f"Error starting server on {server_host}:{server_port}: {e}"
+            )
 
         self.server_thread = threading.Thread(
             target=self.server.serve_forever, name="heartbeat-listener"
@@ -371,7 +377,16 @@ class LocalCommsManager(rclpy.node.Node):
             )
             return None
 
-        response = EpuckKnowledgePacket.unpack(data)
+        try:
+            response = EpuckKnowledgePacket.unpack(data)
+        except (struct.error, ValueError) as e:
+            self.get_logger().error(
+                f"Received invalid knowledge request response from {robot.robot_id}: {e}, buffer: {data}"
+            )
+            raise RuntimeError(
+                f"Received invalid knowledge request response from {robot.robot_id}: {e}, buffer: {data}"
+            )
+
         self.get_logger().debug(
             f"Received knowledge request response from {robot_id} ({robot.robot_id} - {robot.robot_comms_host}:{robot.robot_comms_request_port}): {response}"
         )

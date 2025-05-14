@@ -29,6 +29,7 @@ setup(
             "agent_local_comms_server = agent_local_comms_server.agent_local_comms_server:main",
             "udp_agent_comms = agent_local_comms_server.udp_agent_comms:main",
             "gz_agent_comms = agent_local_comms_server.gz_agent_comms:main",
+            "set_knowledge = agent_local_comms_server.set_knowledge:main",
             "pose_tf = agent_local_comms_server.pose_tf:main",
             "odom_tf = agent_local_comms_server.odom_tf:main",
         ],

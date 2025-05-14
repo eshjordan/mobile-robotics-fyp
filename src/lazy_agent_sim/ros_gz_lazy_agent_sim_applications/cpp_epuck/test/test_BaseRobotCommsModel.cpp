@@ -13,6 +13,8 @@
 //     return RUN_ALL_TESTS();
 // }
 
+std::shared_ptr<rclcpp::Node> LOGGING_NODE; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+
 class ConcreteBaseRobotCommsModel : public BaseRobotCommsModel
 {
 public:

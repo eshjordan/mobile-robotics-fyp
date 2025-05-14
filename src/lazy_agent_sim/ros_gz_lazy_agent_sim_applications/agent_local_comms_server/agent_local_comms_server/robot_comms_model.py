@@ -84,19 +84,8 @@ class BaseRobotCommsModel:
         self.seq_ = 0
         self.centroid_ = Centroid()
         self.boundary_ = Boundary([], [], [])
-        self.known_ids_ = dict(
-            [
-                (
-                    robot_id,
-                    EpuckKnowledgeRecord(
-                        robot_id=self.robot_id,
-                        centroid=self.centroid_,
-                        boundary=self.boundary_,
-                        seq=self.GetSeq(),
-                    ),
-                )
-            ]
-        )
+        self.known_ids_ = {}
+        self._UpdateRecord()
 
     def __del__(self):
         pass
@@ -110,10 +99,17 @@ class BaseRobotCommsModel:
     def InsertKnownIds(self, new_ids: Iterable[EpuckKnowledgeRecord]) -> int:
         size_before = self.KnownIdsSize()
         for record in new_ids:
-            if (
-                record.robot_id not in self.known_ids_
-                or self.known_ids_[record.robot_id].seq < record.seq
-            ):
+            not_found = record.robot_id not in self.known_ids_
+            is_this_robot = record.robot_id == self.robot_id
+            is_larger_seq = (not not_found) and (
+                self.known_ids_[record.robot_id].seq < record.seq)
+
+            if is_this_robot and is_larger_seq:
+                self.SetCentroid(record.centroid)
+                self.SetBoundary(record.boundary)
+                self.UpdateRecord()
+
+            if not_found or is_larger_seq:
                 self.known_ids_[record.robot_id] = record
 
         return self.KnownIdsSize() - size_before
@@ -125,36 +121,28 @@ class BaseRobotCommsModel:
         return len(self.known_ids_)
 
     def GetSeq(self):
-        self.seq_ += 1
-        return self.seq_
+        return self._UpdateRecord().seq
 
     def CreateKnowledgePacket(self):
-        # Update the sequence number of the internal record for this robot, so it matches the one in the response
-        seq = self.GetSeq()
-        new_record = [
-            EpuckKnowledgeRecord(
-                robot_id=self.robot_id,
-                centroid=self.centroid_,
-                boundary=self.boundary_,
-                seq=seq,
-            )
-        ]
-        self.InsertKnownIds(new_record)
+        # Update self record to share the same seq value with this new packet
+        new_record = self._UpdateRecord()
 
         return EpuckKnowledgePacket(
             robot_id=self.robot_id,
-            seq=seq,
+            seq=new_record.seq,
             N=self.KnownIdsSize(),
             known_ids=self.GetKnownIds(),
         )
 
     def SetCentroid(self, centroid: Centroid):
         self.centroid_ = Centroid(centroid)
+        self._UpdateRecord()
 
     def SetBoundary(self, boundary: Boundary):
         self.boundary_ = Boundary(
             boundary.x_points.copy(), boundary.y_points.copy(), boundary.z_points.copy()
         )
+        self._UpdateRecord()
 
     def GetCentroid(self) -> Centroid:
         return Centroid(self.centroid_)
@@ -165,6 +153,19 @@ class BaseRobotCommsModel:
             self.boundary_.y_points.copy(),
             self.boundary_.z_points.copy(),
         )
+
+    def _UpdateRecord(self):
+        # Update the sequence number of the internal record for this robot, so it matches the one
+        # in the response
+        self.seq_ += 1
+        new_record = EpuckKnowledgeRecord(
+            robot_id=self.robot_id,
+            centroid=self.centroid_,
+            boundary=self.boundary_,
+            seq=self.seq_,
+        )
+        self.known_ids_[self.robot_id] = new_record
+        return self.known_ids_[self.robot_id]
 
 
 class RobotCommsModel(BaseRobotCommsModel):
@@ -253,10 +254,8 @@ class RobotCommsModel(BaseRobotCommsModel):
                         f"Received knowledge packet from {host}:{port} - {knowledge}"
                     )
 
-                    # Update the knowledge of the robot
-                    this_robot.seq = robot_model.GetSeq()
-                    robot_model.SetCentroid(this_robot.centroid)
-                    robot_model.SetBoundary(this_robot.boundary)
+                    # Set the seq number for the knowledge of this robot to UINT16_MAX to force an update to the rest of the attributes in the record
+                    this_robot.seq = 0xFFFF
                     robot_model.InsertKnownIds(knowledge.known_ids)
 
                     robot_model.logger.debug(

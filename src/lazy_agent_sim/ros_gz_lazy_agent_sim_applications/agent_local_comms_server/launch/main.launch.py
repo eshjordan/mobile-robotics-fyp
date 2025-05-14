@@ -17,7 +17,7 @@ from launch.substitutions import (
 import launch_ros.actions
 from launch_ros.substitutions import FindPackageShare
 
-use_gazebo = False
+use_gazebo = True
 
 epuck_config = {
     'epuck_implementation': 'epuck_driver_cpp',
@@ -188,6 +188,85 @@ gazebo_config = {
     ],
 }
 
+gazebo_udp_cpp_config = {
+    'epuck_implementation': 'gz_model_headless_py',
+    'comms_manager_implementation': 'central_node_py',
+    'localisation_implementation': 'gz_localisation',
+    'waypoint_controller_implementation': 'waypoint_controller_py',
+    'agent_comms_implementation': 'udp_cpp',
+    'repartitioner_implementation': 'vickery_1d_py',
+    'manager_server_host': '127.0.0.1',
+    'manager_server_port': 50000,
+    'manager_threshold_dist': 0.3,
+    'manager_robot_tf_prefix': 'epuck2_robot_',
+    'manager_robot_tf_suffix': '',
+    'manager_robot_tf_frame': '/base_link',
+    'agents': [
+        {
+            'robot_id': 0,
+            'robot_epuck_host': '127.0.0.1',
+            'robot_epuck_port': 10000,
+            'robot_comms_host': '127.0.0.1',
+            'robot_comms_request_port': 50002,
+            'robot_knowledge_host': '127.0.0.1',
+            'robot_knowledge_exchange_port': 50003,
+            'robot_xpos': -0.1,
+            'robot_ypos': -0.1,
+            'robot_theta': 0.0,
+            'robot_teleop': False,
+            'robot_angular_offset': 0.0,
+            'robot_vicon_name': 'BW_epuck0',
+        },
+        {
+            'robot_id': 1,
+            'robot_epuck_host': '127.0.0.1',
+            'robot_epuck_port': 10001,
+            'robot_comms_host': '127.0.0.1',
+            'robot_comms_request_port': 50004,
+            'robot_knowledge_host': '127.0.0.1',
+            'robot_knowledge_exchange_port': 50005,
+            'robot_xpos': -0.1,
+            'robot_ypos': 0.1,
+            'robot_theta': 0.0,
+            'robot_teleop': False,
+            'robot_angular_offset': 0.0,
+            'robot_vicon_name': 'BW_epuck1',
+        },
+        {
+            'robot_id': 2,
+            'robot_epuck_host': '127.0.0.1',
+            'robot_epuck_port': 10002,
+            'robot_comms_host': '127.0.0.1',
+            'robot_comms_request_port': 50006,
+            'robot_knowledge_host': '127.0.0.1',
+            'robot_knowledge_exchange_port': 50007,
+            'robot_xpos': 0.1,
+            'robot_ypos': -0.1,
+            'robot_theta': 0.0,
+            'robot_teleop': False,
+            'robot_angular_offset': 0.0,
+            'robot_vicon_name': 'BW_epuck2',
+        },
+        {
+            'robot_id': 3,
+            'robot_epuck_host': '127.0.0.1',
+            'robot_epuck_port': 10003,
+            'robot_comms_host': '127.0.0.1',
+            'robot_comms_request_port': 50008,
+            'robot_knowledge_host': '127.0.0.1',
+            'robot_knowledge_exchange_port': 50009,
+            'robot_xpos': 0.1,
+            'robot_ypos': 0.1,
+            'robot_theta': 0.0,
+            'robot_teleop': False,
+            'robot_angular_offset': 0.0,
+            'robot_vicon_name': 'BW_epuck3',
+        },
+    ],
+}
+
+
+
 common_config = {
     'static_transforms': [
     ],
@@ -211,7 +290,8 @@ common_config = {
 
 launch_configuration = common_config
 if use_gazebo:
-    launch_configuration.update(gazebo_config)
+    # launch_configuration.update(gazebo_config)
+    launch_configuration.update(gazebo_udp_cpp_config)
 else:
     launch_configuration.update(epuck_config)
 
