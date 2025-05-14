@@ -14,9 +14,6 @@ def generate_launch_description():
                 "namespace": "/",
                 "robot_id": "0",
                 "scheme_name": "vickery_1d",
-                # "manager_robot_tf_prefix": "epuck2_robot_",
-                # "manager_robot_tf_suffix": "",
-                # "manager_robot_tf_frame": "/base_link",
             }.items(),
         )
     )
@@ -42,15 +39,6 @@ def generate_launch_description():
                         'scheme_name': launch.substitutions.LaunchConfiguration(
                             'scheme_name'
                         ),
-                        # 'manager_robot_tf_prefix': launch.substitutions.LaunchConfiguration(
-                        #     'manager_robot_tf_prefix'
-                        # ),
-                        # 'manager_robot_tf_suffix': launch.substitutions.LaunchConfiguration(
-                        #     'manager_robot_tf_suffix'
-                        # ),
-                        # 'manager_robot_tf_frame': launch.substitutions.LaunchConfiguration(
-                        #     'manager_robot_tf_frame'
-                        # )
                     }
                 ],
             ),

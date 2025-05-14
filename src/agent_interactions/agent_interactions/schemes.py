@@ -3,6 +3,9 @@ from copy import deepcopy
 from lazy_agent_sim_interfaces.msg import EpuckInteraction, EpuckKnowledgePacket, EpuckKnowledgeRecord, Boundary, Centroid
 import numpy as np
 
+
+
+
 # Base class
 class InteractionScheme(ABC):
 
@@ -21,6 +24,9 @@ class InteractionScheme(ABC):
     @abstractmethod
     def new_centroid_boundary_n(self, agent):
         pass
+
+
+
 
 
 import agent_interactions.polygons_2d.interactions as p2d
@@ -55,6 +61,9 @@ class Scheme2dPolygons(InteractionScheme):
         return centroid, boundary, n
     
 
+
+
+
 import agent_interactions.modified_vickery_1d.interactions as mv1d
 class Scheme1dModifiedVickery(InteractionScheme):
 
@@ -83,6 +92,43 @@ class Scheme1dModifiedVickery(InteractionScheme):
         n = agent.n
 
         return centroid, boundary, n
+
+class Scheme1dModifiedVickerySimple(InteractionScheme):
+
+    """
+    No epsilon, no minimum area, no anchoring.
+    Simply repartition inside the union of the areas.
+    """
+
+    def interact(self, agent1, agent2):
+        mv1d.interact_simple(agent1, agent2)
+        return agent1, agent2
+
+    def test_neighbourhood(self, agent1, agent2):
+        return mv1d.test_neighbourhood(agent1, agent2)
+    
+    def agent_from_record(self, record, n) -> mv1d.Agent:
+
+        agent = mv1d.Agent(
+            theta_l = record.boundary.x_points[0],
+            theta_u = record.boundary.x_points[1],
+            n = n,
+            epsilon = 0
+        )
+
+        return agent
+    
+    def new_centroid_boundary_n(self, agent: mv1d.Agent):
+        
+        centroid = Centroid( x = agent.theta_c() )
+        boundary = Boundary(x_points = [agent.theta_l, agent.theta_u])
+        n = agent.n
+
+        return centroid, boundary, n
+
+
+
+
 
 
 import agent_interactions.vickery_1d.interactions as v1d

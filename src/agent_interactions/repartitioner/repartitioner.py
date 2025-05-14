@@ -14,6 +14,9 @@ scheme_data = {
     "modified_vickery_1d": {
         "scheme_handler": schemes.Scheme1dModifiedVickery
     },
+    "modified_simple_vickery_1d": {
+        "scheme_handler": schemes.Scheme1dModifiedVickerySimple
+    },
     "polygons_2d": {
         "scheme_handler": schemes.Scheme2dPolygons
 

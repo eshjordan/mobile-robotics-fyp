@@ -340,6 +340,14 @@ implementations = {
                 'scheme_name': 'modified_vickery_1d',
             },
         },
+        'modified_simple_vickery_1d': {
+            'package': 'agent_interactions',
+            'launchfile': 'repartitioner.launch.py',
+            'oneshot': False,
+            'extra_args': {
+                'scheme_name': 'modified_simple_vickery_1d',
+            },
+        },
         'polygons_2d_py': {
             'package': 'agent_interactions',
             'launchfile': 'repartitioner.launch.py',
