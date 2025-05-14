@@ -11,6 +11,7 @@
   <!-- Build Dependencies -->
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
+  <depend>agent_common_library</depend>
   <depend>ros_gz_lazy_agent_sim_description</depend>
   <depend>ros_gz</depend>
   <depend>gz_sim_vendor</depend>

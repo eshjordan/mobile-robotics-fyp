@@ -9,6 +9,7 @@
 
   <depend>python3-shapely</depend>
   <depend>lazy_agent_sim_interfaces</depend>
+  <depend>agent_common_library</depend>
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>

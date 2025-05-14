@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# This script will be sourced when `install/setup.bash` is sourced.
+# Enable running cppcheck with ament_cppcheck().
+export AMENT_CPPCHECK_ALLOW_SLOW_VERSIONS=1

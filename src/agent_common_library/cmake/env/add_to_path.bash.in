@@ -1,0 +1,8 @@
+#!/bin/bash
+
+## This script will be sourced when `install/setup.bash` is sourced.
+## The value of the `EXTRA_PATHS` CMake variable (and any others enclosed like @VAR@) will be substituted at CMake configure time.
+## See https://cmake.org/cmake/help/latest/command/configure_file.html
+## See https://github.com/ament/ament_cmake/blob/53d31f363941e1ef1aa85714d840ee5ca59ff5fd/ament_cmake_core/cmake/environment_hooks/ament_environment_hooks.cmake
+
+export PATH="@EXTRA_PATHS@:${PATH}"

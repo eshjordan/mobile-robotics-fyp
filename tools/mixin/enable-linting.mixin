@@ -1,0 +1,4 @@
+build:
+  enable-linting:
+    cmake-args:
+      - "-DENABLE_LINTING=ON"

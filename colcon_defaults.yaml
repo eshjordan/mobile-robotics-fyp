@@ -2,17 +2,19 @@
   "build": {
     "symlink-install": true,
     "executor": "parallel",
-    "cmake-args": [
-      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-      "-DCMAKE_BUILD_TYPE=RelWithDebInfo",
-      "-DLINTER_TESTS=ON"
+    "mixin": [
+      "rel-with-deb-info",
+      # "debug",
+      "build-testing-on",
+      "ccache",
+      "compile-commands",
+      "enable-linting",
     ],
     "packages-skip-regex": [
     ],
   },
   "test": {
     "packages-skip-regex": [
-      "^mocap_optitrack_driver$",
     ],
   },
   "test-result": {

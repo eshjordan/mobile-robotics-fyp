@@ -9,6 +9,7 @@
 
   <depend>rclpy</depend>
   <depend>lazy_agent_sim_interfaces</depend>
+  <depend>agent_common_library</depend>
 
   <exec_depend>ros2launch</exec_depend>
 

@@ -1,0 +1,32 @@
+#!/bin/bash
+
+## ament_clang_tidy calls clang-tidy when running, which we use for static code analysis tests.
+## clang-tidy runs a full analysis on each input file, but can take a long time to run.
+## clangd-tidy is a pip package that uses clangd to lint files instead, which is much faster.
+## clangd-tidy does not pick up on all the same issues as clang-tidy, but it is good enough for most use cases.
+## This script is a wrapper around clangd-tidy that can be used by ament_clang_tidy.
+## By setting the PATH env var appropriately, when ament_clang_tidy searches for clang-tidy, this one will be used instead.
+## The arguments accepted by clang-tidy and clangd-tidy are not the same, so this script will remove unsupported arguments.
+## The output of clangd-tidy is also in a different format than clang-tidy, and needs to be modified to match the format expected by ament_clang_tidy.
+
+
+# Check if clangd-tidy is installed
+if ! command -v clangd-tidy &> /dev/null; then
+    echo "/clang-tidy.c:0:0: warning: clangd-tidy is not found. Please install (pip) clangd-tidy and make sure it is on your PATH."
+    exit 0
+fi
+
+# Remove clang-tidy arguments which aren't supported by clangd-tidy
+for arg in "$@"; do
+    shift
+    [ "$arg" = "--header-filter" ] && shift && continue
+    set -- "$@" "$arg"
+done
+
+# Call clangd-tidy with the specified arguments
+output=$(exec clangd-tidy -j $(($(nproc) - 1)) "$@")
+
+# ament_clang_tidy expects the output to be in a specific format, see /opt/ros/${ROS_DISTRO}/lib/python3.12/site-packages/ament_clang_tidy/main.py
+sed -E 's,((\S+)\s+|)(\S+\/.*?\.(c|cc|cpp|cxx|h|hh|hpp|hxx)):([[:digit:]]+):([[:digit:]]+): (Warning:|Error:),'"$(pwd)"'\/\3:\5:\6: warning:,' <<<"$output"
+
+exit 0
