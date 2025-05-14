@@ -377,7 +377,9 @@ def split_polygon_by_line(vertices, abc):
         points1.append(vertices[next_idx])
         curr_idx = next_idx
         
-    points1.append(intersections[1][0])
+    # Check for vtx intersection
+    if np.linalg.norm(np.array(points1[-1]) - intersections[1][0]) > 1E-10:
+        points1.append(intersections[1][0])
     
     # Complete second polygon
     curr_point = intersections[1][0]
@@ -389,7 +391,9 @@ def split_polygon_by_line(vertices, abc):
         points2.append(vertices[next_idx])
         curr_idx = next_idx
         
-    points2.append(intersections[0][0])
+    # Check for vtx intersection
+    if np.linalg.norm(np.array(points2[-1]) - intersections[0][0]) > 1E-10:
+        points2.append(intersections[0][0])
     
     return np.array(points1), np.array(points2)
 
