@@ -1,8 +1,12 @@
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import PoseStamped
-from lazy_agent_sim_interfaces.msg import EpuckInteraction, EpuckKnowledgePacket, EpuckKnowledgeRecord, Boundary, Centroid
-import numpy as np
+from lazy_agent_sim_interfaces.msg import (
+    EpuckInteraction,
+    EpuckKnowledgePacket,
+    EpuckKnowledgeRecord,
+    Boundary,
+    Centroid,
+)
 
 # AGENT INTERACTIONS
 import agent_interactions.schemes as schemes
@@ -19,11 +23,8 @@ scheme_data = {
     },
     "polygons_2d": {
         "scheme_handler": schemes.Scheme2dPolygons
-
     },
 }
-
-
 
 
 """
@@ -32,7 +33,7 @@ launch with:
     ros2 launch agent_interactions repartitioner.launch.py scheme_name:=polygons_2d robot_id:=0
 
 where 'scheme_name' is one of the names in 'scheme_data'
-and 'robot_id' is the id of hte robot whose knowledge packet will be updated by the interaction
+and 'robot_id' is the id of the robot whose knowledge packet will be updated by the interaction
 
 """
 
@@ -65,7 +66,7 @@ class Repartitioner(Node):
             10
         )
 
-    def listener_callback(self, interaction_msg):
+    def listener_callback(self, interaction_msg: EpuckInteraction):
 
         """
         Both agents should receive EXACTLY the same EpuckInteraction msg.
@@ -84,14 +85,41 @@ class Repartitioner(Node):
         if self.get_parameter("robot_id").value not in [this_packet.robot_id, other_packet.robot_id]:
             # id's don't match. ignore packet
             return
+        
+        # Exchange all records
+        # 'this'
+        for this_record in this_packet.known_ids:
+            try:
+                # Find record in other packet
+                idx_other = [record.robot_id for record in other_packet.known_ids].index(this_record.robot_id)  # search other packet's known id's
+            except ValueError:
+                other_packet.known_ids.append(this_record)
+        # 'other'
+        for other_record in other_packet.known_ids:
+            try:
+                # Find record in other packet
+                idx_this = [record.robot_id for record in this_packet.known_ids].index(other_record.robot_id)  # search other packet's known id's
+            except ValueError:
+                this_packet.known_ids.append(other_record)
+        
 
-        this_idx_this = [record.robot_id for record in this_packet.known_ids].index(this_packet.robot_id)
-        this_idx_other = [record.robot_id for record in this_packet.known_ids].index(other_packet.robot_id)
-        other_idx_other = [record.robot_id for record in other_packet.known_ids].index(other_packet.robot_id)
-        other_idx_this = [record.robot_id for record in other_packet.known_ids].index(this_packet.robot_id)
+        # Get indexes of records
 
-        self.get_logger().info(f"This: robot_id={this_packet.robot_id},  this_idx_this={this_idx_this}")
-        self.get_logger().info(f"Other: robot_id={other_packet.robot_id},  other_idx_other={other_idx_other}")
+        # Agents always have records of themself
+        this_idx_this = [record.robot_id for record in this_packet.known_ids].index(this_packet.robot_id)       # "this" robot's record of "this" robot 
+        other_idx_other = [record.robot_id for record in other_packet.known_ids].index(other_packet.robot_id)   # "other" robot's record of "other" robot
+        # Knowledge of each other
+        this_idx_other = [record.robot_id for record in this_packet.known_ids].index(other_packet.robot_id)     # "this" robot's record of "other" robot
+        other_idx_this = [record.robot_id for record in other_packet.known_ids].index(this_packet.robot_id)     # "other" robot's record of "this" robot 
+
+        # Assume each agent has the most up to date info about itself
+        # Ensure both agents have updated info about each other
+        this_packet.known_ids[this_idx_other] = other_packet.known_ids[other_idx_other]
+        other_packet.known_ids[other_idx_this] = this_packet.known_ids[this_idx_this]
+        # TODO update info about ALL agent records (probably not needed since they are not needed for this particular interaction)
+
+        self.get_logger().info(f"This: robot_id={this_packet.robot_id},  this_idx_this={this_idx_this},  this_idx_other={this_idx_other}")
+        self.get_logger().info(f"Other: robot_id={other_packet.robot_id},  other_idx_other={other_idx_other},  other_idx_this={other_idx_this}")
 
         this_agent = self.scheme_handler.agent_from_record(this_packet.known_ids[this_idx_this], this_packet.n)
         other_agent = self.scheme_handler.agent_from_record(other_packet.known_ids[other_idx_other], other_packet.n)
@@ -158,68 +186,71 @@ def main():
 
         repartitioner.get_logger().info("\nold_bounds_1: {}\nold_bounds_2:{}\n".format(old_bounds_1, old_bounds_2))
 
+        record0 = EpuckKnowledgeRecord()
+        record0.robot_id = 0
+        record0.centroid = Centroid()
+        record0.boundary = Boundary(x_points = old_bounds_1)
+        record0.seq = 0
+
         record1 = EpuckKnowledgeRecord()
-        record1.robot_id = 0
+        record1.robot_id = 1
         record1.centroid = Centroid()
-        record1.boundary = Boundary(x_points = old_bounds_1)
+        record1.boundary = Boundary(x_points = old_bounds_2)
         record1.seq = 0
 
-        record2 = EpuckKnowledgeRecord()
-        record2.robot_id = 1
-        record2.centroid = Centroid()
-        record2.boundary = Boundary(x_points = old_bounds_2)
-        record2.seq = 0
+        knowledge_packet_0 = EpuckKnowledgePacket()
+        knowledge_packet_0.robot_id = 0
+        knowledge_packet_0.seq = 0
+        knowledge_packet_0.known_ids = [record0, record1]
+        # knowledge_packet_0.n = 20
+        knowledge_packet_0.n = len(knowledge_packet_0.known_ids)
 
         knowledge_packet_1 = EpuckKnowledgePacket()
-        knowledge_packet_1.robot_id = 0
+        knowledge_packet_1.robot_id = 1
         knowledge_packet_1.seq = 0
-        knowledge_packet_1.known_ids = [record1, record2]
-        knowledge_packet_1.n = 20
-        # knowledge_packet_1.n = len(knowledge_packet_1.known_ids)
-
-        knowledge_packet_2 = EpuckKnowledgePacket()
-        knowledge_packet_2.robot_id = 1
-        knowledge_packet_2.seq = 0
-        knowledge_packet_2.known_ids = [record1, record2]
-        knowledge_packet_2.n = 20
-        # knowledge_packet_2.n = len(knowledge_packet_2.known_ids)
+        knowledge_packet_1.known_ids = [record1]    # doesn't know about 0
+        # knowledge_packet_1.known_ids = [record0, record1]
+        # knowledge_packet_1.n = 20
+        knowledge_packet_1.n = len(knowledge_packet_1.known_ids)
 
         msg = EpuckInteraction()
-        msg.this_robot = knowledge_packet_1
-        msg.other_robot = knowledge_packet_2
+        msg.this_robot = knowledge_packet_0
+        msg.other_robot = knowledge_packet_1
 
         repartitioner.get_logger().info(f"Publishing: {msg}")
         publisher.publish(msg)
 
     def timer_callback_2():
 
+        record0 = EpuckKnowledgeRecord()
+        record0.robot_id = 0
+        record0.centroid = Centroid( x=2, y=2 )
+        record0.boundary = Boundary(x_points = [1, 3, 3, 1], y_points = [3, 3, 1, 1])
+        record0.seq = 0
+
         record1 = EpuckKnowledgeRecord()
-        record1.robot_id = 0
-        record1.centroid = Centroid( x=2, y=2 )
-        record1.boundary = Boundary(x_points = [1, 3, 3, 1], y_points = [3, 3, 1, 1])
+        record1.robot_id = 1
+        record1.centroid = Centroid(x=3, y=3)
+        record1.boundary = Boundary(x_points = [2, 4, 4, 2], y_points = [4, 4, 2, 2])
         record1.seq = 0
 
-        record2 = EpuckKnowledgeRecord()
-        record2.robot_id = 1
-        record2.centroid = Centroid(x=3, y=3)
-        record2.boundary = Boundary(x_points = [2, 4, 4, 2], y_points = [4, 4, 2, 2])
-        record2.seq = 0
+        knowledge_packet_0 = EpuckKnowledgePacket()
+        knowledge_packet_0.robot_id = 0
+        knowledge_packet_0.seq = 0
+        knowledge_packet_0.known_ids = [record0]    #  doesn't know about 1
+        # knowledge_packet_0.known_ids = [record0, record1]
+        knowledge_packet_0.n = len(knowledge_packet_0.known_ids)
 
         knowledge_packet_1 = EpuckKnowledgePacket()
-        knowledge_packet_1.robot_id = 0
+        knowledge_packet_1.robot_id = 1
         knowledge_packet_1.seq = 0
-        knowledge_packet_1.known_ids = [record1, record2]
-        knowledge_packet_1.n = 20
-
-        knowledge_packet_2 = EpuckKnowledgePacket()
-        knowledge_packet_2.robot_id = 1
-        knowledge_packet_2.seq = 0
-        knowledge_packet_2.known_ids = [record1, record2]
-        knowledge_packet_2.n = 20
+        knowledge_packet_1.known_ids = [record1]    # doesn't know about 0
+        # knowledge_packet_1.known_ids = [record0, record1]
+        knowledge_packet_1.n = len(knowledge_packet_1.known_ids)
 
         msg = EpuckInteraction()
-        msg.this_robot = knowledge_packet_1
-        msg.other_robot = knowledge_packet_2
+        msg.this_robot = knowledge_packet_0
+        msg.other_robot = knowledge_packet_1
 
         repartitioner.get_logger().info(f"Publishing: {msg}")
         publisher.publish(msg)
@@ -228,7 +259,7 @@ def main():
     timer_period = 1.0
 
       # seconds
-    repartitioner.create_timer(timer_period, timer_callback_2)
+    repartitioner.create_timer(timer_period, timer_callback_1)
 
     rclpy.spin(repartitioner)
     # # Shutdown

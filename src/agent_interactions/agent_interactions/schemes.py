@@ -34,7 +34,8 @@ class Scheme2dPolygons(InteractionScheme):
 
     def interact(self, agent1, agent2):
         vertices1, vertices2 = p2d.interact_polygons(agent1["vertices"], agent2["vertices"])
-        return {"vertices": vertices1}, {"vertices": vertices2}
+        new_n = max(agent1["n"], agent2["n"], 2) # should always be at least 2 after an interaction
+        return {"vertices": vertices1, "n": new_n}, {"vertices": vertices2, "n": new_n}
 
     def test_neighbourhood(self, agent1, agent2):
         return p2d.test_neighbourhood(agent1["vertices"], agent2["vertices"])
@@ -44,7 +45,8 @@ class Scheme2dPolygons(InteractionScheme):
         agent = {
             "vertices": np.array([
                 [x,y] for x,y in zip(record.boundary.x_points, record.boundary.y_points)
-            ])
+            ]),
+            "n": n
         }
         return agent
     
@@ -56,7 +58,7 @@ class Scheme2dPolygons(InteractionScheme):
             x_points = list(agent["vertices"][:,0]), 
             y_points = list(agent["vertices"][:,1])
         )
-        n = 0       # not necessary for this scheme
+        n = agent["n"]
 
         return centroid, boundary, n
     
@@ -122,7 +124,7 @@ class Scheme1dModifiedVickerySimple(InteractionScheme):
         
         centroid = Centroid( x = agent.theta_c() )
         boundary = Boundary(x_points = [agent.theta_l, agent.theta_u])
-        n = agent.n
+        n = max(agent.n,2)  # should always be at least 2 after an interaction
 
         return centroid, boundary, n
 
@@ -130,7 +132,7 @@ class Scheme1dModifiedVickerySimple(InteractionScheme):
 
 
 
-
+# TODO
 import agent_interactions.vickery_1d.interactions as v1d
 class Scheme1dVickery(InteractionScheme):
 
