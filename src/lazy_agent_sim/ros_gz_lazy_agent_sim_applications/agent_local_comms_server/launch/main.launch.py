@@ -25,6 +25,7 @@ epuck_config = {
     'localisation_implementation': 'vicon_localisation',
     'waypoint_controller_implementation': 'waypoint_controller_py',
     'agent_comms_implementation': 'epuck_firmware',
+    'repartitioner_implementation': 'vickery_1d_py',
     'manager_server_host': '192.168.11.5',
     'manager_server_port': 50000,
     'manager_threshold_dist': 0.3,
@@ -116,6 +117,7 @@ gazebo_config = {
     'localisation_implementation': 'gz_localisation',
     'waypoint_controller_implementation': 'waypoint_controller_py',
     'agent_comms_implementation': 'gz_rf_py',
+    'repartitioner_implementation': 'vickery_1d_py',
     'manager_server_host': '127.0.0.1',
     'manager_server_port': 50000,
     'manager_threshold_dist': 0.3,
@@ -318,6 +320,40 @@ implementations = {
                 'slow_angle': '0.3',
                 'threshold_distance': '0.05',
                 'threshold_angle': '0.05',
+            },
+        },
+    },
+    'repartitioner_implementation': {
+        'vickery_1d_py': {
+            'package': 'agent_interactions',
+            'launchfile': 'repartitioner.launch.py',
+            'oneshot': False,
+            'extra_args': {
+                'scheme_name': 'vickery_1d',
+            },
+        },
+        'modified_vickery_1d_py': {
+            'package': 'agent_interactions',
+            'launchfile': 'repartitioner.launch.py',
+            'oneshot': False,
+            'extra_args': {
+                'scheme_name': 'modified_vickery_1d',
+            },
+        },
+        'modified_simple_vickery_1d': {
+            'package': 'agent_interactions',
+            'launchfile': 'repartitioner.launch.py',
+            'oneshot': False,
+            'extra_args': {
+                'scheme_name': 'modified_simple_vickery_1d',
+            },
+        },
+        'polygons_2d_py': {
+            'package': 'agent_interactions',
+            'launchfile': 'repartitioner.launch.py',
+            'oneshot': False,
+            'extra_args': {
+                'scheme_name': 'polygons_2d',
             },
         },
     },
@@ -787,6 +823,65 @@ def include_waypoint_controller_implementation(context) -> list[launch.Action]:
     return result
 
 
+def include_repartitioner_implementation(context) -> list[launch.Action]:
+    """Include the repartitioner implementation."""
+    result = []
+
+    launchfile = get_implementation_value(
+        'repartitioner_implementation',
+        'launchfile',
+    )
+
+    if not launchfile:
+        return result
+
+    extra_args = get_implementation_value(
+        'repartitioner_implementation',
+        'extra_args',
+    )
+
+    if not get_implementation_value('repartitioner_implementation', 'oneshot'):
+        for agent in launch_configuration['agents']:
+            robot_id = agent['robot_id']
+
+            launch_arguments = {
+                'namespace':
+                    f'/{launch_configuration["manager_robot_tf_prefix"]}{robot_id}',
+                'robot_id':
+                    f"{robot_id}",
+            }
+
+            launch_arguments.update(extra_args if extra_args else {})
+
+            _include = IncludeLaunch(
+                PythonLaunch(
+                    PathJoin(
+                        [
+                            FindPackageShare(
+                                get_implementation_value(
+                                    'repartitioner_implementation',
+                                    'package',
+                                ),
+                            ),
+                            'launch',
+                            get_implementation_value(
+                                'repartitioner_implementation',
+                                'launchfile',
+                            ),
+                        ]
+                    )
+                ),
+                launch_arguments=launch_arguments.items(),
+            )
+
+            result.append(_include)
+    else:
+        raise NotImplementedError(
+            "Repartitioner oneshot implementation not implemented yet")
+
+    return result
+
+
 def launch_teleop(context) -> list[launch.Action]:
     """Launch teleop nodes for robots that require it."""
 
@@ -908,6 +1003,7 @@ def setup_launch(context):
         include_agent_comms_implementations(context) + \
         include_waypoint_controller_implementation(context) + \
         include_localisation_implementation(context) + \
+        include_repartitioner_implementation(context) + \
         launch_static_transforms(context) + \
         launch_teleop(context)
 

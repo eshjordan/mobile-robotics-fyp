@@ -9,6 +9,9 @@ import time
 from typing import Callable, Iterable, override
 
 from agent_local_comms_server.packets import (
+    EPUCK_COMMAND_REQUEST_KNOWLEDGE,
+    EPUCK_COMMAND_SET_KNOWLEDGE,
+    EpuckCommandPacket,
     EpuckHeartbeatPacket,
     EpuckHeartbeatResponsePacket,
     EpuckNeighbourPacket,
@@ -209,7 +212,7 @@ class RobotCommsModel(BaseRobotCommsModel):
     def server_factory(self):
         robot_model = self
 
-        class ReceiveKnowledgeRequestHandler(socketserver.BaseRequestHandler):
+        class ReceiveCommandHandler(socketserver.BaseRequestHandler):
             @override
             def handle(self):
                 self.request: tuple[bytes, socket.socket]
@@ -218,21 +221,49 @@ class RobotCommsModel(BaseRobotCommsModel):
                 host = self.client_address[0]
                 port = self.client_address[1]
 
-                request = EpuckKnowledgePacket.unpack(data)
+                command = EpuckCommandPacket.unpack(data)
 
                 robot_model.logger.debug(
-                    f"Received knowledge request from {host}:{port}"
+                    f"Received command from {host}:{port}"
                 )
 
-                knowledge = robot_model.CreateKnowledgePacket()
+                if command.command == EPUCK_COMMAND_REQUEST_KNOWLEDGE:
+                    knowledge = robot_model.CreateKnowledgePacket()
 
-                client.sendto(knowledge.pack(), self.client_address)
+                    client.sendto(knowledge.pack(), self.client_address)
 
-                robot_model.logger.debug(
-                    f"Sending requested knowledge to {host}:{port} - {robot_model.GetKnownIds()}"
-                )
+                    robot_model.logger.debug(
+                        f"Sending requested knowledge to {host}:{port} - {robot_model.GetKnownIds()}"
+                    )
 
-        return ReceiveKnowledgeRequestHandler
+                elif command.command == EPUCK_COMMAND_SET_KNOWLEDGE:
+                    data, _ = client.recvfrom(
+                        EpuckKnowledgePacket.calcsize())
+                    knowledge = EpuckKnowledgePacket.unpack(data)
+
+                    this_robot = [
+                        robot for robot in knowledge.known_ids if robot.robot_id == self.robot_id]
+                    if len(this_robot) == 0:
+                        robot_model.logger.warning(
+                            f"Received knowledge packet without this robot's knowledge: {knowledge}"
+                        )
+                        return
+                    this_robot = this_robot[0]
+                    robot_model.logger.debug(
+                        f"Received knowledge packet from {host}:{port} - {knowledge}"
+                    )
+
+                    # Update the knowledge of the robot
+                    this_robot.seq = robot_model.GetSeq()
+                    robot_model.SetCentroid(this_robot.centroid)
+                    robot_model.SetBoundary(this_robot.boundary)
+                    robot_model.InsertKnownIds(knowledge.known_ids)
+
+                    robot_model.logger.debug(
+                        f"Updated knowledge: {robot_model.GetKnownIds()}"
+                    )
+
+        return ReceiveCommandHandler
 
     def __del__(self):
         self.stop()

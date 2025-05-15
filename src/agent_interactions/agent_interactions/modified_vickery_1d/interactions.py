@@ -277,6 +277,42 @@ def test_neighbourhood(agent1: Agent, agent2: Agent):
                    angles_equal(agent2.theta_u,agent1.theta_l))
     return overlapping
 
+
+
+def interact_simple(agent_p: Agent, agent_pc: Agent):
+
+    """
+    Modifies the Agent objects in-place
+    """
+
+    bounds = [
+        (agent_p.theta_l,   agent_p.theta_u,    agent_p,    agent_pc),
+        (agent_p.theta_l,   agent_pc.theta_u,   agent_p,    agent_pc),
+        (agent_pc.theta_l,  agent_pc.theta_u,   agent_pc,   agent_p),
+        (agent_pc.theta_l,  agent_p.theta_u,    agent_pc,   agent_p),
+    ]
+
+    def compute_bound(x):
+        if angles_equal(x[0],x[1]):
+            return 0
+        return (x[1]-x[0])%(2*pi)
+
+    biggest_bound = max(bounds, key=compute_bound)
+    lower_bound, upper_bound, agent_lower, agent_upper = biggest_bound
+
+    # move normally
+    new_n = max(agent_p.n, agent_pc.n)
+    agent_p.update_knowledge(new_n)
+    agent_pc.update_knowledge(new_n)
+
+    middle = agent_p.mid(lower_bound, upper_bound)
+    agent_lower.theta_l = lower_bound
+    agent_lower.theta_u = middle
+    agent_upper.theta_l = middle
+    agent_upper.theta_u = upper_bound
+
+
+
 def interact(agent_p: Agent, agent_pc: Agent, forward: bool):
 
     """

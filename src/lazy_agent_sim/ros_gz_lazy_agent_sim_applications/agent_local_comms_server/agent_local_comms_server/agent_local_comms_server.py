@@ -12,8 +12,14 @@ import rclpy.time
 import rclpy.duration
 import rclpy.node
 from agent_local_comms_server.packets import (
+    EPUCK_COMMAND_REQUEST_KNOWLEDGE,
+    EPUCK_COMMAND_SET_KNOWLEDGE,
+    Boundary,
+    Centroid,
+    EpuckCommandPacket,
     EpuckHeartbeatPacket,
     EpuckHeartbeatResponsePacket,
+    EpuckKnowledgeRecord,
     EpuckNeighbourPacket,
     EpuckKnowledgePacket,
 )
@@ -44,9 +50,8 @@ class LocalCommsManager(rclpy.node.Node):
         self.declare_parameter("remap_ids/2", 2)
         self.declare_parameter("remap_ids/3", 3)
 
-        self.knowledge_request_client = None
         self.knowledge_request_timer = self.create_timer(
-            1.0, self.request_knowledge, autostart=False
+            1.0, self.request_knowledge_tmr_cb, autostart=False
         )
         self.knowledge_request_publisher = self.create_publisher(
             EpuckKnowledgePacketMsg, "~/knowledge", 10
@@ -54,6 +59,13 @@ class LocalCommsManager(rclpy.node.Node):
 
         self.interaction_publisher = self.create_publisher(
             EpuckInteractionMsg, "~/interaction", 10
+        )
+
+        self.repartition_subscriber = self.create_subscription(
+            EpuckKnowledgePacketMsg,
+            "~/repartition",
+            self.repartition_callback,
+            10,
         )
 
         self.tf_buffer = tf2_ros.buffer.Buffer()
@@ -84,7 +96,8 @@ class LocalCommsManager(rclpy.node.Node):
 
         server_host = self.get_parameter("server_host").value
         server_port = self.get_parameter("server_port").value
-        self.get_logger().info(f"Starting server on {server_host}:{server_port}")
+        self.get_logger().info(
+            f"Starting server on {server_host}:{server_port}")
         self.server = ThreadingUDPServer(
             (server_host, server_port), self.create_request_handler()
         )
@@ -95,12 +108,10 @@ class LocalCommsManager(rclpy.node.Node):
         self.server_thread.daemon = True
         self.server_thread.start()
 
-        self.knowledge_request_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.knowledge_request_timer.reset()
 
     def stop(self):
         self.knowledge_request_timer.cancel()
-        self.knowledge_request_client = None
 
         if self.server is None:
             return
@@ -112,7 +123,8 @@ class LocalCommsManager(rclpy.node.Node):
         id_str = str(id)
 
         if remap:
-            remappings = self.get_parameters([f"remap_ids/{id}" for id in range(4)])
+            remappings = self.get_parameters(
+                [f"remap_ids/{id}" for id in range(4)])
 
             for remapping in remappings:
                 if remapping.value == id:
@@ -178,13 +190,13 @@ class LocalCommsManager(rclpy.node.Node):
                     # Find neighbouring robots
                     known_frames = [
                         (
-                            id,
-                            knowledge_host,
-                            knowledge_exchange_port,
-                            manager.robot_frame_name(id, False),
+                            robot.robot_id,
+                            robot.robot_knowledge_host,
+                            robot.robot_knowledge_exchange_port,
+                            manager.robot_frame_name(robot.robot_id, False),
                         )
-                        for id, _, _, knowledge_host, knowledge_exchange_port in manager.known_robots
-                        if id != heartbeat.robot_id
+                        for robot in manager.known_robots.values()
+                        if robot.robot_id != heartbeat.robot_id
                     ]
 
                 # Get all transforms to known frames
@@ -251,7 +263,8 @@ class LocalCommsManager(rclpy.node.Node):
 
                 # Publish to the interaction topic
                 if len(new_in_range) > 0:
-                    this_robot_knowledge = manager.request_knowledge(heartbeat.robot_id)
+                    this_robot_knowledge = manager.request_knowledge(
+                        heartbeat.robot_id)
                     this_robot_knowledge_msg = manager.knowledge_packet_to_msg(
                         this_robot_knowledge
                     )
@@ -260,11 +273,7 @@ class LocalCommsManager(rclpy.node.Node):
                         known_robots_copy = manager.known_robots.copy()
 
                     for id in new_in_range:
-                        other_robot = None
-                        for robot in known_robots_copy:
-                            if id == robot[0]:
-                                other_robot = robot
-                                break
+                        other_robot = known_robots_copy[id]
 
                         other_robot_knowledge = manager.request_knowledge(
                             other_robot.robot_id
@@ -325,25 +334,23 @@ class LocalCommsManager(rclpy.node.Node):
 
             robot = self.known_robots[robot_id]
 
-        request = EpuckKnowledgePacket(
-            robot_id=robot.robot_id,
-            seq=0,
-            N=0,
-            known_ids=[],
-        ).pack()
+        command = EpuckCommandPacket(
+            command=EPUCK_COMMAND_REQUEST_KNOWLEDGE, data=[]).pack()
 
-        self.get_logger().debug("Knowledge packet packed")
+        self.get_logger().debug("Command packet packed")
 
-        self.knowledge_request_client.sendto(
-            request,
+        client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        client.sendto(
+            command,
             (robot.robot_comms_host, robot.robot_comms_request_port),
         )
 
-        self.get_logger().debug("Knowledge packet sent")
+        self.get_logger().debug("Command packet sent")
 
         # Wait for response
         ready_to_read, _, _ = select.select(
-            [self.knowledge_request_client], [], [], 1.0
+            [client], [], [], 1.0
         )
 
         if not ready_to_read or len(ready_to_read) == 0:
@@ -352,7 +359,7 @@ class LocalCommsManager(rclpy.node.Node):
             )
             return None
 
-        data, retaddr = self.knowledge_request_client.recvfrom(
+        data, retaddr = client.recvfrom(
             EpuckKnowledgePacket.calcsize()
         )
 
@@ -366,7 +373,7 @@ class LocalCommsManager(rclpy.node.Node):
 
         response = EpuckKnowledgePacket.unpack(data)
         self.get_logger().debug(
-            f"Received knowledge request response from {robot.robot_id}: {response}"
+            f"Received knowledge request response from {robot_id} ({robot.robot_id} - {robot.robot_comms_host}:{robot.robot_comms_request_port}): {response}"
         )
 
         self.update_robot_model(robot.robot_id, response)
@@ -375,7 +382,7 @@ class LocalCommsManager(rclpy.node.Node):
 
         self.knowledge_request_publisher.publish(msg_response)
 
-        return msg_response
+        return response
 
     def update_robot_model(self, robot_id: int, response: EpuckKnowledgePacket) -> None:
         with self.known_robots_mut:
@@ -387,11 +394,12 @@ class LocalCommsManager(rclpy.node.Node):
 
             robot = self.known_robots[robot_id]
             robot.seq_ = response.seq
-            robot.centroid_ = response.centroid
-            robot.boundary_ = response.boundary
             robot.known_ids_ = {
                 record.robot_id: record for record in response.known_ids
             }
+            robot_record = robot.known_ids_[robot.robot_id]
+            robot.centroid_ = robot_record.centroid
+            robot.boundary_ = robot_record.boundary
 
     def knowledge_packet_to_msg(
         self, packet: EpuckKnowledgePacket
@@ -399,7 +407,7 @@ class LocalCommsManager(rclpy.node.Node):
         return EpuckKnowledgePacketMsg(
             robot_id=packet.robot_id,
             seq=packet.seq,
-            N=packet.N,
+            n=packet.N,
             known_ids=[
                 EpuckKnowledgeRecordMsg(
                     robot_id=record.robot_id,
@@ -418,6 +426,74 @@ class LocalCommsManager(rclpy.node.Node):
                 for record in packet.known_ids
             ],
         )
+
+    def msg_to_knowledge_packet(
+        self, msg: EpuckKnowledgePacketMsg
+    ) -> EpuckKnowledgePacket:
+        return EpuckKnowledgePacket(
+            robot_id=msg.robot_id,
+            seq=msg.seq,
+            N=msg.n,
+            known_ids=[
+                EpuckKnowledgeRecord(
+                    robot_id=record.robot_id,
+                    centroid=Centroid(
+                        x=record.centroid.x,
+                        y=record.centroid.y,
+                        z=record.centroid.z,
+                    ),
+                    boundary=Boundary(
+                        x_points=record.boundary.x_points,
+                        y_points=record.boundary.y_points,
+                        z_points=record.boundary.z_points,
+                    ),
+                    seq=record.seq,
+                )
+                for record in msg.known_ids
+            ],
+        )
+
+    def repartition_callback(
+        self, msg: EpuckKnowledgePacketMsg
+    ) -> None:
+        self.get_logger().debug(
+            f"Repartition callback received: {msg}"
+        )
+
+        self.get_logger().debug(f"Sending knowledge to {msg.robot_id}")
+
+        with self.known_robots_mut:
+            if msg.robot_id not in self.known_robots:
+                self.get_logger().warning(
+                    f"Robot {msg.robot_id} not found in known robots, cannot set knowledge"
+                )
+                return None
+
+            robot = self.known_robots[msg.robot_id]
+
+        command = EpuckCommandPacket(
+            command=EPUCK_COMMAND_SET_KNOWLEDGE, data=[]).pack()
+
+        self.get_logger().debug("Command packet packed")
+
+        client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        client.sendto(
+            command,
+            (robot.robot_comms_host, robot.robot_comms_request_port),
+        )
+
+        self.get_logger().debug("Command packet sent")
+
+        knowledge = self.msg_to_knowledge_packet(msg)
+
+        data = knowledge.pack()
+        self.get_logger().debug("Knowledge packet packed")
+        client.sendto(
+            data,
+            (robot.robot_knowledge_host, robot.robot_knowledge_exchange_port),
+        )
+        self.get_logger().debug("Knowledge packet sent")
 
 
 def main():
