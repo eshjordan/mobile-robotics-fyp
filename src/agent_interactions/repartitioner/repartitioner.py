@@ -30,7 +30,7 @@ scheme_data = {
 """
 launch with:
 
-    ros2 launch agent_interactions repartitioner.launch.py scheme_name:=polygons_2d robot_id:=0
+    ros2 launch agent_interactions repartitioner.launch.py scheme_name:=modified_simple_vickery_1d robot_id:=0
 
 where 'scheme_name' is one of the names in 'scheme_data'
 and 'robot_id' is the id of the robot whose knowledge packet will be updated by the interaction
@@ -55,14 +55,16 @@ class Repartitioner(Node):
 
         self.subscriber = self.create_subscription(
             EpuckInteraction,
-            "/repartition/request",
+            # "/repartition/request",
+            "/agent_local_comms_server/interaction",
             self.listener_callback,
             10
         ),
 
         self.response = self.create_publisher(
             EpuckKnowledgePacket,
-            "/repartition/response",
+            # "/repartition/response",
+            "/agent_local_comms_server/repartition",
             10
         )
 
@@ -118,8 +120,8 @@ class Repartitioner(Node):
         other_packet.known_ids[other_idx_this] = this_packet.known_ids[this_idx_this]
         # TODO update info about ALL agent records (probably not needed since they are not needed for this particular interaction)
 
-        self.get_logger().info(f"This: robot_id={this_packet.robot_id},  this_idx_this={this_idx_this},  this_idx_other={this_idx_other}")
-        self.get_logger().info(f"Other: robot_id={other_packet.robot_id},  other_idx_other={other_idx_other},  other_idx_this={other_idx_this}")
+        # self.get_logger().info(f"This: robot_id={this_packet.robot_id},  this_idx_this={this_idx_this},  this_idx_other={this_idx_other}")
+        # self.get_logger().info(f"Other: robot_id={other_packet.robot_id},  other_idx_other={other_idx_other},  other_idx_this={other_idx_this}")
 
         this_agent = self.scheme_handler.agent_from_record(this_packet.known_ids[this_idx_this], this_packet.n)
         other_agent = self.scheme_handler.agent_from_record(other_packet.known_ids[other_idx_other], other_packet.n)
