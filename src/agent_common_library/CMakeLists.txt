@@ -61,10 +61,10 @@ ament_environment_hooks(
 )
 
 # Install the library so that it can be used by other packages
-install(
-  DIRECTORY include/
-  DESTINATION include/agent_common_library
-)
+# install(
+#   DIRECTORY include/
+#   DESTINATION include/agent_common_library
+# )
 
 # Build the package
 ament_auto_package(
