@@ -1,5 +1,5 @@
 from launch_ros.substitutions import FindPackageShare
-from launch.substitutions import PathJoinSubstitution
+from launch.substitutions import PathJoinSubstitution, IfElseSubstitution, EqualsSubstitution
 import launch
 import launch_ros.actions
 
@@ -8,12 +8,13 @@ def launch_robot_comms() -> list[launch.Action]:
     _node = launch_ros.actions.Node(
         package="cpp_epuck",
         executable="cpp_epuck",
-        name=("knowledge_comms_robot_", launch.substitutions.LaunchConfiguration("robot_id")),
+        name=("knowledge_comms_robot_",
+              launch.substitutions.LaunchConfiguration("robot_id")),
         output="screen",
-        # prefix=[
-        #     # Debugging with gdb
-        #     "xterm -bg black -fg white -fa 'Monospace' -fs 13 -e gdb -ex start --args"
-        # ],
+        prefix=IfElseSubstitution(EqualsSubstitution(launch.substitutions.LaunchConfiguration("robot_id"), "0"), [
+            # Debugging with gdb
+            "xterm -bg black -fg white -fa 'Monospace' -fs 13 -e gdb -ex 'set breakpoint pending on' -ex 'b RobotCommsModel<UDPKnowledgeServer, UDPKnowledgeClient>::handle_commands if data[0] == 0x23 && data[1] == 1' -ex run --args"
+        ], []),
         ros_arguments=[
             "--log-level",
             "debug",

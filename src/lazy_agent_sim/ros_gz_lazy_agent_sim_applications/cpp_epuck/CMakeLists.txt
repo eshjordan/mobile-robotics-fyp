@@ -3,6 +3,8 @@ project(cpp_epuck)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
+  # Set compiler optimization flags
+  add_compile_options(-O0 -g)
 endif()
 
 find_package(ament_cmake_auto REQUIRED)

@@ -269,31 +269,10 @@ class LocalCommsManager(rclpy.node.Node):
 
                 # Publish to the interaction topic
                 if len(new_in_range) > 0:
-                    this_robot_knowledge = manager.request_knowledge(
-                        heartbeat.robot_id)
-                    this_robot_knowledge_msg = manager.knowledge_packet_to_msg(
-                        this_robot_knowledge
+                    manager.publish_interactions(
+                        heartbeat.robot_id,
+                        new_in_range,
                     )
-
-                    with manager.known_robots_mut:
-                        known_robots_copy = manager.known_robots.copy()
-
-                    for id in new_in_range:
-                        other_robot = known_robots_copy[id]
-
-                        other_robot_knowledge = manager.request_knowledge(
-                            other_robot.robot_id
-                        )
-                        other_robot_knowledge_msg = manager.knowledge_packet_to_msg(
-                            other_robot_knowledge
-                        )
-
-                        manager.interaction_publisher.publish(
-                            EpuckInteractionMsg(
-                                this_robot=this_robot_knowledge_msg,
-                                other_robot=other_robot_knowledge_msg,
-                            )
-                        )
 
                 response = EpuckHeartbeatResponsePacket(
                     num_neighbours=len(neighbour_packets),
@@ -458,9 +437,9 @@ class LocalCommsManager(rclpy.node.Node):
                         z=record.centroid.z,
                     ),
                     boundary=Boundary(
-                        x_points=record.boundary.x_points,
-                        y_points=record.boundary.y_points,
-                        z_points=record.boundary.z_points,
+                        x_points=list(record.boundary.x_points),
+                        y_points=list(record.boundary.y_points),
+                        z_points=list(record.boundary.z_points),
                     ),
                     seq=record.seq,
                 )
@@ -468,14 +447,55 @@ class LocalCommsManager(rclpy.node.Node):
             ],
         )
 
+    def publish_interactions(self, this_robot_id, new_in_range):
+        this_robot_knowledge = self.request_knowledge(
+            this_robot_id)
+
+        if not this_robot_knowledge:
+            self.get_logger().warning(
+                f"Problem requesting knowledge from robot {this_robot_id} when publishing interaction!"
+            )
+            return
+
+        this_robot_knowledge_msg = self.knowledge_packet_to_msg(
+            this_robot_knowledge
+        )
+
+        with self.known_robots_mut:
+            known_robots_copy = self.known_robots.copy()
+
+        for id in new_in_range:
+            other_robot = known_robots_copy[id]
+
+            other_robot_knowledge = self.request_knowledge(
+                other_robot.robot_id
+            )
+
+            if not other_robot_knowledge:
+                self.get_logger().warning(
+                    f"Problem requesting knowledge from robot {other_robot.robot_id} when publishing interaction!"
+                )
+                continue
+
+            other_robot_knowledge_msg = self.knowledge_packet_to_msg(
+                other_robot_knowledge
+            )
+
+            self.interaction_publisher.publish(
+                EpuckInteractionMsg(
+                    this_robot=this_robot_knowledge_msg,
+                    other_robot=other_robot_knowledge_msg,
+                )
+            )
+
     def repartition_callback(
         self, msg: EpuckKnowledgePacketMsg
     ) -> None:
-        self.get_logger().debug(
+        self.get_logger().info(
             f"Repartition callback received: {msg}"
         )
 
-        self.get_logger().debug(f"Sending knowledge to {msg.robot_id}")
+        self.get_logger().info(f"Sending knowledge to {msg.robot_id}")
 
         with self.known_robots_mut:
             if msg.robot_id not in self.known_robots:
@@ -489,7 +509,7 @@ class LocalCommsManager(rclpy.node.Node):
         command = EpuckCommandPacket(
             command=EPUCK_COMMAND_SET_KNOWLEDGE, data=[]).pack()
 
-        self.get_logger().debug("Command packet packed")
+        self.get_logger().info("Command packet packed")
 
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -498,17 +518,17 @@ class LocalCommsManager(rclpy.node.Node):
             (robot.robot_comms_host, robot.robot_comms_request_port),
         )
 
-        self.get_logger().debug("Command packet sent")
+        self.get_logger().info("Command packet sent")
 
         knowledge = self.msg_to_knowledge_packet(msg)
 
         data = knowledge.pack()
-        self.get_logger().debug("Knowledge packet packed")
+        self.get_logger().info("Knowledge packet packed")
         client.sendto(
             data,
             (robot.robot_knowledge_host, robot.robot_knowledge_exchange_port),
         )
-        self.get_logger().debug("Knowledge packet sent")
+        self.get_logger().info("Knowledge packet sent")
 
 
 def main():

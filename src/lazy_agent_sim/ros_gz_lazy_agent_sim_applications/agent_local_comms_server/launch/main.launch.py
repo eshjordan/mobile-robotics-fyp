@@ -1083,9 +1083,9 @@ def setup_launch(context):
         include_agent_comms_implementations(context) + \
         include_waypoint_controller_implementation(context) + \
         include_localisation_implementation(context) + \
-        include_repartitioner_implementation(context) + \
         launch_static_transforms(context) + \
         launch_teleop(context)
+        # include_repartitioner_implementation(context) + \
 
     return actions
 
