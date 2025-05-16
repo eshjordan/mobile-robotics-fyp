@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# ros2 topic pub -1 /agent_local_comms_server/repartition lazy_agent_sim_interfaces/msg/EpuckKnowledgePacket "{robot_id: 0, seq: 0, n: 1, known_ids: [{robot_id: 0, centroid: {x: 1.0, y: 1.0, z: 0.0}, boundary: {x_points: [1.0, 1.0], y_points: [], z_points: []}, seq: 0}]}"
+
 import rclpy
 import rclpy.time
 import rclpy.duration
