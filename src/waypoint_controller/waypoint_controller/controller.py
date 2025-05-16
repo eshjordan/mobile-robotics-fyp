@@ -303,22 +303,22 @@ class WaypointController_v1(Node):
         twist.angular.z = angular_velocity
         self.cmd_pub.publish(twist)
 
-        self.get_logger().info(
-            f"self.current_waypoint {self.current_waypoint[0]:.2f}, {self.current_waypoint[1]:.2f}",
-            throttle_duration_sec=1.0,
-        )
-        self.get_logger().info(
-            f"Dist to wp: {distance_to_waypoint}", throttle_duration_sec=1.0
-        )
-        self.get_logger().info(
-            "x: {:7.3f}  y: {:7.3f}".format(self.x, self.y), throttle_duration_sec=1.0
-        )
-        self.get_logger().info(
-            "angle_to_waypoint: {:7.3f}    robot_angle: {:7.3f}    angle_diff: {:7.3f}".format(
-                angle_to_waypoint, self.theta, angle_diff
-            ),
-            throttle_duration_sec=1.0,
-        )
+        # self.get_logger().info(
+        #     f"self.current_waypoint {self.current_waypoint[0]:.2f}, {self.current_waypoint[1]:.2f}",
+        #     throttle_duration_sec=1.0,
+        # )
+        # self.get_logger().info(
+        #     f"Dist to wp: {distance_to_waypoint}", throttle_duration_sec=1.0
+        # )
+        # self.get_logger().info(
+        #     "x: {:7.3f}  y: {:7.3f}".format(self.x, self.y), throttle_duration_sec=1.0
+        # )
+        # self.get_logger().info(
+        #     "angle_to_waypoint: {:7.3f}    robot_angle: {:7.3f}    angle_diff: {:7.3f}".format(
+        #         angle_to_waypoint, self.theta, angle_diff
+        #     ),
+        #     throttle_duration_sec=1.0,
+        # )
 
         # self.get_logger().info(f"sending forward twist command: linear.x = {linear_velocity}, angular.z = {angular_velocity}")
 
@@ -332,7 +332,7 @@ class WaypointController_v1(Node):
 
     def generate_initial_waypoints(self):
         """Generate initial waypoints for the robot to follow."""
-        self.get_logger().info("generate_initial_waypoints")
+        self.get_logger().info(f"Generating initial waypoints for robot {self.get_parameter("robot_id").value}")
         initial_waypoints = generate_boustrophedon_waypoints_radial(
             start_angle=0.0,
             end_angle=2 * np.pi / 4,
@@ -353,42 +353,42 @@ class WaypointController_v1(Node):
         self.send_twist_message(0.0, turn_angle)
         self.get_logger().info("Turning around after interaction")
 
-    def control_loop(self):
-        """Main control loop for the robot."""
-        current_position = (self.x, self.y)
-        current_orientation = self.theta
+    # def control_loop(self):
+    #     """Main control loop for the robot."""
+    #     current_position = (self.x, self.y)
+    #     current_orientation = self.theta
 
-        # Plan the next movement
-        self.path_planner.plan(current_position, current_orientation)
-        other_robot_info = None
+    #     # Plan the next movement
+    #     self.path_planner.plan(current_position, current_orientation)
+    #     other_robot_info = None
 
-        if other_robot_info:  # if detect other robots
-            other_x, other_y, other_theta = other_robot_info
+    #     if other_robot_info:  # if detect other robots
+    #         other_x, other_y, other_theta = other_robot_info
 
-            # Example: Check if another robot is close
-            distance_to_other = sqrt((other_x - self.x) ** 2 + (other_y - self.y) ** 2)
-            if distance_to_other < 2.0:  # Adjust threshold as necessary
-                self.stop_robot()
+    #         # Example: Check if another robot is close
+    #         distance_to_other = sqrt((other_x - self.x) ** 2 + (other_y - self.y) ** 2)
+    #         if distance_to_other < 2.0:  # Adjust threshold as necessary
+    #             self.stop_robot()
 
-                # Get other robot's partition info
-                other_start_angle, other_end_angle = self.get_other_robot_partition()
-                other_agent_number = self.get_other_robot_agent_number()
+    #             # Get other robot's partition info
+    #             other_start_angle, other_end_angle = self.get_other_robot_partition()
+    #             other_agent_number = self.get_other_robot_agent_number()
 
-                # Call your algorithm with both robots' information
-                self.path_planner.algorithm(
-                    self.start_angle,
-                    self.end_angle,
-                    self.agent_number,
-                    # Assuming the other robot knows about 2 agents
-                    other_start_angle,
-                    other_end_angle,
-                    other_agent_number,
-                )
-                self.turn_around()
-            else:
-                self.send_twist_message()
-        else:
-            self.send_twist_message()
+    #             # Call your algorithm with both robots' information
+    #             self.path_planner.algorithm(
+    #                 self.start_angle,
+    #                 self.end_angle,
+    #                 self.agent_number,
+    #                 # Assuming the other robot knows about 2 agents
+    #                 other_start_angle,
+    #                 other_end_angle,
+    #                 other_agent_number,
+    #             )
+    #             self.turn_around()
+    #         else:
+    #             self.send_twist_message()
+    #     else:
+    #         self.send_twist_message()
 
 
 #    def get_other_robot_position(self, other_robot_frame):
@@ -589,18 +589,8 @@ def generate_boustrophedon_waypoints_radial(
         (cx + radius * np.cos(a), cy + radius * np.sin(a)) for a in arc_angles
     ]
 
-    # Sample the two radial edges
-    radial_r = np.linspace(0, radius, boundary_resolution)
-    radial1 = [
-        (cx + r * np.cos(start_angle), cy + r * np.sin(start_angle)) for r in radial_r
-    ]
-    radial2 = [
-        (cx + r * np.cos(end_angle), cy + r * np.sin(end_angle)) for r in radial_r
-    ]
-
-    # Combine all boundary edges
-    boundary_edges = [radial1, arc_points, radial2]
-    all_boundary_points = np.vstack(boundary_edges)
+    boundary_points = [center] + arc_points
+    all_boundary_points = np.vstack(boundary_points)
 
     return generate_boustrophedon_waypoints_polygon(all_boundary_points, line_spacing)
 
@@ -632,28 +622,28 @@ class SimplePathPlanner:
         self.waypoints = new_waypoints
         self.current_waypoint_index = 0
 
-    def algorithm(self, agent1, agent2):
-        """
-        TODO: Is this algorithm run centrally ???
+    # def algorithm(self, agent1, agent2):
+    #     """
+    #     TODO: Is this algorithm run centrally ???
 
-        Generic agent inputs. Can be a dict or a class, whatever.
-        It just needs to have the attributes required for whichever scheme we are running.
+    #     Generic agent inputs. Can be a dict or a class, whatever.
+    #     It just needs to have the attributes required for whichever scheme we are running.
 
-        Uncomment whichever one we are using.
-        We should probably declare these somewhere else so we can utilise the 'test_neighbourhood' method
-        """
+    #     Uncomment whichever one we are using.
+    #     We should probably declare these somewhere else so we can utilise the 'test_neighbourhood' method
+    #     """
 
-        # Modified from Vickery paper to maintain boundaries and repartition within them
-        mv1d = schemes.Scheme1dModifiedVickery()
-        mv1d.interact(agent1, agent2, forward=True)
+    #     # Modified from Vickery paper to maintain boundaries and repartition within them
+    #     mv1d = schemes.Scheme1dModifiedVickery()
+    #     mv1d.interact(agent1, agent2, forward=True)
 
-        # # Original algorithm from Vickery paper
-        # v1d = schemes.Scheme1dVickery()
-        # v1d.interact(agent1, agent2, forward=True)
+    #     # # Original algorithm from Vickery paper
+    #     # v1d = schemes.Scheme1dVickery()
+    #     # v1d.interact(agent1, agent2, forward=True)
 
-        # # 2d case with generic polygons
-        # p2d = schemes.Scheme2dPolygons()
-        # p2d.interact(agent1, agent2)
+    #     # # 2d case with generic polygons
+    #     # p2d = schemes.Scheme2dPolygons()
+    #     # p2d.interact(agent1, agent2)
 
     # def algorithm(self, my_start_angle, my_end_angle, my_agent_number,
     #               other_start_angle, other_end_angle, other_agent_number):

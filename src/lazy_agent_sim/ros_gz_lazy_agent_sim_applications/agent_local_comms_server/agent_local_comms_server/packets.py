@@ -175,13 +175,13 @@ class Boundary:
     z_points: list[float]
 
     def pack(self):
-        padded_x_points = self.x_points + [0] * (
+        padded_x_points = list(self.x_points) + [0] * (
             max(MAX_BOUNDARY_X_POINTS, 1) - len(self.x_points)
         )
-        padded_y_points = self.y_points + [0] * (
+        padded_y_points = list(self.y_points) + [0] * (
             max(MAX_BOUNDARY_Y_POINTS, 1) - len(self.y_points)
         )
-        padded_z_points = self.z_points + [0] * (
+        padded_z_points = list(self.z_points) + [0] * (
             max(MAX_BOUNDARY_Z_POINTS, 1) - len(self.z_points)
         )
         return struct.pack(
