@@ -8,6 +8,14 @@ from geometry_msgs.msg import PoseStamped
 import tf2_py
 import tf2_ros
 
+from lazy_agent_sim_interfaces.msg import (
+    EpuckInteraction,
+    EpuckKnowledgePacket,
+    EpuckKnowledgeRecord,
+    Boundary,
+    Centroid,
+)
+
 # import tf_transformations
 
 import math as mth
@@ -74,6 +82,13 @@ class WaypointController_v1(Node):
             10,
         )
 
+        self.repartition_subscriber = self.create_subscription(
+            EpuckKnowledgePacket,
+            "/agent_local_comms_server/repartition",
+            self.repartition_callback,
+            10
+        )
+
         # Robot current velocity twist msgs
         # send message every second
         self.create_timer(0.01, self.send_twist_message)
@@ -97,6 +112,23 @@ class WaypointController_v1(Node):
         self.current_waypoint = self.path_planner.get_next_waypoint()
         # self.get_logger().info(f"self.current_waypoint {self.current_waypoint}")
         self.prnt_msg = 0
+
+
+    def repartition_callback(self, msg: EpuckKnowledgePacket):
+
+        if msg.robot_id != self.declare_parameter("robot_id", 0).value:
+            # Not this robot
+            return
+    
+        # Assume 1d case for now
+        this_idx_this = [record.robot_id for record in msg.known_ids].index(msg.robot_id)       # "this" robot's record of "this" robot 
+        start_angle = msg.known_ids[this_idx_this].boundary.x_points[0]
+        end_angle = msg.known_ids[this_idx_this].boundary.x_points[1]
+        self.path_planner = SimplePathPlanner(
+            self.generate_initial_waypoints(start_angle, end_angle), logger=self.get_logger()
+        )
+        self.current_waypoint = self.path_planner.get_next_waypoint()
+
 
     def update_pose(self):
         robot_frame = (
@@ -330,12 +362,12 @@ class WaypointController_v1(Node):
         self.cmd_pub.publish(twist)
         self.get_logger().info("Robot stopped for interaction")
 
-    def generate_initial_waypoints(self):
+    def generate_initial_waypoints(self, start_angle=0, end_angle=2 * np.pi / 4):
         """Generate initial waypoints for the robot to follow."""
         self.get_logger().info(f"Generating initial waypoints for robot {self.get_parameter("robot_id").value}")
         initial_waypoints = generate_boustrophedon_waypoints_radial(
-            start_angle=0.0,
-            end_angle=2 * np.pi / 4,
+            start_angle=start_angle,
+            end_angle=end_angle,
             line_spacing=0.1,
             radius=1,
             center=(0, 0),
