@@ -251,10 +251,10 @@ class FramePublisher(rclpy.node.Node):
             tf_frame_id_to_tf_child_frame_id_matrix)
 
         # Broadcast the transform from tf_frame_id to tf_child_frame_id
-        timestamp = self.get_clock().now()
+        timestamp = msg.header.stamp
 
         child_tf = geometry_msgs.msg.TransformStamped()
-        child_tf.header.stamp = timestamp.to_msg()
+        child_tf.header.stamp = timestamp
         child_tf.header.frame_id = self.get_parameter('tf_frame_id').value
         child_tf.child_frame_id = self.get_parameter('tf_child_frame_id').value
         child_tf.transform.translation.x = translation[0]
