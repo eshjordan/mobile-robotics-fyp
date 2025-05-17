@@ -95,6 +95,7 @@ class Repartitioner(Node):
         knowledge_packet = EpuckKnowledgePacket(
             robot_id = msg.robot_id,
             seq = 0,
+            num_known_ids = 1,
             known_ids = [
                 EpuckKnowledgeRecord(
                     robot_id = msg.robot_id,
@@ -187,6 +188,7 @@ class Repartitioner(Node):
             this_record_this.centroid, this_record_this.boundary = new_this_centroid, new_this_boundary
             this_record_other.centroid, this_record_other.boundary = new_other_centroid, new_other_boundary
             this_packet.n = new_this_n
+            this_packet.num_known_ids = len(this_packet.known_ids)
             self.response.publish(this_packet)
 
         elif self.get_parameter("robot_id").value == other_packet.robot_id:
@@ -195,6 +197,7 @@ class Repartitioner(Node):
             other_record_other.centroid, other_record_other.boundary = new_other_centroid, new_other_boundary
             other_record_this.centroid, other_record_this.boundary = new_this_centroid, new_this_boundary
             other_packet.n = new_other_n
+            other_packet.num_known_ids = len(other_packet.known_ids)
             self.response.publish(other_packet)
 
         else:

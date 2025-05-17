@@ -12,6 +12,9 @@ import rclpy.time
 import rclpy.duration
 import rclpy.node
 from agent_local_comms_server.packets import (
+    MAX_BOUNDARY_X_POINTS,
+    MAX_BOUNDARY_Y_POINTS,
+    MAX_BOUNDARY_Z_POINTS,
     EPUCK_COMMAND_REQUEST_KNOWLEDGE,
     EPUCK_COMMAND_SET_KNOWLEDGE,
     Boundary,
@@ -53,6 +56,7 @@ class LocalCommsManager(rclpy.node.Node):
         self.declare_parameter("robot_ids", "")
 
 
+        # List of IDs known ahead of time
         self.robot_ids = [int(id) for id in self.get_parameter("robot_ids").value.split(',') if id]  # split by ',' and ignore empty strings
         self.get_logger().info("Robot IDs: " + str(self.robot_ids))
 
@@ -128,14 +132,6 @@ class LocalCommsManager(rclpy.node.Node):
 
         self.knowledge_request_timer.reset()
 
-        for idx, robot_id in enumerate(self.robot_ids):
-            self.reset_publisher.publish(
-                EpuckRepartitionResetMsg(
-                    robot_id = robot_id,
-                    agent_idx = idx+1,
-                    num_agents = len(self.robot_ids)
-                )
-            )
 
     def stop(self):
         self.knowledge_request_timer.cancel()
@@ -210,6 +206,14 @@ class LocalCommsManager(rclpy.node.Node):
                             heartbeat.robot_comms_request_port,
                             heartbeat.robot_knowledge_host,
                             heartbeat.robot_knowledge_exchange_port,
+                        )
+
+                        manager.reset_publisher.publish(
+                            EpuckRepartitionResetMsg(
+                                robot_id = heartbeat.robot_id,
+                                agent_idx = len(manager.known_robots),
+                                num_agents = len(manager.known_robots)
+                            )
                         )
 
                     frame = manager.robot_frame_name(heartbeat.robot_id, False)
@@ -409,6 +413,7 @@ class LocalCommsManager(rclpy.node.Node):
 
             robot = self.known_robots[robot_id]
             robot.seq_ = response.seq
+            robot.n_ = response.N
             robot.known_ids_ = {
                 record.robot_id: record for record in response.known_ids
             }
@@ -423,6 +428,7 @@ class LocalCommsManager(rclpy.node.Node):
             robot_id=packet.robot_id,
             seq=packet.seq,
             n=packet.N,
+            num_known_ids=packet.num_known_ids,
             known_ids=[
                 EpuckKnowledgeRecordMsg(
                     robot_id=record.robot_id,
@@ -449,6 +455,7 @@ class LocalCommsManager(rclpy.node.Node):
             robot_id=msg.robot_id,
             seq=msg.seq,
             N=msg.n,
+            num_known_ids=msg.num_known_ids,
             known_ids=[
                 EpuckKnowledgeRecord(
                     robot_id=record.robot_id,
@@ -458,9 +465,9 @@ class LocalCommsManager(rclpy.node.Node):
                         z=record.centroid.z,
                     ),
                     boundary=Boundary(
-                        x_points=list(record.boundary.x_points),
-                        y_points=list(record.boundary.y_points),
-                        z_points=list(record.boundary.z_points),
+                        x_points=list(record.boundary.x_points) if MAX_BOUNDARY_X_POINTS > 0 else [],
+                        y_points=list(record.boundary.y_points) if MAX_BOUNDARY_Y_POINTS > 0 else [],
+                        z_points=list(record.boundary.z_points) if MAX_BOUNDARY_Z_POINTS > 0 else [],
                     ),
                     seq=record.seq,
                 )
@@ -541,6 +548,11 @@ class LocalCommsManager(rclpy.node.Node):
         )
 
         self.get_logger().debug("Command packet sent")
+
+        self.get_logger().info('HERE')
+        self.get_logger().info(f'{msg}')
+        self.get_logger().info(f'{msg.known_ids[0].boundary}')
+        self.get_logger().info(f'{msg.known_ids[0].boundary.x_points}')
 
         knowledge = self.msg_to_knowledge_packet(msg)
 

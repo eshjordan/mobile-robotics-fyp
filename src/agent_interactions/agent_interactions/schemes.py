@@ -126,8 +126,8 @@ class Scheme1dModifiedVickerySimple(InteractionScheme):
     
     def new_centroid_boundary_n(self, agent: mv1d.Agent):
         
-        centroid = Centroid( x = agent.theta_c() )
-        boundary = Boundary(x_points = [agent.theta_l, agent.theta_u])
+        centroid = Centroid( x = agent.theta_c(), y = 0, z = 0 )
+        boundary = Boundary(x_points = [agent.theta_l, agent.theta_u], y_points = [], z_points = [])
         n = max(agent.n,2)  # should always be at least 2 after an interaction
 
         return centroid, boundary, n

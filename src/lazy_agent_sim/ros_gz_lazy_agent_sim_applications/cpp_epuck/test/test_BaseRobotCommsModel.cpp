@@ -115,18 +115,17 @@ TEST_F(TestBaseRobotCommsModel, TestInsertKnownIds) {}
 TEST_F(TestBaseRobotCommsModel, TestCreateKnowledgePacket)
 {
     // Check that the knowledge packet is created correctly
-    auto expected_knowledge_packet =
-        EpuckKnowledgePacket{0x22,
-                             model->robot_id,
-                             2,
-                             1,
-                             {EpuckKnowledgeRecord{model->robot_id, model->get_centroid(), model->get_boundary(), 2}}};
+    auto expected_knowledge_packet = EpuckKnowledgePacket{
+        0x22, model->robot_id,
+        2,    1,
+        1,    {EpuckKnowledgeRecord{model->robot_id, model->get_centroid(), model->get_boundary(), 2}}};
 
     auto knowledge_packet = model->create_knowledge_packet();
     EXPECT_EQ(expected_knowledge_packet.id, knowledge_packet.id);
     EXPECT_EQ(expected_knowledge_packet.robot_id, knowledge_packet.robot_id);
     EXPECT_EQ(expected_knowledge_packet.seq, knowledge_packet.seq);
     EXPECT_EQ(expected_knowledge_packet.N, knowledge_packet.N);
+    EXPECT_EQ(expected_knowledge_packet.num_known_ids, knowledge_packet.num_known_ids);
     EXPECT_EQ(expected_knowledge_packet.known_ids[0].robot_id, knowledge_packet.known_ids[0].robot_id);
     EXPECT_EQ(expected_knowledge_packet.known_ids[0].centroid, knowledge_packet.known_ids[0].centroid);
     EXPECT_EQ(expected_knowledge_packet.known_ids[0].boundary, knowledge_packet.known_ids[0].boundary);
