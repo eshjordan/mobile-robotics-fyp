@@ -10,6 +10,9 @@ from launch.actions import (
 from launch.launch_description_sources import (
     PythonLaunchDescriptionSource as PythonLaunch,
 )
+from launch_yaml.launch_description_sources import (
+    YAMLLaunchDescriptionSource as YamlLaunch
+)
 from launch.substitutions import (
     PathJoinSubstitution as PathJoin,
 )
@@ -33,51 +36,51 @@ epuck_config = {
     'manager_robot_tf_suffix': '',
     'manager_robot_tf_frame': '/base_link',
     'agents': [
-        # {
-        #     'robot_id': 5785,
-        #     'robot_epuck_host': '192.168.11.12',
-        #     'robot_epuck_port': 1000,
-        #     'robot_comms_host': '192.168.11.12',
-        #     'robot_comms_request_port': 1001,
-        #     'robot_knowledge_host': '192.168.11.12',
-        #     'robot_knowledge_exchange_port': 1002,
-        #     'robot_xpos': -0.1,
-        #     'robot_ypos': -0.1,
-        #     'robot_theta': 0.0,
-        #     'robot_teleop': False,
-        #     'robot_angular_offset': 0.0,
-        #     'robot_vicon_name': 'epuck2_robot_5785',
-        # },
-        # {
-        #     'robot_id': 5653,
-        #     'robot_epuck_host': '192.168.11.11',
-        #     'robot_epuck_port': 1000,
-        #     'robot_comms_host': '192.168.11.11',
-        #     'robot_comms_request_port': 1001,
-        #     'robot_knowledge_host': '192.168.11.11',
-        #     'robot_knowledge_exchange_port': 1002,
-        #     'robot_xpos': -1.0,
-        #     'robot_ypos': 0.0,
-        #     'robot_theta': 0.0,
-        #     'robot_teleop': False,
-        #     'robot_angular_offset': 0.0,
-        #     'robot_vicon_name': 'epuck2_robot_5653',
-        # },
         {
-            'robot_id': 5731,
-            'robot_epuck_host': '192.168.11.13',
+            'robot_id': 5785,
+            'robot_epuck_host': '192.168.11.12',
             'robot_epuck_port': 1000,
-            'robot_comms_host': '192.168.11.13',
+            'robot_comms_host': '192.168.11.12',
             'robot_comms_request_port': 1001,
-            'robot_knowledge_host': '192.168.11.13',
+            'robot_knowledge_host': '192.168.11.12',
             'robot_knowledge_exchange_port': 1002,
-            'robot_xpos': 1.0,
+            'robot_xpos': 0.0,
             'robot_ypos': 0.0,
             'robot_theta': 0.0,
             'robot_teleop': False,
             'robot_angular_offset': 0.0,
-            'robot_vicon_name': 'epuck2_robot_5731',
+            'robot_vicon_name': 'epuck2_robot_5785',
         },
+        {
+            'robot_id': 5653,
+            'robot_epuck_host': '192.168.11.11',
+            'robot_epuck_port': 1000,
+            'robot_comms_host': '192.168.11.11',
+            'robot_comms_request_port': 1001,
+            'robot_knowledge_host': '192.168.11.11',
+            'robot_knowledge_exchange_port': 1002,
+            'robot_xpos': 0.0,
+            'robot_ypos': 0.0,
+            'robot_theta': 0.0,
+            'robot_teleop': False,
+            'robot_angular_offset': 0.0,
+            'robot_vicon_name': 'epuck2_robot_5653',
+        },
+        # {
+        #     'robot_id': 5731,
+        #     'robot_epuck_host': '192.168.11.13',
+        #     'robot_epuck_port': 1000,
+        #     'robot_comms_host': '192.168.11.13',
+        #     'robot_comms_request_port': 1001,
+        #     'robot_knowledge_host': '192.168.11.13',
+        #     'robot_knowledge_exchange_port': 1002,
+        #     'robot_xpos': 0.0,
+        #     'robot_ypos': 0.0,
+        #     'robot_theta': 0.0,
+        #     'robot_teleop': False,
+        #     'robot_angular_offset': 0.0,
+        #     'robot_vicon_name': 'epuck2_robot_5731',
+        # },
         # {
         #     'robot_id': 5831,
         #     'robot_epuck_host': '192.168.11.14',
@@ -101,8 +104,8 @@ epuck_config = {
         #     'robot_comms_request_port': 1001,
         #     'robot_knowledge_host': '192.168.11.15',
         #     'robot_knowledge_exchange_port': 1002,
-        #     'robot_xpos': -0.1,
-        #     'robot_ypos': 0.1,
+        #     'robot_xpos': 0.0,
+        #     'robot_ypos': 0.0,
         #     'robot_theta': 0.0,
         #     'robot_teleop': False,
         #     'robot_angular_offset': 0.0,
@@ -194,7 +197,7 @@ gazebo_udp_cpp_config = {
     'localisation_implementation': 'gz_localisation',
     'waypoint_controller_implementation': 'waypoint_controller_py',
     'agent_comms_implementation': 'udp_cpp',
-    'repartitioner_implementation': 'vickery_1d_py',
+    'repartitioner_implementation': 'modified_simple_vickery_1d',
     'manager_server_host': '127.0.0.1',
     'manager_server_port': 50000,
     'manager_threshold_dist': 0.3,
@@ -210,8 +213,8 @@ gazebo_udp_cpp_config = {
             'robot_comms_request_port': 50002,
             'robot_knowledge_host': '127.0.0.1',
             'robot_knowledge_exchange_port': 50003,
-            'robot_xpos': -0.1,
-            'robot_ypos': -0.1,
+            'robot_xpos': 0.0,
+            'robot_ypos': 0.0,
             'robot_theta': 0.0,
             'robot_teleop': False,
             'robot_angular_offset': 0.0,
@@ -225,8 +228,8 @@ gazebo_udp_cpp_config = {
             'robot_comms_request_port': 50004,
             'robot_knowledge_host': '127.0.0.1',
             'robot_knowledge_exchange_port': 50005,
-            'robot_xpos': -0.1,
-            'robot_ypos': 0.1,
+            'robot_xpos': 0.0,
+            'robot_ypos': 0.0,
             'robot_theta': 0.0,
             'robot_teleop': False,
             'robot_angular_offset': 0.0,
@@ -240,8 +243,8 @@ gazebo_udp_cpp_config = {
             'robot_comms_request_port': 50006,
             'robot_knowledge_host': '127.0.0.1',
             'robot_knowledge_exchange_port': 50007,
-            'robot_xpos': 0.1,
-            'robot_ypos': -0.1,
+            'robot_xpos': 0.0,
+            'robot_ypos': 0.0,
             'robot_theta': 0.0,
             'robot_teleop': False,
             'robot_angular_offset': 0.0,
@@ -255,8 +258,8 @@ gazebo_udp_cpp_config = {
             'robot_comms_request_port': 50008,
             'robot_knowledge_host': '127.0.0.1',
             'robot_knowledge_exchange_port': 50009,
-            'robot_xpos': 0.1,
-            'robot_ypos': 0.1,
+            'robot_xpos': 0.0,
+            'robot_ypos': 0.0,
             'robot_theta': 0.0,
             'robot_teleop': False,
             'robot_angular_offset': 0.0,
@@ -290,7 +293,7 @@ common_config = {
 
 launch_configuration = common_config
 if use_gazebo:
-    launch_configuration.update(gazebo_config)
+    launch_configuration.update(gazebo_udp_cpp_config)
 else:
     launch_configuration.update(epuck_config)
 
@@ -1084,7 +1087,25 @@ def setup_launch(context):
         include_localisation_implementation(context) + \
         include_repartitioner_implementation(context) + \
         launch_static_transforms(context) + \
-        launch_teleop(context)
+        launch_teleop(context) + [
+            IncludeLaunch(
+                YamlLaunch(
+                    PathJoin(
+                        [
+                            FindPackageShare(
+                                'vrpn_mocap',
+                            ),
+                            'launch',
+                            'client.launch.yaml',
+                        ]
+                    )
+                ),
+                launch_arguments= {
+                    'server': '192.168.11.3',
+                    'port': '3883',
+                }.items(),
+            )
+        ]
 
     return actions
 
