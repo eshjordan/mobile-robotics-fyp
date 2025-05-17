@@ -33,6 +33,7 @@ from lazy_agent_sim_interfaces.msg import (
     EpuckInteraction as EpuckInteractionMsg,
     Boundary as BoundaryMsg,
     Centroid as CentroidMsg,
+    EpuckRepartitionReset as EpuckRepartitionResetMsg
 )
 
 
@@ -49,6 +50,11 @@ class LocalCommsManager(rclpy.node.Node):
         self.declare_parameter("remap_ids/1", 1)
         self.declare_parameter("remap_ids/2", 2)
         self.declare_parameter("remap_ids/3", 3)
+        self.declare_parameter("robot_ids", "")
+
+
+        self.robot_ids = [int(id) for id in self.get_parameter("robot_ids").value.split(',') if id]  # split by ',' and ignore empty strings
+        self.get_logger().info("Robot IDs: " + str(self.robot_ids))
 
         self.knowledge_request_timer = self.create_timer(
             1.0, self.request_knowledge_tmr_cb, autostart=False
@@ -66,6 +72,12 @@ class LocalCommsManager(rclpy.node.Node):
             "~/repartition",
             self.repartition_callback,
             10,
+        )
+
+        self.reset_publisher = self.create_publisher(
+            EpuckRepartitionResetMsg,
+            "/repartition/reset",
+            10
         )
 
         self.tf_buffer = tf2_ros.buffer.Buffer()
@@ -115,6 +127,15 @@ class LocalCommsManager(rclpy.node.Node):
         self.server_thread.start()
 
         self.knowledge_request_timer.reset()
+
+        for idx, robot_id in enumerate(self.robot_ids):
+            self.reset_publisher.publish(
+                EpuckRepartitionResetMsg(
+                    robot_id = robot_id,
+                    agent_idx = idx+1,
+                    num_agents = len(self.robot_ids)
+                )
+            )
 
     def stop(self):
         self.knowledge_request_timer.cancel()

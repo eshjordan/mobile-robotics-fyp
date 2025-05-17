@@ -22,7 +22,11 @@ class InteractionScheme(ABC):
         pass
 
     @abstractmethod
-    def new_centroid_boundary_n(self, agent):
+    def new_centroid_boundary_n(self, agent) -> tuple[Centroid, Boundary, int]:
+        pass
+
+    @abstractmethod
+    def get_agent_initial_state(self, agent_idx: int, N: int) -> tuple[Centroid, Boundary, int]:
         pass
 
 
@@ -127,6 +131,16 @@ class Scheme1dModifiedVickerySimple(InteractionScheme):
         n = max(agent.n,2)  # should always be at least 2 after an interaction
 
         return centroid, boundary, n
+    
+    def get_agent_initial_state(self, agent_idx: int, N: int):
+        """
+        agent_idx is the index, not the actual robot id
+        """
+
+        agent = mv1d.insert_simple(agent_idx, N)
+        return self.new_centroid_boundary_n(agent)
+
+
 
 
 
@@ -160,14 +174,25 @@ class Scheme1dVickery(InteractionScheme):
 
 
 
-# Dummy class for testing
-class Agent:
-    def __init__(self, vertices):
-        self.vertices = vertices
+# # Dummy class for testing
+# class Agent:
+#     def __init__(self, vertices):
+#         self.vertices = vertices
+
 
 import matplotlib.pyplot as plt
 if __name__ == "__main__":
-    pass    
+    pass
+    
+    # scheme = Scheme1dModifiedVickerySimple()
+
+    # N = 5
+    # for i in range(1, N+1):
+    #     centroid, boundary, n = scheme.get_agent_initial_state(i, N)
+    #     print("Bounds: {:.3f}pi, {:.3f}pi".format(boundary.x_points[0] / np.pi, boundary.x_points[1] / np.pi))
+
+
+
     # scheme = Scheme2dPolygons()
     # a1 = Agent(vertices=np.array([[0,0],[0,2],[2,2],[2,0]]))
     # a2 = Agent(vertices=np.array([[1,1],[1,3],[3,3],[3,1]]))

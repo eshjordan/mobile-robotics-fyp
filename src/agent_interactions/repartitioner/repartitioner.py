@@ -6,7 +6,10 @@ from lazy_agent_sim_interfaces.msg import (
     EpuckKnowledgeRecord,
     Boundary,
     Centroid,
+    EpuckRepartitionReset,
 )
+
+from std_msgs.msg import UInt16
 
 # AGENT INTERACTIONS
 import agent_interactions.schemes as schemes
@@ -61,12 +64,51 @@ class Repartitioner(Node):
             10
         ),
 
+        self.reset_subscriber = self.create_subscription(
+            EpuckRepartitionReset,
+            "/repartition/reset",
+            self.reset_callback,
+            10
+        ),
+
         self.response = self.create_publisher(
             EpuckKnowledgePacket,
             # "/repartition/response",
             "/agent_local_comms_server/repartition",
             10
         )
+    
+
+    def reset_callback(self, msg: EpuckRepartitionReset):
+
+        """
+        agent_idx is the index, not the actual robot id
+        """
+
+        if self.get_parameter("robot_id").value != msg.robot_id:
+            return
+
+        # Compute new initial state
+        centroid, boundary, n = self.scheme_handler.get_agent_initial_state(msg.agent_idx, msg.num_agents)
+
+        # Construct knowledge packet
+        knowledge_packet = EpuckKnowledgePacket(
+            robot_id = msg.robot_id,
+            seq = 0,
+            known_ids = [
+                EpuckKnowledgeRecord(
+                    robot_id = msg.robot_id,
+                    centroid = centroid,
+                    boundary = boundary,
+                    seq = 0
+                )
+            ],
+            n = n
+        )
+
+        # Publish knowledge packet
+        self.response.publish(knowledge_packet)
+
 
     def listener_callback(self, interaction_msg: EpuckInteraction):
 
@@ -164,7 +206,7 @@ def main():
     rclpy.init()
     repartitioner = Repartitioner()
 
-    TESTING = False
+    TESTING = True
 
     if not TESTING:
         rclpy.spin(repartitioner)
@@ -173,95 +215,117 @@ def main():
 
 
 
-    # Create a dummy publisher to send EpuckKnowledgePacket messages
-    publisher = repartitioner.create_publisher(
-        EpuckInteraction,
-        "/repartition/request",
+    # # Create a dummy publisher to send EpuckKnowledgePacket messages
+    # publisher = repartitioner.create_publisher(
+    #     EpuckInteraction,
+    #     "/repartition/request",
+    #     10
+    # )
+
+    reset_publisher = repartitioner.create_publisher(
+        EpuckRepartitionReset,
+        "/repartition/reset",
         10
     )
 
-    # Create a timer to publish the dummy message periodically
-    def timer_callback_1():
-
-        old_bounds_1 = [0, 1]
-        old_bounds_2 = [0.5, 3]
-
-        repartitioner.get_logger().info("\nold_bounds_1: {}\nold_bounds_2:{}\n".format(old_bounds_1, old_bounds_2))
-
-        record0 = EpuckKnowledgeRecord()
-        record0.robot_id = 0
-        record0.centroid = Centroid()
-        record0.boundary = Boundary(x_points = old_bounds_1)
-        record0.seq = 0
-
-        record1 = EpuckKnowledgeRecord()
-        record1.robot_id = 1
-        record1.centroid = Centroid()
-        record1.boundary = Boundary(x_points = old_bounds_2)
-        record1.seq = 0
-
-        knowledge_packet_0 = EpuckKnowledgePacket()
-        knowledge_packet_0.robot_id = 0
-        knowledge_packet_0.seq = 0
-        knowledge_packet_0.known_ids = [record0, record1]
-        # knowledge_packet_0.n = 20
-        knowledge_packet_0.n = len(knowledge_packet_0.known_ids)
-
-        knowledge_packet_1 = EpuckKnowledgePacket()
-        knowledge_packet_1.robot_id = 1
-        knowledge_packet_1.seq = 0
-        knowledge_packet_1.known_ids = [record1]    # doesn't know about 0
-        # knowledge_packet_1.known_ids = [record0, record1]
-        # knowledge_packet_1.n = 20
-        knowledge_packet_1.n = len(knowledge_packet_1.known_ids)
-
-        msg = EpuckInteraction()
-        msg.this_robot = knowledge_packet_0
-        msg.other_robot = knowledge_packet_1
-
-        repartitioner.get_logger().info(f"Publishing: {msg}")
-        publisher.publish(msg)
-
-    def timer_callback_2():
-
-        record0 = EpuckKnowledgeRecord()
-        record0.robot_id = 0
-        record0.centroid = Centroid( x=2, y=2 )
-        record0.boundary = Boundary(x_points = [1, 3, 3, 1], y_points = [3, 3, 1, 1])
-        record0.seq = 0
-
-        record1 = EpuckKnowledgeRecord()
-        record1.robot_id = 1
-        record1.centroid = Centroid(x=3, y=3)
-        record1.boundary = Boundary(x_points = [2, 4, 4, 2], y_points = [4, 4, 2, 2])
-        record1.seq = 0
-
-        knowledge_packet_0 = EpuckKnowledgePacket()
-        knowledge_packet_0.robot_id = 0
-        knowledge_packet_0.seq = 0
-        knowledge_packet_0.known_ids = [record0]    #  doesn't know about 1
-        # knowledge_packet_0.known_ids = [record0, record1]
-        knowledge_packet_0.n = len(knowledge_packet_0.known_ids)
-
-        knowledge_packet_1 = EpuckKnowledgePacket()
-        knowledge_packet_1.robot_id = 1
-        knowledge_packet_1.seq = 0
-        knowledge_packet_1.known_ids = [record1]    # doesn't know about 0
-        # knowledge_packet_1.known_ids = [record0, record1]
-        knowledge_packet_1.n = len(knowledge_packet_1.known_ids)
-
-        msg = EpuckInteraction()
-        msg.this_robot = knowledge_packet_0
-        msg.other_robot = knowledge_packet_1
-
-        repartitioner.get_logger().info(f"Publishing: {msg}")
-        publisher.publish(msg)
+    def timer_callback_3():
+        repartitioner.get_logger().info("Sending repartition reset")
+        reset_publisher.publish(
+            EpuckRepartitionReset(
+                robot_id = repartitioner.get_parameter('robot_id').value,
+                agent_idx = repartitioner.get_parameter('robot_id').value + 1,
+                num_agents = 2
+            )
+        )
+    
 
 
-    timer_period = 1.0
+    timer_period = 10
 
-      # seconds
-    repartitioner.create_timer(timer_period, timer_callback_1)
+    # seconds
+    repartitioner.create_timer(timer_period, timer_callback_3)
+
+
+
+    # # Create a timer to publish the dummy message periodically
+    # def timer_callback_1():
+
+    #     old_bounds_1 = [0, 1]
+    #     old_bounds_2 = [0.5, 3]
+
+    #     repartitioner.get_logger().info("\nold_bounds_1: {}\nold_bounds_2:{}\n".format(old_bounds_1, old_bounds_2))
+
+    #     record0 = EpuckKnowledgeRecord()
+    #     record0.robot_id = 0
+    #     record0.centroid = Centroid()
+    #     record0.boundary = Boundary(x_points = old_bounds_1)
+    #     record0.seq = 0
+
+    #     record1 = EpuckKnowledgeRecord()
+    #     record1.robot_id = 1
+    #     record1.centroid = Centroid()
+    #     record1.boundary = Boundary(x_points = old_bounds_2)
+    #     record1.seq = 0
+
+    #     knowledge_packet_0 = EpuckKnowledgePacket()
+    #     knowledge_packet_0.robot_id = 0
+    #     knowledge_packet_0.seq = 0
+    #     knowledge_packet_0.known_ids = [record0, record1]
+    #     # knowledge_packet_0.n = 20
+    #     knowledge_packet_0.n = len(knowledge_packet_0.known_ids)
+
+    #     knowledge_packet_1 = EpuckKnowledgePacket()
+    #     knowledge_packet_1.robot_id = 1
+    #     knowledge_packet_1.seq = 0
+    #     knowledge_packet_1.known_ids = [record1]    # doesn't know about 0
+    #     # knowledge_packet_1.known_ids = [record0, record1]
+    #     # knowledge_packet_1.n = 20
+    #     knowledge_packet_1.n = len(knowledge_packet_1.known_ids)
+
+    #     msg = EpuckInteraction()
+    #     msg.this_robot = knowledge_packet_0
+    #     msg.other_robot = knowledge_packet_1
+
+    #     repartitioner.get_logger().info(f"Publishing: {msg}")
+    #     publisher.publish(msg)
+
+    # def timer_callback_2():
+
+    #     record0 = EpuckKnowledgeRecord()
+    #     record0.robot_id = 0
+    #     record0.centroid = Centroid( x=2, y=2 )
+    #     record0.boundary = Boundary(x_points = [1, 3, 3, 1], y_points = [3, 3, 1, 1])
+    #     record0.seq = 0
+
+    #     record1 = EpuckKnowledgeRecord()
+    #     record1.robot_id = 1
+    #     record1.centroid = Centroid(x=3, y=3)
+    #     record1.boundary = Boundary(x_points = [2, 4, 4, 2], y_points = [4, 4, 2, 2])
+    #     record1.seq = 0
+
+    #     knowledge_packet_0 = EpuckKnowledgePacket()
+    #     knowledge_packet_0.robot_id = 0
+    #     knowledge_packet_0.seq = 0
+    #     knowledge_packet_0.known_ids = [record0]    #  doesn't know about 1
+    #     # knowledge_packet_0.known_ids = [record0, record1]
+    #     knowledge_packet_0.n = len(knowledge_packet_0.known_ids)
+
+    #     knowledge_packet_1 = EpuckKnowledgePacket()
+    #     knowledge_packet_1.robot_id = 1
+    #     knowledge_packet_1.seq = 0
+    #     knowledge_packet_1.known_ids = [record1]    # doesn't know about 0
+    #     # knowledge_packet_1.known_ids = [record0, record1]
+    #     knowledge_packet_1.n = len(knowledge_packet_1.known_ids)
+
+    #     msg = EpuckInteraction()
+    #     msg.this_robot = knowledge_packet_0
+    #     msg.other_robot = knowledge_packet_1
+
+    #     repartitioner.get_logger().info(f"Publishing: {msg}")
+    #     publisher.publish(msg)
+
+
+
 
     rclpy.spin(repartitioner)
     # # Shutdown

@@ -194,7 +194,7 @@ gazebo_udp_cpp_config = {
     'localisation_implementation': 'gz_localisation',
     'waypoint_controller_implementation': 'waypoint_controller_py',
     'agent_comms_implementation': 'udp_cpp',
-    'repartitioner_implementation': 'vickery_1d_py',
+    'repartitioner_implementation': 'modified_simple_vickery_1d',
     'manager_server_host': '127.0.0.1',
     'manager_server_port': 50000,
     'manager_threshold_dist': 0.3,
@@ -616,7 +616,8 @@ def include_comms_manager_implementation(context) -> list[launch.Action]:
             'robot_tf_frame':
                 f"{launch_configuration['manager_robot_tf_frame']}",
             'robot_ids':
-                f"{','.join([f"{agent['robot_id']}" for agent in launch_configuration['agents']])}",
+                # f"{','.join([f"{agent['robot_id']}" for agent in launch_configuration['agents']])}",
+                ''.join([f"{agent['robot_id']}," for agent in launch_configuration['agents']]),
         }.items(),
     )
 
@@ -760,7 +761,8 @@ def include_localisation_implementation(context) -> list[launch.Action]:
             result.append(_include)
     else:
         launch_arguments = {
-            'robot_ids': f"{','.join([f"{agent['robot_id']}" for agent in launch_configuration['agents']])}",
+            'robot_ids': ''.join([f"{agent['robot_id']}," for agent in launch_configuration['agents']]),
+            # 'robot_ids': f"{','.join([f"{agent['robot_id']}" for agent in launch_configuration['agents']])}",
             'robot_tf_prefix':
             f"{launch_configuration['manager_robot_tf_prefix']}",
                 'robot_tf_suffix':
