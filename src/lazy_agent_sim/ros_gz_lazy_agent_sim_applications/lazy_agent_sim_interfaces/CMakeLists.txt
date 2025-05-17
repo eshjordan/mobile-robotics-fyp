@@ -12,6 +12,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/EpuckInteraction.msg"
   "msg/EpuckKnowledgeRecord.msg"
   "msg/EpuckKnowledgePacket.msg"
+  "msg/EpuckRepartitionReset.msg"
 )
 
 

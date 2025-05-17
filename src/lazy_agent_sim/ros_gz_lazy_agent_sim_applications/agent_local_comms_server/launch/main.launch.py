@@ -619,7 +619,8 @@ def include_comms_manager_implementation(context) -> list[launch.Action]:
             'robot_tf_frame':
                 f"{launch_configuration['manager_robot_tf_frame']}",
             'robot_ids':
-                f"{','.join([f"{agent['robot_id']}" for agent in launch_configuration['agents']])}",
+                # f"{','.join([f"{agent['robot_id']}" for agent in launch_configuration['agents']])}",
+                ''.join([f"{agent['robot_id']}," for agent in launch_configuration['agents']]),
         }.items(),
     )
 
@@ -763,7 +764,8 @@ def include_localisation_implementation(context) -> list[launch.Action]:
             result.append(_include)
     else:
         launch_arguments = {
-            'robot_ids': f"{','.join([f"{agent['robot_id']}" for agent in launch_configuration['agents']])}",
+            'robot_ids': ''.join([f"{agent['robot_id']}," for agent in launch_configuration['agents']]),
+            # 'robot_ids': f"{','.join([f"{agent['robot_id']}" for agent in launch_configuration['agents']])}",
             'robot_tf_prefix':
             f"{launch_configuration['manager_robot_tf_prefix']}",
                 'robot_tf_suffix':

@@ -279,6 +279,40 @@ def test_neighbourhood(agent1: Agent, agent2: Agent):
 
 
 
+
+
+def insert_simple(agent_idx, N):
+
+    """
+    agent_idx should be 1-indexed
+    """
+
+    if agent_idx == 1:
+        return Agent(
+            theta_l = 3*pi/2,
+            theta_u = pi/2,
+            n = 2,
+            epsilon = 0
+        )
+    
+    if agent_idx == N:
+        return Agent(
+            theta_l = 3*pi/2 - (pi/(2**(N-2))),
+            theta_u = 3*pi/2,
+            n = 2,
+            epsilon = 0
+        )
+    
+    return Agent(
+        theta_l = 3*pi/2 - (pi/(2**(agent_idx-2))),
+        theta_u = 3*pi/2 - (pi/(2**(agent_idx-1))),
+        n = 2,
+        epsilon = 0
+    )
+
+
+
+
 def interact_simple(agent_p: Agent, agent_pc: Agent):
 
     """

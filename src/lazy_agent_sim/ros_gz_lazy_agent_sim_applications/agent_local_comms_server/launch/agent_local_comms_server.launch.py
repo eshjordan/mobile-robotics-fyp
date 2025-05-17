@@ -20,6 +20,7 @@ def generate_launch_description():
                 "remap_ids/1": "1",
                 "remap_ids/2": "2",
                 "remap_ids/3": "3",
+                "robot_ids": "",
             }.items(),
         )
     )
@@ -63,6 +64,9 @@ def generate_launch_description():
                         ),
                         "remap_ids/3": launch.substitutions.LaunchConfiguration(
                             "remap_ids/3"
+                        ),
+                        "robot_ids": launch.substitutions.LaunchConfiguration(
+                            "robot_ids"
                         ),
                     }
                 ],
