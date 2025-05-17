@@ -289,7 +289,7 @@ class EpuckKnowledgeRecord:
 
 
 EPUCK_KNOWLEDGE_PACKET_FMT_STR: str = ENDIAN_FMT + \
-    f"B{ROBOT_ID_TYPE_FMT_STR}HB"
+    f"B{ROBOT_ID_TYPE_FMT_STR}HBB"
 EPUCK_KNOWLEDGE_PACKET_ID: int = 0x22
 
 
@@ -300,6 +300,7 @@ class EpuckKnowledgePacket:
     robot_id: int = 0  # see above
     seq: int = 0  # ushort
     N: int = 0x0  # byte
+    num_known_ids: int = 0x0  # byte
 
     def pack(self):
         retval = struct.pack(
@@ -308,6 +309,7 @@ class EpuckKnowledgePacket:
             self.robot_id,
             self.seq,
             self.N,
+            self.num_known_ids,
         ) + b"".join([record.pack() for record in self.known_ids]) + b"\x00" * (
             EpuckKnowledgeRecord.calcsize() * (MAX_ROBOTS - len(self.known_ids))
         )
@@ -325,12 +327,12 @@ class EpuckKnowledgePacket:
             )
 
         start_len = struct.calcsize(EPUCK_KNOWLEDGE_PACKET_FMT_STR)
-        id, robot_id, seq, N = struct.unpack(
+        id, robot_id, seq, N, num_known_ids = struct.unpack(
             EPUCK_KNOWLEDGE_PACKET_FMT_STR, buffer[:start_len]
         )
         known_ids = []
         offset = start_len
-        for _ in range(min(N, MAX_ROBOTS)):
+        for _ in range(min(num_known_ids, MAX_ROBOTS)):
             record = EpuckKnowledgeRecord.unpack(
                 buffer[offset: offset + EpuckKnowledgeRecord.calcsize()]
             )
@@ -341,6 +343,7 @@ class EpuckKnowledgePacket:
             robot_id=robot_id,
             seq=seq,
             N=N,
+            num_known_ids=num_known_ids,
             known_ids=known_ids,
         )
 

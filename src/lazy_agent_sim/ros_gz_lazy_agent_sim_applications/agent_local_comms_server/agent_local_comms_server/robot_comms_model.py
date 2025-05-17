@@ -84,6 +84,7 @@ class BaseRobotCommsModel:
         self.seq_ = 0
         self.centroid_ = Centroid()
         self.boundary_ = Boundary([], [], [])
+        self.n_ = 1
         self.known_ids_ = {}
         self._UpdateRecord()
 
@@ -113,6 +114,12 @@ class BaseRobotCommsModel:
                 self.known_ids_[record.robot_id] = record
 
         return self.KnownIdsSize() - size_before
+    
+    def SetN(self, N):
+        self.n_ = N
+
+    def GetN(self) -> int:
+        return self.n_
 
     def GetKnownIds(self) -> list[EpuckKnowledgeRecord]:
         return list(self.known_ids_.values())
@@ -130,7 +137,8 @@ class BaseRobotCommsModel:
         return EpuckKnowledgePacket(
             robot_id=self.robot_id,
             seq=new_record.seq,
-            N=self.KnownIdsSize(),
+            N=self.GetN(),
+            num_known_ids=self.KnownIdsSize(),
             known_ids=self.GetKnownIds(),
         )
 
@@ -254,6 +262,7 @@ class RobotCommsModel(BaseRobotCommsModel):
                         f"Received knowledge packet from {host}:{port} - {knowledge}"
                     )
 
+                    robot_model.SetN(knowledge.N)
                     # Set the seq number for the knowledge of this robot to UINT16_MAX to force an update to the rest of the attributes in the record
                     this_robot.seq = 0xFFFF
                     robot_model.InsertKnownIds(knowledge.known_ids)
