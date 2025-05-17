@@ -121,8 +121,10 @@ class WaypointController_v1(Node):
         this_idx_this = [record.robot_id for record in msg.known_ids].index(msg.robot_id)       # "this" robot's record of "this" robot 
         start_angle = msg.known_ids[this_idx_this].boundary.x_points[0]
         end_angle = msg.known_ids[this_idx_this].boundary.x_points[1]
+        centroid = msg.known_ids[this_idx_this].centroid
         self.path_planner = SimplePathPlanner(
-            self.generate_initial_waypoints(start_angle, end_angle), logger=self.get_logger()
+            # self.generate_initial_waypoints(start_angle, end_angle), logger=self.get_logger()
+            self.generate_initial_waypoints(centroid.x - 0.1, centroid.x + 0.1), logger=self.get_logger()
         )
         self.current_waypoint = self.path_planner.get_next_waypoint()
 

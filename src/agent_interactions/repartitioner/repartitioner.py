@@ -130,6 +130,17 @@ class Repartitioner(Node):
         if self.get_parameter("robot_id").value not in [this_packet.robot_id, other_packet.robot_id]:
             # id's don't match. ignore packet
             return
+
+        # Agents always have records of themself
+        this_idx_this = [record.robot_id for record in this_packet.known_ids].index(this_packet.robot_id)       # "this" robot's record of "this" robot 
+        other_idx_other = [record.robot_id for record in other_packet.known_ids].index(other_packet.robot_id)   # "other" robot's record of "other" robot
+
+        this_agent = self.scheme_handler.agent_from_record(this_packet.known_ids[this_idx_this], this_packet.n)
+        other_agent = self.scheme_handler.agent_from_record(other_packet.known_ids[other_idx_other], other_packet.n)
+
+        if not self.scheme_handler.test_neighbourhood(this_agent, other_agent):
+            self.get_logger().info(f"Agents {this_packet.robot_id} and {other_packet.robot_id} are not neighbours. Aborting interaction.")
+            return
         
         # Exchange all records
         # 'this'
@@ -148,11 +159,6 @@ class Repartitioner(Node):
                 this_packet.known_ids.append(other_record)
         
 
-        # Get indexes of records
-
-        # Agents always have records of themself
-        this_idx_this = [record.robot_id for record in this_packet.known_ids].index(this_packet.robot_id)       # "this" robot's record of "this" robot 
-        other_idx_other = [record.robot_id for record in other_packet.known_ids].index(other_packet.robot_id)   # "other" robot's record of "other" robot
         # Knowledge of each other
         this_idx_other = [record.robot_id for record in this_packet.known_ids].index(other_packet.robot_id)     # "this" robot's record of "other" robot
         other_idx_this = [record.robot_id for record in other_packet.known_ids].index(this_packet.robot_id)     # "other" robot's record of "this" robot 
@@ -166,8 +172,7 @@ class Repartitioner(Node):
         # self.get_logger().info(f"This: robot_id={this_packet.robot_id},  this_idx_this={this_idx_this},  this_idx_other={this_idx_other}")
         # self.get_logger().info(f"Other: robot_id={other_packet.robot_id},  other_idx_other={other_idx_other},  other_idx_this={other_idx_this}")
 
-        this_agent = self.scheme_handler.agent_from_record(this_packet.known_ids[this_idx_this], this_packet.n)
-        other_agent = self.scheme_handler.agent_from_record(other_packet.known_ids[other_idx_other], other_packet.n)
+
 
         # self.get_logger().info("\n\n")
         # self.get_logger().info("BEFORE")
@@ -209,7 +214,7 @@ def main():
     rclpy.init()
     repartitioner = Repartitioner()
 
-    TESTING = True
+    TESTING = False
 
     if not TESTING:
         rclpy.spin(repartitioner)

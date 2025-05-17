@@ -11,10 +11,10 @@ def launch_robot_comms() -> list[launch.Action]:
         name=("knowledge_comms_robot_",
               launch.substitutions.LaunchConfiguration("robot_id")),
         output="screen",
-        prefix=IfElseSubstitution(EqualsSubstitution(launch.substitutions.LaunchConfiguration("robot_id"), "0"), [
+        prefix=[ #IfElseSubstitution(EqualsSubstitution(launch.substitutions.LaunchConfiguration("robot_id"), "0"), [
             # Debugging with gdb
-            # "xterm -bg black -fg white -fa 'Monospace' -fs 13 -e gdb -ex 'set breakpoint pending on' -ex 'b RobotCommsModel<UDPKnowledgeServer, UDPKnowledgeClient>::handle_commands if data[0] == 0x23 && data[1] == 1' -ex run --args"
-        ], []),
+            "xterm -bg black -fg white -fa 'Monospace' -fs 13 -e gdb -ex run --args"
+        ], # []),
         ros_arguments=[
             # "--log-level",
             # "debug",

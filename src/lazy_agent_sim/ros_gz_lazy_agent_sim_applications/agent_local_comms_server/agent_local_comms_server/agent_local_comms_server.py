@@ -549,11 +549,6 @@ class LocalCommsManager(rclpy.node.Node):
 
         self.get_logger().debug("Command packet sent")
 
-        self.get_logger().info('HERE')
-        self.get_logger().info(f'{msg}')
-        self.get_logger().info(f'{msg.known_ids[0].boundary}')
-        self.get_logger().info(f'{msg.known_ids[0].boundary.x_points}')
-
         knowledge = self.msg_to_knowledge_packet(msg)
 
         data = knowledge.pack()
