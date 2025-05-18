@@ -77,6 +77,8 @@ class Repartitioner(Node):
             "/agent_local_comms_server/repartition",
             10
         )
+
+        self.reset_agent_idx = None
     
 
     def reset_callback(self, msg: EpuckRepartitionReset):
@@ -85,20 +87,30 @@ class Repartitioner(Node):
         agent_idx is the index, not the actual robot id
         """
 
-        if self.get_parameter("robot_id").value != msg.robot_id:
+        my_id = self.get_parameter("robot_id").value
+
+        # There are two cases here where the robot should repartition after a reset
+        if not (
+            msg.robot_id == my_id or                                                            # 1. The ID's match
+            (self.reset_agent_idx is not None and msg.agent_idx == self.reset_agent_idx + 1)    # 2. A new agent with self.reset_agent_idx+1 is reset. I should repartition again with the new N value.
+        ):
             return
+        
+        # Save index
+        if msg.robot_id == my_id:
+            self.reset_agent_idx = msg.agent_idx
 
         # Compute new initial state
-        centroid, boundary, n = self.scheme_handler.get_agent_initial_state(msg.agent_idx, msg.num_agents)
+        centroid, boundary, n = self.scheme_handler.get_agent_initial_state(self.reset_agent_idx, msg.num_agents)
 
         # Construct knowledge packet
         knowledge_packet = EpuckKnowledgePacket(
-            robot_id = msg.robot_id,
+            robot_id = my_id,
             seq = 0,
             num_known_ids = 1,
             known_ids = [
                 EpuckKnowledgeRecord(
-                    robot_id = msg.robot_id,
+                    robot_id = my_id,
                     centroid = centroid,
                     boundary = boundary,
                     seq = 0
@@ -109,6 +121,10 @@ class Repartitioner(Node):
 
         # Publish knowledge packet
         self.response.publish(knowledge_packet)
+
+
+
+            
 
 
     def listener_callback(self, interaction_msg: EpuckInteraction):
@@ -168,19 +184,6 @@ class Repartitioner(Node):
         this_packet.known_ids[this_idx_other] = other_packet.known_ids[other_idx_other]
         other_packet.known_ids[other_idx_this] = this_packet.known_ids[this_idx_this]
         # TODO update info about ALL agent records (probably not needed since they are not needed for this particular interaction)
-
-        # self.get_logger().info(f"This: robot_id={this_packet.robot_id},  this_idx_this={this_idx_this},  this_idx_other={this_idx_other}")
-        # self.get_logger().info(f"Other: robot_id={other_packet.robot_id},  other_idx_other={other_idx_other},  other_idx_this={other_idx_this}")
-
-
-
-        # self.get_logger().info("\n\n")
-        # self.get_logger().info("BEFORE")
-        # self.get_logger().info("this_agent")
-        # self.get_logger().info(f"vertices: {this_agent["vertices"]}")
-        # self.get_logger().info("other_agent")
-        # self.get_logger().info(f"vertices: {other_agent["vertices"]}")
-        # self.get_logger().info(f"th_l: {other_agent["theta_l"]},  th_u: {other_agent["theta_u"]},   eps: {other_agent["epsilon"]}")
 
         new_this_agent, new_other_agent = self.scheme_handler.interact(this_agent, other_agent)
         new_this_centroid, new_this_boundary, new_this_n = self.scheme_handler.new_centroid_boundary_n(new_this_agent)
