@@ -121,10 +121,11 @@ class WaypointController_v1(Node):
         this_idx_this = [record.robot_id for record in msg.known_ids].index(msg.robot_id)       # "this" robot's record of "this" robot 
         start_angle = msg.known_ids[this_idx_this].boundary.x_points[0]
         end_angle = msg.known_ids[this_idx_this].boundary.x_points[1]
-        centroid = msg.known_ids[this_idx_this].centroid
+        centroid: Centroid = msg.known_ids[this_idx_this].centroid
         self.path_planner = SimplePathPlanner(
-            # self.generate_initial_waypoints(start_angle, end_angle), logger=self.get_logger()
-            self.generate_initial_waypoints(centroid.x - 0.1, centroid.x + 0.1), logger=self.get_logger()
+            self.generate_initial_waypoints(start_angle, end_angle), logger=self.get_logger()
+            # self.generate_initial_waypoints(centroid.x - 0.1, centroid.x + 0.1), logger=self.get_logger()
+            # generate_centroid_waypoint_radial(centroid_angle=centroid.x, radius=0.14)
         )
         self.current_waypoint = self.path_planner.get_next_waypoint()
 
@@ -342,11 +343,12 @@ class WaypointController_v1(Node):
     def generate_initial_waypoints(self, start_angle=0, end_angle=2 * np.pi / 4):
         """Generate initial waypoints for the robot to follow."""
         self.get_logger().info(f"Generating initial waypoints for robot {self.get_parameter("robot_id").value}")
-        initial_waypoints = generate_boustrophedon_waypoints_radial(
+        # initial_waypoints = generate_boustrophedon_waypoints_radial(
+        initial_waypoints = generate_angular_waypoints(
             start_angle=start_angle,
             end_angle=end_angle,
             line_spacing=0.1,
-            radius=1,
+            radius=0.5,
             center=(0, 0),
         )
 
@@ -361,6 +363,10 @@ class WaypointController_v1(Node):
         turn_angle = pi  # 180 degrees
         self.send_twist_message(0.0, turn_angle)
         self.get_logger().info("Turning around after interaction")
+
+
+def generate_centroid_waypoint_radial(centroid_angle, radius = 0.5):
+    return [[radius * np.cos(centroid_angle), radius * np.sin(centroid_angle)]] * 3
 
 
 def generate_boustrophedon_waypoints_polygon(all_boundary_points, line_spacing=0.1):
@@ -450,6 +456,54 @@ def generate_boustrophedon_waypoints_radial(
     all_boundary_points = np.vstack(boundary_points)
 
     return generate_boustrophedon_waypoints_polygon(all_boundary_points, line_spacing)
+
+
+
+def generate_angular_waypoints(
+    start_angle,
+    end_angle,
+    line_spacing=0.1,
+    radius=1,
+    center=(0, 0),
+    boundary_resolution=20,
+):
+    """
+
+    Parameters:
+    - start_angle (float): start angle of the sector (radians)
+    - end_angle (float): end angle of the sector (radians)
+    - line_spacing (float): vertical spacing between sweep lines
+    - radius (float): radius of the sector
+    - center (tuple): center (x, y) of the sector
+    - boundary_resolution (int): resolution for sampling arc and radial edges
+
+    Returns:
+    - waypoints (list of (x, y)): only edge-intersection waypoints in boustrophedon order
+    """
+
+    cx, cy = center
+    flipped = True
+    radii = np.arange(line_spacing, radius+line_spacing, line_spacing)
+    boundary_points = np.array([[cx, cy]])
+
+    for rad in radii:
+
+        flipped = not flipped
+
+        # Sample the arc boundary
+        arc_angles = np.linspace(start_angle, end_angle, boundary_resolution)
+        arc_points = np.array([
+            (cx + rad * np.cos(a), cy + rad * np.sin(a)) for a in (arc_angles if not flipped else reversed(arc_angles))
+        ])
+        print(boundary_points.shape)
+        print(arc_points.shape)
+        boundary_points = np.vstack([
+            arc_points,
+            boundary_points,
+        ])
+
+    return boundary_points
+
 
 
 class SimplePathPlanner:
