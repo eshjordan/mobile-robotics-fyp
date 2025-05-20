@@ -2,31 +2,49 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from lazy_agent_sim_interfaces.msg import EpuckInteraction, EpuckKnowledgePacket, EpuckKnowledgeRecord, Boundary, Centroid
 import numpy as np
-
-
+from typing import Any, Tuple
 
 
 # Base class
 class InteractionScheme(ABC):
 
     @abstractmethod
-    def interact(self, agent1, agent2):
+    def interact(self, agent1: Any, agent2: Any) -> Tuple[Any,Any]:
+        """
+        Implement this to compute the interaction between
+        two agents and return the new agent states
+        """
         pass
 
     @abstractmethod
     def test_neighbourhood(self, agent1, agent2):
+        """
+        Implement this to test whether two agents are neighbours
+        """
         pass
 
     @abstractmethod
-    def agent_from_record(self, record, n):
+    def agent_from_record(self, record: EpuckKnowledgeRecord, n: int) -> Any:
+        """
+        Implement this to convert an EpuckKnowledgeRecord msg
+        to an agent data struture to be used in other functions
+        """
         pass
 
     @abstractmethod
-    def new_centroid_boundary_n(self, agent) -> tuple[Centroid, Boundary, int]:
+    def new_centroid_boundary_n(self, agent: Any) -> Tuple[Centroid, Boundary, int]:
+        """
+        Implement this to convert an agent data structure
+        to a Centroid, Boundary, and N (knowledge)
+        """
         pass
 
     @abstractmethod
-    def get_agent_initial_state(self, agent_idx: int, N: int) -> tuple[Centroid, Boundary, int]:
+    def get_agent_initial_state(self, agent_idx: int, N: int) -> Tuple[Centroid, Boundary, int]:
+        """
+        Implement this to compute the initial state assigned to an agent once
+        the agent comms manager makes first contact to the agent.
+        """
         pass
 
 
@@ -34,6 +52,7 @@ class InteractionScheme(ABC):
 
 
 import agent_interactions.polygons_2d.interactions as p2d
+from agent_interactions.polygons_2d.insertions import generate_circle
 class Scheme2dPolygons(InteractionScheme):
 
     def interact(self, agent1, agent2):
@@ -54,9 +73,9 @@ class Scheme2dPolygons(InteractionScheme):
         }
         return agent
     
-    def new_centroid_boundary_n(self, agent):
+    def new_centroid_boundary_n(self, agent: dict):
         
-        centroid = Centroid( x = p2d.centre_of_polygon(agent["vertices"]) ) # not necessary for this scheme
+        centroid = Centroid( x = p2d.centre_of_polygon(agent["vertices"]) )
 
         boundary = Boundary(
             x_points = list(agent["vertices"][:,0]), 
@@ -65,6 +84,14 @@ class Scheme2dPolygons(InteractionScheme):
         n = agent["n"]
 
         return centroid, boundary, n
+    
+    def get_agent_initial_state(self, agent_idx, N):
+        # inititalise with entire domain bounds
+        agent = {
+            "vertices": generate_circle(centre=[0,0], radius=1, circle_resolution=50),
+            "n": 1
+        }
+        return self.new_centroid_boundary_n(agent)
     
 
 

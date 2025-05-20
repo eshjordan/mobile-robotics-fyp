@@ -435,21 +435,11 @@ def split_polygon_exactly_50_50(merged_poly, agent_centre_1, agent_centre_2):
     a = x2-x1
     b = y2-y1
 
-    # c_vals = [(-a*x -b*y, (x,y)) for x,y in merged_poly]
-    # c_min, (x_min, y_min) = min(c_vals, key=lambda x:x[0])
-    # c_max, (x_max, y_max) = max(c_vals, key=lambda x:x[0])
-
-
-    # c1_o = -a*x1 -b*y1
-    # c2_o = -a*x2 -b*y2
-
-
-
-    # c_vals = [(-a*x -b*y) for x,y in merged_poly]
-    # c_min = min(c_vals)
-    # c_max = max(c_vals)
-
-
+    # Handle case where a=0 and b=0 (i.e. when centers are exactly the same)
+    if abs(a) < 1E-10 and abs(b) < 1E-10:
+        # Vertical line
+        a = 1
+        b = 0
 
     c_vals = [(-a*x -b*y, (x,y)) for x,y in merged_poly]
     c_min, (x_min, y_min) = min(c_vals, key=lambda x:x[0])

@@ -110,24 +110,48 @@ class WaypointController_v1(Node):
         # self.get_logger().info(f"self.current_waypoint {self.current_waypoint}")
         self.prnt_msg = 0
 
+    
 
     def repartition_callback(self, msg: EpuckKnowledgePacket):
 
         if msg.robot_id != self.get_parameter("robot_id").value:
             # Not this robot
             return
-    
-        # Assume 1d case for now
+        
         this_idx_this = [record.robot_id for record in msg.known_ids].index(msg.robot_id)       # "this" robot's record of "this" robot 
-        start_angle = msg.known_ids[this_idx_this].boundary.x_points[0]
-        end_angle = msg.known_ids[this_idx_this].boundary.x_points[1]
+        boundary: Boundary = msg.known_ids[this_idx_this].boundary
         centroid: Centroid = msg.known_ids[this_idx_this].centroid
-        self.path_planner = SimplePathPlanner(
-            self.generate_initial_waypoints(start_angle, end_angle), logger=self.get_logger()
-            # self.generate_initial_waypoints(centroid.x - 0.1, centroid.x + 0.1), logger=self.get_logger()
-            # generate_centroid_waypoint_radial(centroid_angle=centroid.x, radius=0.14)
-        )
+
+        # Infer type from structure of boundary.x_points
+        scheme_type = "1d" if len(boundary.x_points) == 2 else "2d"
+
+        if scheme_type == "1d":
+    
+            start_angle = msg.known_ids[this_idx_this].boundary.x_points[0]
+            end_angle = msg.known_ids[this_idx_this].boundary.x_points[1]
+            # centroid: Centroid = msg.known_ids[this_idx_this].centroid
+            self.path_planner = SimplePathPlanner(
+                generate_angular_waypoints(start_angle, end_angle, radius=0.5), logger=self.get_logger()
+                # self.generate_initial_waypoints(start_angle, end_angle), logger=self.get_logger()
+                # self.generate_initial_waypoints(centroid.x - 0.1, centroid.x + 0.1), logger=self.get_logger()
+                # generate_centroid_waypoint_radial(centroid_angle=centroid.x, radius=0.14)
+            )
+        elif scheme_type == "2d":
+
+            vertices = np.array([
+                [x,y] for x,y in zip(boundary.x_points, boundary.y_points)
+            ])
+
+            center = [centroid.x, centroid.y]
+
+            self.path_planner = SimplePathPlanner(
+                # generate_boustrophedon_waypoints_polygon(vertices), logger=self.get_logger()
+                [center], logger=self.get_logger()
+            )
+
         self.current_waypoint = self.path_planner.get_next_waypoint()
+
+
 
 
     def update_pose(self):
@@ -340,17 +364,21 @@ class WaypointController_v1(Node):
         self.cmd_pub.publish(twist)
         self.get_logger().info("Robot stopped for interaction")
 
-    def generate_initial_waypoints(self, start_angle=0, end_angle=2 * np.pi / 4):
+    def generate_initial_waypoints(self):
+    # def generate_initial_waypoints(self, start_angle=0, end_angle=2 * np.pi / 4):
         """Generate initial waypoints for the robot to follow."""
+
         self.get_logger().info(f"Generating initial waypoints for robot {self.get_parameter("robot_id").value}")
         # initial_waypoints = generate_boustrophedon_waypoints_radial(
-        initial_waypoints = generate_angular_waypoints(
-            start_angle=start_angle,
-            end_angle=end_angle,
-            line_spacing=0.1,
-            radius=0.5,
-            center=(0, 0),
-        )
+        # initial_waypoints = generate_angular_waypoints(
+        #     start_angle=start_angle,
+        #     end_angle=end_angle,
+        #     line_spacing=0.1,
+        #     radius=0.5,
+        #     center=(0, 0),
+        # )
+
+        initial_waypoints = [[0,0],[0,1],[1,0],[0,-1],[-1,0],[0,1]] #  dummy initial waypoints
 
         log_str = "initial_waypoints:\n"
         for waypoint in initial_waypoints:
@@ -363,6 +391,38 @@ class WaypointController_v1(Node):
         turn_angle = pi  # 180 degrees
         self.send_twist_message(0.0, turn_angle)
         self.get_logger().info("Turning around after interaction")
+
+
+
+
+
+
+class SimplePathPlanner:
+    def __init__(
+        self, waypoints, logger=rclpy.logging.get_logger("simple_path_planner")
+    ):
+        self.waypoints = waypoints
+        self.current_waypoint_index = 0
+        self.logger = logger
+        self.direction = 1  # 1 for forward, -1 for reverse
+
+    def get_next_waypoint(self):
+        # Check if we need to reverse direction
+        if self.current_waypoint_index == len(self.waypoints) - 1:
+            self.direction = -1
+        elif self.current_waypoint_index == 0:
+            self.direction = 1
+
+        # Update index
+        self.current_waypoint_index += self.direction
+        return self.waypoints[self.current_waypoint_index]
+
+    def update_waypoints(self, new_waypoints):
+        self.waypoints = new_waypoints
+        self.current_waypoint_index = 0
+
+
+
 
 
 def generate_centroid_waypoint_radial(centroid_angle, radius = 0.5):
@@ -444,6 +504,12 @@ def generate_boustrophedon_waypoints_radial(
     - waypoints (list of (x, y)): only edge-intersection waypoints in boustrophedon order
     """
 
+    # Sanitise inputs
+    start_angle = start_angle % (2*np.pi)
+    end_angle = end_angle % (2*np.pi)
+    if start_angle > end_angle:
+        end_angle += 2*np.pi
+
     cx, cy = center
 
     # Sample the arc boundary
@@ -481,6 +547,12 @@ def generate_angular_waypoints(
     - waypoints (list of (x, y)): only edge-intersection waypoints in boustrophedon order
     """
 
+    # Sanitise inputs
+    start_angle = start_angle % (2*np.pi)
+    end_angle = end_angle % (2*np.pi)
+    if start_angle > end_angle:
+        end_angle += 2*np.pi
+
     cx, cy = center
     flipped = True
     radii = np.arange(line_spacing, radius+line_spacing, line_spacing)
@@ -506,29 +578,8 @@ def generate_angular_waypoints(
 
 
 
-class SimplePathPlanner:
-    def __init__(
-        self, waypoints, logger=rclpy.logging.get_logger("simple_path_planner")
-    ):
-        self.waypoints = waypoints
-        self.current_waypoint_index = 0
-        self.logger = logger
-        self.direction = 1  # 1 for forward, -1 for reverse
 
-    def get_next_waypoint(self):
-        # Check if we need to reverse direction
-        if self.current_waypoint_index == len(self.waypoints) - 1:
-            self.direction = -1
-        elif self.current_waypoint_index == 0:
-            self.direction = 1
 
-        # Update index
-        self.current_waypoint_index += self.direction
-        return self.waypoints[self.current_waypoint_index]
-
-    def update_waypoints(self, new_waypoints):
-        self.waypoints = new_waypoints
-        self.current_waypoint_index = 0
 
 
 def main():

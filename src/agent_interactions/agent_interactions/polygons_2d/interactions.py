@@ -106,25 +106,23 @@ def visualise_regions(agent_vertices, domain_vertices, interaction=None, ax=None
         ax.scatter(cx1, cy1, marker='x', color='black', s=50, zorder=5, alpha=0.5)
         ax.scatter(cx2, cy2, marker='x', color='black', s=50, zorder=5, alpha=0.5)
 
-        # a = cx2-cx1
-        # b = cy2-cy1
-        # c = 0.5*(cx1**2+cy1**2-cx2**2-cy2**2)
-
-        # Draw line between two agents (shift towards the larger polygon)
-
-        agent_area_1 = polygon_area(agent_vertices[agent1])
-        agent_area_2 = polygon_area(agent_vertices[agent2])
-        alpha = agent_area_2 / (agent_area_2 + agent_area_1)
-        a = cx2-cx1
-        b = cy2-cy1
-        c = (cy2-cy1)*(-cy1*(1-alpha)-alpha*cy2) + (cx2-cx1)*(-cx1*(1-alpha)-alpha*cx2)
-
         new_poly1, new_poly2, (a,b,c) = split_polygon_exactly_50_50(merged_polys, [cx1, cy1], [cx2, cy2])
 
-        xlim = ax.get_xlim()
-        x = np.array(xlim)
-        y = (-a * x - c) / b
-        ax.plot(x, y, '--', color='black', alpha=0.5, zorder=1)
+        print("(a,b,c)")
+        print((a,b,c))
+
+
+
+        if abs(b) > 1E-10:
+            xlim = ax.get_xlim()
+            x = np.array(xlim)
+            y = (-a * x - c) / b
+            ax.plot(x, y, '--', color='black', alpha=0.5, zorder=1)
+        else:
+            ylim = ax.get_ylim()
+            y = np.array(ylim)
+            x = np.ones_like(y) * (-c/a)
+            ax.plot(x, y, '--', color='black', alpha=0.5, zorder=1)
 
 
     # Draw domain boundary as hollow polygon
