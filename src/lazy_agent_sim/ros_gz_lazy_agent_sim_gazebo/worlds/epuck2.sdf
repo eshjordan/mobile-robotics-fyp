@@ -99,7 +99,7 @@
 
     <model name="epuck2_robot_0">
       <self_collide>false</self_collide>
-      <pose>-1.0 -1.0 0.001 0 0 0</pose>
+      <pose>1.642464 -1.560504 0 0.03345559917315946 -0.02264039102022201 0.3154178127582603</pose>
 
       <include merge="true">
         <uri>package://ros_gz_lazy_agent_sim_description/models/epuck2</uri>
@@ -122,7 +122,7 @@
 
     <model name="epuck2_robot_1">
       <self_collide>false</self_collide>
-      <pose>-1.0 1.0 0.001 0 0 0</pose>
+      <pose>1.605983 0.51829 0 0.027390799206311735 0.0038766362542771095 -0.2074146651177951</pose>
 
       <include merge="true">
         <uri>package://ros_gz_lazy_agent_sim_description/models/epuck2</uri>
@@ -145,7 +145,7 @@
 
     <model name="epuck2_robot_2">
       <self_collide>false</self_collide>
-      <pose>1.0 -1.0 0.001 0 0 0</pose>
+      <pose>-0.440772 -1.151986 0 0.05028155267398287 0.048922545618319414 0.16206260536344289</pose>
 
       <include merge="true">
         <uri>package://ros_gz_lazy_agent_sim_description/models/epuck2</uri>
@@ -168,7 +168,7 @@
 
     <model name="epuck2_robot_3">
       <self_collide>false</self_collide>
-      <pose>1.0 1.0 0.001 0 0 0</pose>
+      <pose>-1.192578 0.045757 0 0.008047534209946127 0.009379430896685416 -1.613903356092391</pose>
 
       <include merge="true">
         <uri>package://ros_gz_lazy_agent_sim_description/models/epuck2</uri>

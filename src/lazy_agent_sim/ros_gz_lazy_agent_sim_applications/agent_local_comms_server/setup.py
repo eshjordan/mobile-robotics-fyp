@@ -32,6 +32,7 @@ setup(
             "set_knowledge = agent_local_comms_server.set_knowledge:main",
             "pose_tf = agent_local_comms_server.pose_tf:main",
             "odom_tf = agent_local_comms_server.odom_tf:main",
+            "log_tf = agent_local_comms_server.log_tf:main",
         ],
     },
 )
