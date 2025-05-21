@@ -11,8 +11,11 @@ def test_neighbourhood(vertices1, vertices2):
     """
     try:
         result = merge_polygons(vertices1, vertices2)
+        agent_centre_1 = centre_of_polygon(vertices1)
+        agent_centre_2 = centre_of_polygon(vertices2)
+        split_polygon_exactly_50_50(result, agent_centre_1, agent_centre_2)
         return True
-    except ShapeError:
+    except (ShapeError, PolygonError):
         return False
 
 # def test_neighbourhood(vertices1, vertices2):
@@ -75,6 +78,7 @@ def visualise_regions(agent_vertices, domain_vertices, interaction=None, ax=None
         # Combine domain lines with point-specific lines
 
         if len(vertices) >= 3:
+            print(f"{interaction}")
             polygon = Polygon(vertices, alpha=0.3, facecolor=color, edgecolor='black')
             ax.add_patch(polygon)
 
@@ -91,8 +95,13 @@ def visualise_regions(agent_vertices, domain_vertices, interaction=None, ax=None
 
         merged_polys = clean_polygon(merge_polygons(agent_vertices[agent1], agent_vertices[agent2]))
 
-        polygon = Polygon(merged_polys, alpha=0.4, facecolor='none', edgecolor='black',
+        try:
+            polygon = Polygon(merged_polys, alpha=0.4, facecolor='none', edgecolor='black',
                     hatch='///', fill=True, linewidth=2)
+        except Exception as e:
+            print(e)
+            raise e
+
         ax.add_patch(polygon)
         cx, cy = centre_of_polygon(merged_polys)
         ax.scatter(cx, cy, marker='x', color='black', s=150, zorder=5, alpha=0.8)
@@ -108,10 +117,7 @@ def visualise_regions(agent_vertices, domain_vertices, interaction=None, ax=None
 
         new_poly1, new_poly2, (a,b,c) = split_polygon_exactly_50_50(merged_polys, [cx1, cy1], [cx2, cy2])
 
-        print("(a,b,c)")
-        print((a,b,c))
-
-
+        # print("(a,b,c)" + str((a,b,c)))
 
         if abs(b) > 1E-10:
             xlim = ax.get_xlim()

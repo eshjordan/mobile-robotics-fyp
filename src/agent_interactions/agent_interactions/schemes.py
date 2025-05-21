@@ -75,7 +75,8 @@ class Scheme2dPolygons(InteractionScheme):
     
     def new_centroid_boundary_n(self, agent: dict):
         
-        centroid = Centroid( x = p2d.centre_of_polygon(agent["vertices"]) )
+        center = p2d.centre_of_polygon(agent["vertices"])
+        centroid = Centroid( x = center[0], y = center[1] )
 
         boundary = Boundary(
             x_points = list(agent["vertices"][:,0]), 
@@ -88,7 +89,7 @@ class Scheme2dPolygons(InteractionScheme):
     def get_agent_initial_state(self, agent_idx, N):
         # inititalise with entire domain bounds
         agent = {
-            "vertices": generate_circle(centre=[0,0], radius=1, circle_resolution=50),
+            "vertices": generate_circle(centre=[0,0], radius=1, circle_resolution=13),
             "n": 1
         }
         return self.new_centroid_boundary_n(agent)

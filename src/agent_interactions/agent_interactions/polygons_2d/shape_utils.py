@@ -316,7 +316,7 @@ def split_polygon_by_line(vertices, abc):
                     intersections.append([np.array([x,y]), i, False])
     
     # Check last itx for duplicate
-    if abs(intersections[0][0][0]-intersections[-1][0][0]) < 1E-10 and abs(intersections[0][0][1]-intersections[-1][0][1]) < 1E-10:
+    if len(intersections)>=2 and abs(intersections[0][0][0]-intersections[-1][0][0]) < 1E-10 and abs(intersections[0][0][1]-intersections[-1][0][1]) < 1E-10:
         intersections.pop() # remove last one
         intersections[0][2] = True # mark as vertex
     
@@ -409,6 +409,127 @@ def split_polygon_by_line(vertices, abc):
 
 
 
+
+
+
+# def split_polygon_exactly_50_50(merged_poly, agent_centre_1, agent_centre_2):
+#     """
+#     Split a polygon along a line whose slope and offset ensure the polygons are split exactly 50:50 (with some small error)
+#     Maintains original agent polygon local regions (i.e. they don't just swap positions randomly)
+
+#     Args:
+#         merged_poly (ndarray): The polygon to split 
+#         agent_centre_1 (tuple | ndarray): (x,y) coordinates of first agent's center
+#         agent_centre_2 (tuple | ndarray): (x,y) coordinates of second agent's center
+
+#     Returns:
+#         tuple:
+#             - new_poly1 (ndarray): Agent 1's new polygon vertices
+#             - new_poly2 (ndarray): Agent 2's new polygon vertices
+#             - line (tuple): Line coefficients (a,b,c) that was used to split agents where ax + by + c = 0
+#     """
+
+#     MAX_ERR = 1E-4
+
+#     x1,y1 = agent_centre_1
+#     x2,y2 = agent_centre_2
+
+#     # Determine slope from original agent centers
+#     a = x2-x1
+#     b = y2-y1
+
+#     # Handle case where a=0 and b=0 (i.e. when centers are exactly the same)
+#     if abs(a) < 1E-10 and abs(b) < 1E-10:
+
+#         # Use PCA to find direction of maximum variance
+#         points = np.array(merged_poly)
+#         _, v = np.linalg.eig(np.cov(points.T))
+#         # Use eigenvector corresponding to minimum variance direction
+#         a = v[0,1]  
+#         b = -v[0,0]  # Perpendicular direction
+    
+#     print(a,b)
+
+#     c_vals = [(-a*x -b*y, (x,y)) for x,y in merged_poly]
+#     c_min, (x_min, y_min) = min(c_vals, key=lambda x:x[0])
+#     c_max, (x_max, y_max) = max(c_vals, key=lambda x:x[0])
+
+#     split_ratios = []
+#     for c in c_vals:
+#         try:
+#             new_poly1, new_poly2 = split_polygon_by_line(merged_poly, (a,b,c))
+#             split_ratios.append(
+#                 {
+#                     "c": c,
+#                     "ratio": polygon_area(new_poly1) / (polygon_area(new_poly1) + polygon_area(new_poly2)),
+#                     "poly1": new_poly1,
+#                     "poly2": new_poly2
+#                 }
+#             )
+            
+#         except PolygonError:
+#             pass
+#             # split_ratios.append(
+#             #     {
+#             #         "c": c,
+#             #         "ratio": float('inf'),
+#             #         "poly1": None,
+#             #         "poly2": None
+#             #     }
+#             # )
+    
+
+#     # Check for exact 50:50
+
+#     for ratio in split_ratios:
+#         if abs(ratio["ratio"] - 0.5) < 1E-2:
+
+#             # Ensure polys are assigned to the correct agent
+#             agent1_side = a*x1+b*y1+c
+#             cx1,cy1 = centre_of_polygon(new_poly1)
+#             new_poly1_side = a*cx1+b*cy1+c
+#             if new_poly1_side*agent1_side < 0 and abs(new_poly1_side*agent1_side) > 1e-10:
+#                 new_poly1, new_poly2 = new_poly2, new_poly1
+
+#             return ratio["poly1"], ratio["poly2"], (a,b,ratio["c"])
+
+
+#     # Interpolate to find best one
+
+#     best_lo = None
+#     best_hi = None
+#     for ratio in list(sorted(split_ratios)):
+#         if ratio["ratio"] > 0.5:
+#             if best_hi is None or ratio["ratio"] < best_hi["ratio"]:
+#                 best_hi = ratio
+#         else:
+#             if best_lo is None or ratio["ratio"] > best_lo["ratio"]:
+#                 best_lo = ratio
+    
+#     if best_lo is not None and best_hi is not None:
+
+#         aa = 0.5 - best_lo["ratio"]
+#         bb = best_hi["ratio"] - 0.5
+#         r = aa / (aa + bb)
+#         c = best_lo["c"] + (best_hi["c"] - best_lo["c"])*r
+
+#         try:
+#             new_poly1, new_poly2 = split_polygon_by_line(merged_poly, (a,b,c))
+#             return new_poly1, new_poly2, (a,b,c)
+
+#         except PolygonError:
+
+
+
+
+
+
+
+
+
+
+
+
 def split_polygon_exactly_50_50(merged_poly, agent_centre_1, agent_centre_2):
     """
     Split a polygon along a line whose slope and offset ensure the polygons are split exactly 50:50 (with some small error)
@@ -436,10 +557,17 @@ def split_polygon_exactly_50_50(merged_poly, agent_centre_1, agent_centre_2):
     b = y2-y1
 
     # Handle case where a=0 and b=0 (i.e. when centers are exactly the same)
-    if abs(a) < 1E-10 and abs(b) < 1E-10:
-        # Vertical line
-        a = 1
-        b = 0
+    if abs(a) < 1E-2 and abs(b) < 1E-2:
+
+        # Use PCA to find direction of maximum variance
+        points = np.array(merged_poly)
+        _, v = np.linalg.eig(np.cov(points.T))
+        # Use eigenvector corresponding to minimum variance direction
+        a = v[0,1]  
+        b = -v[0,0]  # Perpendicular direction
+        # print("(a,b): " + str((a,b)))
+        # print("merged_poly: " + str(merged_poly))
+        # print("points: " + str(points))
 
     c_vals = [(-a*x -b*y, (x,y)) for x,y in merged_poly]
     c_min, (x_min, y_min) = min(c_vals, key=lambda x:x[0])
@@ -456,6 +584,7 @@ def split_polygon_exactly_50_50(merged_poly, agent_centre_1, agent_centre_2):
         c1, x1, y1 = c_max, x_max, y_max
         
 
+    c_best = None
     while True:
 
         try:
@@ -466,9 +595,19 @@ def split_polygon_exactly_50_50(merged_poly, agent_centre_1, agent_centre_2):
             
         except PolygonError as e:
             raise e
+
+            # # If there's an error, just take the best (previous) one
+            # if c_best is None:
+            #     raise e
+            # else:
+            #     break
+
+            # raise e
             # # Convert to convex hull and redo
             # print("WARNING: CONVERTING TO CONVEX HULL")
             # return split_polygon_exactly_50_50(merged_poly[ConvexHull(merged_poly).vertices], agent_centre_1, agent_centre_2)
+        
+        c_best = c
         
         # Ensure polys are assigned to the correct agent
         agent1_side = a*x1+b*y1+c
@@ -491,5 +630,5 @@ def split_polygon_exactly_50_50(merged_poly, agent_centre_1, agent_centre_2):
             c1 = c
             continue
     
-    return new_poly1, new_poly2, (a,b,c)
+    return new_poly1, new_poly2, (a,b,c_best)
 

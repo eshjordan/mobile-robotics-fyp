@@ -3,8 +3,10 @@ import numpy as np
 class ShapeError(Exception):
     pass
 
+EPS_ERROR = 1E-2
+
 def remove_duplicate_vertices(vertices):
-    mask = [np.True_ if i==0 else np.linalg.norm(vertices[i,:]-vertices[i-1,:]) > 1E-10 for i in range(len(vertices))]
+    mask = [np.True_ if i==0 else np.linalg.norm(vertices[i,:]-vertices[i-1,:]) > EPS_ERROR for i in range(len(vertices))]
     return vertices[mask]
 
 class Vertex:
@@ -74,11 +76,19 @@ class Vertex:
             
 
         # Find neighbour with largest interior angle
-        prev_mag = np.linalg.norm(prev_vtx.xy)
+        prev_mag = np.linalg.norm(prev_vtx.xy - self.xy)
         nbrs = [nbr for nbr in self.nbrs if nbr != prev_vtx]
         crosses = [np.cross(prev_vtx.xy - self.xy, nbr.xy - self.xy) for nbr in nbrs]
         scalars = [np.dot(prev_vtx.xy - self.xy, nbr.xy - self.xy) for nbr in nbrs]
         magnitudes = [np.linalg.norm(nbr.xy - self.xy) for nbr in nbrs]
+
+        for mag in magnitudes:
+            if abs(mag) < 1E-2:
+                raise ShapeError
+        
+        if abs(prev_mag) < 1E-2:
+            raise ShapeError
+
         cosines = [(dot / (mag*prev_mag)) for dot,mag in zip(scalars, magnitudes)]
         # cross > 0 means 0 < angle < 180
         cosines_scores = [(1 - cos) if cross >= 0 else (3 + cos) for cos, cross in zip(cosines, crosses)]
@@ -156,7 +166,7 @@ class Shape:
         a2,b2,c2 = abc2
         
         det = a1*b2 - a2*b1
-        if abs(det) < 1e-10:
+        if abs(det) < EPS_ERROR:
             return None
             
         x = (b1*c2 - b2*c1)/det
@@ -183,7 +193,7 @@ class Shape:
         
         # Check for exact vertex intersection
         for vtx in [vtx_a_1, vtx_a_2, vtx_b_1, vtx_b_2]:
-            if np.linalg.norm(itx - vtx) < 1E-10:
+            if np.linalg.norm(itx - vtx) < EPS_ERROR:
                 return vtx
 
         # print(f"edge_intersection: {str(Vertex(itx))} not outside of edges ({str(Vertex(vtx_a_1))}, {str(Vertex(vtx_a_2))}) or ({str(Vertex(vtx_b_1))}, {str(Vertex(vtx_b_2))})")
@@ -204,7 +214,7 @@ class Shape:
 
         # Check for exact vertex intersection
         for vtx in [vtx_1, vtx_2]:
-            if np.linalg.norm(itx - vtx) < 1E-10:
+            if np.linalg.norm(itx - vtx) < EPS_ERROR:
                 return vtx
 
         if not Shape.point_lies_inside_edge_bounds(itx, (vtx_1,vtx_2)):
@@ -226,7 +236,7 @@ class Shape:
         gradients = sorted([-a/b for a,b,c in edge_lines if b != 0])    # m must not be infinity
         n = len(gradients)
         for i in range(n):
-            if abs(gradients[i] - gradients[(i+1)%n]) > 1E-10:
+            if abs(gradients[i] - gradients[(i+1)%n]) > EPS_ERROR:
                 m = 0.5 * (gradients[i] + gradients[(i+1)%n])
                 break
         else:
@@ -247,24 +257,24 @@ class Shape:
                 continue
 
             # Check for itx with first vertex
-            if np.linalg.norm(itx - vtx_1) < 1E-10:
+            if np.linalg.norm(itx - vtx_1) < EPS_ERROR:
                 # Intersection with FIRST vertex. Must check if the vertex is a "turning point" on the ray
                 next_vtx_val = a*vtx_2[0] + b*vtx_2[1] + c
                 vtx_0, _ = edges[(i-1)%len(edges)]
                 prev_vtx_val = a*vtx_0[0] + b*vtx_0[1] + c
                 
-                if next_vtx_val*prev_vtx_val > 1E-10:
+                if next_vtx_val*prev_vtx_val > EPS_ERROR:
                     # next and prev vertices are on same side of the ray. do not count this itx
                     continue
 
             # Check for itx with second vertex
-            if np.linalg.norm(itx - vtx_2) < 1E-10:
+            if np.linalg.norm(itx - vtx_2) < EPS_ERROR:
                 # Intersection with SECOND vertex. Must check if the vertex is a "turning point" on the ray
                 _, vtx_3 = edges[(i+1)%len(edges)]
                 next_vtx_val = a*vtx_3[0] + b*vtx_3[1] + c
                 prev_vtx_val = a*vtx_1[0] + b*vtx_1[1] + c
                 
-                if next_vtx_val*prev_vtx_val > 1E-10:
+                if next_vtx_val*prev_vtx_val > EPS_ERROR:
                     # next and prev vertices are on same side of the ray. do not count this itx
                     continue
 
@@ -282,7 +292,7 @@ class Shape:
         vtx_1, vtx_2 = edge
         px, py = point
         a,b,c = Shape.edge_to_abc(vtx_1, vtx_2)
-        return abs(a*px + b*py + c) < 1E-10
+        return abs(a*px + b*py + c) < EPS_ERROR
     
     @staticmethod
     def point_lies_on_edge(point, edge):
@@ -365,7 +375,7 @@ class Shape:
 
         # STAGE 1 - Merge duplicate vertices from both shapes
 
-        # Assume no duplicates within shape1 and shape2. Therefore, we can terminate inner for loop when we've found a duplicate
+        # Assume no duplicates within shape1 and within shape2. Therefore, we can terminate inner for loop when we've found a duplicate
         # All vertices in shape 1
         some_vertices_merged = False
         some_edges_intersected = False
@@ -374,7 +384,7 @@ class Shape:
 
             # Search for duplicates with shape 2
             for vtx2 in shape2.vertices:
-                if np.linalg.norm(vtx1.xy - vtx2.xy) < 1E-10:
+                if np.linalg.norm(vtx1.xy - vtx2.xy) < EPS_ERROR:
 
                     # Found one. Go through shape 2's vtx neighbours. 
                     for nbr in vtx2.nbrs:
@@ -400,7 +410,7 @@ class Shape:
 
 
 
-        # STAGE 2 - Merge duplicate vertices from both shapes
+        # STAGE 2 - Edges
 
         edges: tuple[Vertex, Vertex] = []
         if some_vertices_merged:
@@ -427,7 +437,7 @@ class Shape:
 
                 # Check if any vertices are the same
                 for vtx1, vtx2 in [(edges[i][0], edges[j][0]), (edges[i][0], edges[j][1]), (edges[i][1], edges[j][0]), (edges[i][1], edges[j][1])]:
-                    if np.linalg.norm(vtx1.xy - vtx2.xy) < 1E-10:
+                    if np.linalg.norm(vtx1.xy - vtx2.xy) < EPS_ERROR:
                         break
                 else:
 
@@ -477,7 +487,7 @@ class Shape:
                             continue
                         # # TODO: do we need this for loop check?
                         # for xy in [edges[i][0].xy, edges[i][1].xy, edges[j][0].xy, edges[j][1].xy]:
-                        #     if np.linalg.norm(itx-xy) < 1E-10:
+                        #     if np.linalg.norm(itx-xy) < EPS_ERROR:
                         #         break
                         # Continue only after checking it doesn't lie on any existing vertices
                         # else:
@@ -524,11 +534,15 @@ class Shape:
         # Get graph of vertices (and intersections)
         graph, overlap = Shape.build_vertex_graph(self, other)
 
+        # print("overlap" if overlap else "no overlap")
+
         # Check for fully inside
         if not overlap:
             if self.is_fully_inside_of(other):
+                # print("returning other")
                 return other
             if other.is_fully_inside_of(self):
+                # print("returning self")
                 return self
             raise ShapeError("No overlap or intersection between the two shapes")
         

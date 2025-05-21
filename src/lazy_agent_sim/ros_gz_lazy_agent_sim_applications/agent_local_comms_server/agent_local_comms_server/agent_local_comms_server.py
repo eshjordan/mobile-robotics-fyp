@@ -395,6 +395,12 @@ class LocalCommsManager(rclpy.node.Node):
             f"Received knowledge request response from {robot_id} ({robot.robot_id} - {robot.robot_comms_host}:{robot.robot_comms_request_port}): {response}"
         )
 
+        # Remove trailing 'inf's
+        for record in response.known_ids:
+            record.boundary.x_points = [pt for pt in record.boundary.x_points if abs(pt)!=float('inf')]
+            record.boundary.y_points = [pt for pt in record.boundary.y_points if abs(pt)!=float('inf')]
+            record.boundary.z_points = [pt for pt in record.boundary.z_points if abs(pt)!=float('inf')]
+
         self.update_robot_model(robot.robot_id, response)
 
         msg_response = self.knowledge_packet_to_msg(response)

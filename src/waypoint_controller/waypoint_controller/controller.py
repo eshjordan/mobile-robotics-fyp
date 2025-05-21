@@ -127,11 +127,11 @@ class WaypointController_v1(Node):
 
         if scheme_type == "1d":
     
-            start_angle = msg.known_ids[this_idx_this].boundary.x_points[0]
-            end_angle = msg.known_ids[this_idx_this].boundary.x_points[1]
+            start_angle = boundary.x_points[0]
+            end_angle = boundary.x_points[1]
             # centroid: Centroid = msg.known_ids[this_idx_this].centroid
             self.path_planner = SimplePathPlanner(
-                generate_angular_waypoints(start_angle, end_angle, radius=0.5), logger=self.get_logger()
+                [generate_centroid_waypoint_radial(centroid_angle=centroid.x, radius=0.5)]*3 + generate_angular_waypoints(start_angle, end_angle, radius=0.5), logger=self.get_logger()
                 # self.generate_initial_waypoints(start_angle, end_angle), logger=self.get_logger()
                 # self.generate_initial_waypoints(centroid.x - 0.1, centroid.x + 0.1), logger=self.get_logger()
                 # generate_centroid_waypoint_radial(centroid_angle=centroid.x, radius=0.14)
@@ -141,12 +141,11 @@ class WaypointController_v1(Node):
             vertices = np.array([
                 [x,y] for x,y in zip(boundary.x_points, boundary.y_points)
             ])
-
             center = [centroid.x, centroid.y]
 
             self.path_planner = SimplePathPlanner(
-                # generate_boustrophedon_waypoints_polygon(vertices), logger=self.get_logger()
-                [center], logger=self.get_logger()
+                [center]*2 + generate_boustrophedon_waypoints_polygon(vertices), logger=self.get_logger()
+                # [center]*3, logger=self.get_logger()
             )
 
         self.current_waypoint = self.path_planner.get_next_waypoint()
@@ -426,7 +425,7 @@ class SimplePathPlanner:
 
 
 def generate_centroid_waypoint_radial(centroid_angle, radius = 0.5):
-    return [[radius * np.cos(centroid_angle), radius * np.sin(centroid_angle)]] * 3
+    return [radius * np.cos(centroid_angle), radius * np.sin(centroid_angle)]
 
 
 def generate_boustrophedon_waypoints_polygon(all_boundary_points, line_spacing=0.1):
@@ -574,7 +573,7 @@ def generate_angular_waypoints(
             boundary_points,
         ])
 
-    return boundary_points
+    return list(boundary_points)
 
 
 
