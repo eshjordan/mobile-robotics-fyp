@@ -20,15 +20,23 @@ from launch.substitutions import (
 import launch_ros.actions
 from launch_ros.substitutions import FindPackageShare
 
-use_gazebo = False
+selected_config = 'epuck'
 
-epuck_config = {
+available_configs = {
+    'epuck': {},
+    'gazebo_cpp_comms': {},
+    'gazebo_py_comms': {},
+    'gazebo_ghost': {},
+}
+
+available_configs['epuck'] = {
     'epuck_implementation': 'epuck_driver_cpp',
     'comms_manager_implementation': 'central_node_py',
     'localisation_implementation': 'vicon_localisation',
     'waypoint_controller_implementation': 'waypoint_controller_py',
     'agent_comms_implementation': 'epuck_firmware',
     'repartitioner_implementation': 'modified_simple_vickery_1d',
+    'mocap_implementation': 'vicon',
     'manager_server_host': '192.168.11.5',
     'manager_server_port': 50000,
     'manager_threshold_dist': 0.3,
@@ -114,7 +122,7 @@ epuck_config = {
     ],
 }
 
-gazebo_config = {
+available_configs['gazebo_py'] = {
     'epuck_implementation': 'gz_model_headless_py',
     'comms_manager_implementation': 'central_node_py',
     'localisation_implementation': 'gz_localisation',
@@ -188,10 +196,25 @@ gazebo_config = {
             'robot_angular_offset': 0.0,
             'robot_vicon_name': 'BW_epuck3',
         },
+        {
+            'robot_id': 4,
+            'robot_epuck_host': '127.0.0.1',
+            'robot_epuck_port': 10004,
+            'robot_comms_host': '127.0.0.1',
+            'robot_comms_request_port': 50010,
+            'robot_knowledge_host': 'aa:bb:cc:dd:ee:04',
+            'robot_knowledge_exchange_port': 50011,
+            'robot_xpos': 0.0,
+            'robot_ypos': 0.0,
+            'robot_theta': 0.0,
+            'robot_teleop': False,
+            'robot_angular_offset': 0.0,
+            'robot_vicon_name': 'BW_epuck4',
+        },
     ],
 }
 
-gazebo_udp_cpp_config = {
+available_configs['gazebo_cpp_comms'] = {
     'epuck_implementation': 'gz_model_headless_py',
     'comms_manager_implementation': 'central_node_py',
     'localisation_implementation': 'gz_localisation',
@@ -206,7 +229,7 @@ gazebo_udp_cpp_config = {
     'manager_robot_tf_frame': '/base_link',
     'agents': [
         {
-            'robot_id': 0,
+            'robot_id': 5785,
             'robot_epuck_host': '127.0.0.1',
             'robot_epuck_port': 10000,
             'robot_comms_host': '127.0.0.1',
@@ -221,7 +244,7 @@ gazebo_udp_cpp_config = {
             'robot_vicon_name': 'BW_epuck0',
         },
         {
-            'robot_id': 1,
+            'robot_id': 5653,
             'robot_epuck_host': '127.0.0.1',
             'robot_epuck_port': 10001,
             'robot_comms_host': '127.0.0.1',
@@ -236,7 +259,7 @@ gazebo_udp_cpp_config = {
             'robot_vicon_name': 'BW_epuck1',
         },
         {
-            'robot_id': 2,
+            'robot_id': 5731,
             'robot_epuck_host': '127.0.0.1',
             'robot_epuck_port': 10002,
             'robot_comms_host': '127.0.0.1',
@@ -251,7 +274,7 @@ gazebo_udp_cpp_config = {
             'robot_vicon_name': 'BW_epuck2',
         },
         {
-            'robot_id': 3,
+            'robot_id': 5831,
             'robot_epuck_host': '127.0.0.1',
             'robot_epuck_port': 10003,
             'robot_comms_host': '127.0.0.1',
@@ -264,6 +287,109 @@ gazebo_udp_cpp_config = {
             'robot_teleop': False,
             'robot_angular_offset': 0.0,
             'robot_vicon_name': 'BW_epuck3',
+        },
+        {
+            'robot_id': 5682,
+            'robot_epuck_host': '127.0.0.1',
+            'robot_epuck_port': 10004,
+            'robot_comms_host': '127.0.0.1',
+            'robot_comms_request_port': 50010,
+            'robot_knowledge_host': '127.0.0.1',
+            'robot_knowledge_exchange_port': 50011,
+            'robot_xpos': 0.0,
+            'robot_ypos': 0.0,
+            'robot_theta': 0.0,
+            'robot_teleop': False,
+            'robot_angular_offset': 0.0,
+            'robot_vicon_name': 'BW_epuck4',
+        },
+    ],
+}
+
+available_configs['gazebo_ghost'] = {
+    'epuck_implementation': 'gz_model_headless_py',
+    'localisation_implementation': 'gz_localisation',
+    'manager_server_host': '127.0.0.1',
+    'manager_server_port': 50000,
+    'manager_threshold_dist': 0.3,
+    'manager_robot_tf_prefix': 'epuck2_robot_',
+    'manager_robot_tf_suffix': '',
+    'manager_robot_tf_frame': '/base_link',
+    'agents': [
+        {
+            'robot_id': 5785,
+            'robot_epuck_host': '127.0.0.1',
+            'robot_epuck_port': 10000,
+            'robot_comms_host': '127.0.0.1',
+            'robot_comms_request_port': 50002,
+            'robot_knowledge_host': '127.0.0.1',
+            'robot_knowledge_exchange_port': 50003,
+            'robot_xpos': 0.0,
+            'robot_ypos': 0.0,
+            'robot_theta': 0.0,
+            'robot_teleop': False,
+            'robot_angular_offset': 0.0,
+            'robot_vicon_name': 'BW_epuck0',
+        },
+        {
+            'robot_id': 5653,
+            'robot_epuck_host': '127.0.0.1',
+            'robot_epuck_port': 10001,
+            'robot_comms_host': '127.0.0.1',
+            'robot_comms_request_port': 50004,
+            'robot_knowledge_host': '127.0.0.1',
+            'robot_knowledge_exchange_port': 50005,
+            'robot_xpos': 0.0,
+            'robot_ypos': 0.0,
+            'robot_theta': 0.0,
+            'robot_teleop': False,
+            'robot_angular_offset': 0.0,
+            'robot_vicon_name': 'BW_epuck1',
+        },
+        {
+            'robot_id': 5731,
+            'robot_epuck_host': '127.0.0.1',
+            'robot_epuck_port': 10002,
+            'robot_comms_host': '127.0.0.1',
+            'robot_comms_request_port': 50006,
+            'robot_knowledge_host': '127.0.0.1',
+            'robot_knowledge_exchange_port': 50007,
+            'robot_xpos': 0.0,
+            'robot_ypos': 0.0,
+            'robot_theta': 0.0,
+            'robot_teleop': False,
+            'robot_angular_offset': 0.0,
+            'robot_vicon_name': 'BW_epuck2',
+        },
+        {
+            'robot_id': 5831,
+            'robot_epuck_host': '127.0.0.1',
+            'robot_epuck_port': 10003,
+            'robot_comms_host': '127.0.0.1',
+            'robot_comms_request_port': 50008,
+            'robot_knowledge_host': '127.0.0.1',
+            'robot_knowledge_exchange_port': 50009,
+            'robot_xpos': 0.0,
+            'robot_ypos': 0.0,
+            'robot_theta': 0.0,
+            'robot_teleop': False,
+            'robot_angular_offset': 0.0,
+            'robot_vicon_name': 'BW_epuck3',
+        },
+        {
+            'robot_id': 5682,
+            'robot_epuck_host': '127.0.0.1',
+            'robot_epuck_port': 10004,
+            'robot_comms_host': '127.0.0.1',
+            'robot_comms_request_port': 50010,
+            'robot_knowledge_host': '127.0.0.1',
+            'robot_knowledge_exchange_port': 50011,
+            'robot_xpos': 0.0,
+            'robot_ypos': 0.0,
+            'robot_theta': 0.0,
+            'robot_teleop': False,
+            'robot_angular_offset': 0.0,
+            'robot_vicon_name': 'BW_epuck4',
         },
     ],
 }
@@ -290,12 +416,6 @@ common_config = {
         # },
     ]
 }
-
-launch_configuration = common_config
-if use_gazebo:
-    launch_configuration.update(gazebo_udp_cpp_config)
-else:
-    launch_configuration.update(epuck_config)
 
 
 implementations = {
@@ -335,6 +455,10 @@ implementations = {
             ),
             'extra_args': {
                 'gui': 'false',
+                'robot_ids': '5785, 5653, 5731, 5831, 5682',
+                "gz_version": "8",
+                "manager_robot_tf_prefix": "epuck2_robot_",
+                "manager_robot_tf_suffix": "",
             },
         },
     },
@@ -439,11 +563,50 @@ implementations = {
             },
         },
     },
+    'mocap_implementation': {
+        'vicon': {
+            'package': 'vrpn_mocap',
+            'launchfile': 'client.launch.yaml',
+            'oneshot': True,
+            'extra_args': {
+                'server': '192.168.11.3',
+                'port': '3883',
+            },
+        },
+    },
 }
 
 
+launch_configuration = common_config
+launch_configuration.update(available_configs[selected_config])
+
+
+def get_implementation(
+    impl_category: str
+) -> dict[str, SomeSubstitutionsType]:
+    """Get the implementation name from the launch configuration.
+
+    Allows the user to select a single top-level implementation with common
+    settings without needing to update values in multiple places.
+
+    Args:
+        impl_category (str): Which implementation type to use.
+
+    Returns:
+        SomeSubstitutionsType: The substitution.
+    """
+    if impl_category not in implementations:
+        return None
+    available_impls = implementations[impl_category]
+    if impl_category not in launch_configuration:
+        return None
+    selected_impl = launch_configuration[impl_category]
+    if selected_impl not in available_impls:
+        return None
+    return available_impls[selected_impl]
+
 def get_implementation_value(
-    implementation: str, value: str
+    impl_category: str, value: str
 ) -> SomeSubstitutionsType:
     """Get an implementation-dependent value from the launch configuration.
 
@@ -451,22 +614,26 @@ def get_implementation_value(
     settings without needing to update values in multiple places.
 
     Args:
-        implementation (str): Which implementation type to use.
+        impl_category (str): Which implementation type to use.
         value (str): The value to be substituted.
 
     Returns:
         SomeSubstitutionsType: The substitution.
     """
-    return implementations[implementation][
-        launch_configuration[implementation]
-    ][value] if value in implementations[implementation][
-        launch_configuration[implementation]
-    ] else None
+    impl = get_implementation(impl_category)
+    if impl is None:
+        return None
+    if value not in impl:
+        return None
+    return impl[value]
 
 
 def include_epuck_implementation(context) -> list[launch.Action]:
     """Include the epuck implementation."""
     result = []
+
+    if get_implementation('epuck_implementation') is None:
+        return result
 
     rviz_config = get_implementation_value(
         'epuck_implementation',
@@ -587,6 +754,9 @@ def include_comms_manager_implementation(context) -> list[launch.Action]:
     """Include the comms manager implementation."""
     result = []
 
+    if get_implementation('comms_manager_implementation') is None:
+        return result
+
     _include = IncludeLaunch(
         PythonLaunch(
             PathJoin(
@@ -632,6 +802,9 @@ def include_comms_manager_implementation(context) -> list[launch.Action]:
 def include_agent_comms_implementations(context) -> list[launch.Action]:
     """Include the agent comms implementations."""
     result = []
+
+    if get_implementation('agent_comms_implementation') is None:
+        return result
 
     launchfile = get_implementation_value(
         'agent_comms_implementation',
@@ -686,6 +859,9 @@ def include_agent_comms_implementations(context) -> list[launch.Action]:
 def include_localisation_implementation(context) -> list[launch.Action]:
     """Include the localisation implementation."""
     result = []
+
+    if get_implementation('localisation_implementation') is None:
+        return result
 
     launchfile = get_implementation_value(
         'localisation_implementation',
@@ -804,6 +980,9 @@ def include_waypoint_controller_implementation(context) -> list[launch.Action]:
     """Include the waypoint controller implementation."""
     result = []
 
+    if get_implementation('waypoint_controller_implementation') is None:
+        return result
+
     launchfile = get_implementation_value(
         'waypoint_controller_implementation',
         'launchfile',
@@ -911,6 +1090,9 @@ def include_repartitioner_implementation(context) -> list[launch.Action]:
     """Include the repartitioner implementation."""
     result = []
 
+    if get_implementation('repartitioner_implementation') is None:
+        return result
+
     launchfile = get_implementation_value(
         'repartitioner_implementation',
         'launchfile',
@@ -962,6 +1144,55 @@ def include_repartitioner_implementation(context) -> list[launch.Action]:
     else:
         raise NotImplementedError(
             "Repartitioner oneshot implementation not implemented yet")
+
+    return result
+
+
+def include_mocap_implementation(context) -> list[launch.Action]:
+    """Include the mocap implementation."""
+    result = []
+
+    if get_implementation('mocap_implementation') is None:
+        return result
+
+    launchfile = get_implementation_value(
+        'mocap_implementation',
+        'launchfile',
+    )
+
+    if not launchfile:
+        return result
+
+    extra_args = get_implementation_value(
+        'mocap_implementation',
+        'extra_args',
+    )
+
+    launch_arguments = {}
+    launch_arguments.update(extra_args if extra_args else {})
+
+    _include = IncludeLaunch(
+        YamlLaunch(
+            PathJoin(
+                [
+                    FindPackageShare(
+                        get_implementation_value(
+                            'mocap_implementation',
+                            'package',
+                        ),
+                    ),
+                    'launch',
+                    get_implementation_value(
+                        'mocap_implementation',
+                        'launchfile',
+                    ),
+                ]
+            )
+        ),
+        launch_arguments=launch_arguments.items(),
+    )
+
+    result.append(_include)
 
     return result
 
@@ -1088,26 +1319,9 @@ def setup_launch(context):
         include_waypoint_controller_implementation(context) + \
         include_localisation_implementation(context) + \
         include_repartitioner_implementation(context) + \
+        include_mocap_implementation(context) + \
         launch_static_transforms(context) + \
-        launch_teleop(context) + [
-            IncludeLaunch(
-                YamlLaunch(
-                    PathJoin(
-                        [
-                            FindPackageShare(
-                                'vrpn_mocap',
-                            ),
-                            'launch',
-                            'client.launch.yaml',
-                        ]
-                    )
-                ),
-                launch_arguments= {
-                    'server': '192.168.11.3',
-                    'port': '3883',
-                }.items(),
-            )
-        ]
+        launch_teleop(context)
 
     return actions
 
