@@ -189,6 +189,29 @@
     </model>
 
 
+    <!-- <model name="epuck2_robot_4">
+      <self_collide>false</self_collide>
+      <pose>0 0 0 0 0 0</pose>
+
+      <include merge="true">
+        <uri>package://ros_gz_lazy_agent_sim_description/models/epuck2</uri>
+      </include>
+
+
+      <plugin
+        filename="gz-sim-comms-endpoint-system"
+        name="gz::sim::systems::CommsEndpoint">
+        <address>aa:bb:cc:dd:ee:04</address>
+        <topic>aa:bb:cc:dd:ee:04/rx</topic>
+        <broker>
+          <bind_service>/broker/bind</bind_service>
+          <unbind_service>/broker/unbind</unbind_service>
+        </broker>
+      </plugin>
+
+    </model> -->
+
+
     <gui fullscreen="0">
 
       <!-- Main scene window -->

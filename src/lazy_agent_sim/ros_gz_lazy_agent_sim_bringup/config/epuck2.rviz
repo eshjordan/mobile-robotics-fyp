@@ -91,7 +91,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_0/proximity0
+            Value: /epuck2_robot_5785/proximity0
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -125,7 +125,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_0/proximity1
+            Value: /epuck2_robot_5785/proximity1
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -159,7 +159,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_0/proximity2
+            Value: /epuck2_robot_5785/proximity2
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -193,7 +193,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_0/proximity3
+            Value: /epuck2_robot_5785/proximity3
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -227,7 +227,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_0/proximity4
+            Value: /epuck2_robot_5785/proximity4
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -261,7 +261,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_0/proximity5
+            Value: /epuck2_robot_5785/proximity5
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -295,7 +295,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_0/proximity6
+            Value: /epuck2_robot_5785/proximity6
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -329,7 +329,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_0/proximity7
+            Value: /epuck2_robot_5785/proximity7
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -343,7 +343,7 @@ Visualization Manager:
             Durability Policy: Volatile
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_0/robot_description
+            Value: /epuck2_robot_5785/robot_description
           Enabled: true
           Links:
             All Links Enabled: true
@@ -480,7 +480,7 @@ Visualization Manager:
             Inertia: false
             Mass: false
           Name: RobotModel
-          TF Prefix: epuck2_robot_0
+          TF Prefix: epuck2_robot_5785
           Update Interval: 0
           Value: true
           Visual Enabled: true
@@ -521,7 +521,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_0/odom
+            Value: /epuck2_robot_5785/odom
           Value: true
         - Class: rviz_default_plugins/Marker
           Enabled: true
@@ -534,7 +534,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Best Effort
-            Value: /epuck2_robot_0/floor
+            Value: /epuck2_robot_5785/floor
           Value: true
         - Class: rviz_default_plugins/Marker
           Enabled: true
@@ -547,7 +547,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Best Effort
-            Value: /epuck2_robot_0/microphone
+            Value: /epuck2_robot_5785/microphone
           Value: true
         - Class: rviz_default_plugins/Image
           Enabled: false
@@ -561,7 +561,7 @@ Visualization Manager:
             Durability Policy: Volatile
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_0/camera
+            Value: /epuck2_robot_5785/camera
           Value: false
         - Alpha: 1
           Autocompute Intensity Bounds: true
@@ -593,7 +593,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_0/scan
+            Value: /epuck2_robot_5785/scan
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -627,7 +627,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_0/dist_sens
+            Value: /epuck2_robot_5785/dist_sens
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -642,7 +642,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Best Effort
-            Value: /epuck2_robot_0/mag_field_vector
+            Value: /epuck2_robot_5785/mag_field_vector
           Value: true
         - Alpha: 0.5
           Binary representation: false
@@ -658,17 +658,17 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: epuck2_robot_0/map
+            Value: epuck2_robot_5785/map
           Update Topic:
             Depth: 5
             Durability Policy: Volatile
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: epuck2_robot_0/map_updates
+            Value: epuck2_robot_5785/map_updates
           Use Timestamp: false
           Value: true
       Enabled: true
-      Name: epuck2_robot_0
+      Name: epuck2_robot_5785
     - Class: rviz_common/Group
       Displays:
         - Alpha: 0.5
@@ -701,7 +701,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_1/proximity0
+            Value: /epuck2_robot_5653/proximity0
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -735,7 +735,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_1/proximity1
+            Value: /epuck2_robot_5653/proximity1
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -769,7 +769,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_1/proximity2
+            Value: /epuck2_robot_5653/proximity2
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -803,7 +803,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_1/proximity3
+            Value: /epuck2_robot_5653/proximity3
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -837,7 +837,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_1/proximity4
+            Value: /epuck2_robot_5653/proximity4
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -871,7 +871,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_1/proximity5
+            Value: /epuck2_robot_5653/proximity5
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -905,7 +905,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_1/proximity6
+            Value: /epuck2_robot_5653/proximity6
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -939,7 +939,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_1/proximity7
+            Value: /epuck2_robot_5653/proximity7
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -953,7 +953,7 @@ Visualization Manager:
             Durability Policy: Volatile
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_1/robot_description
+            Value: /epuck2_robot_5653/robot_description
           Enabled: true
           Links:
             All Links Enabled: true
@@ -1090,7 +1090,7 @@ Visualization Manager:
             Inertia: false
             Mass: false
           Name: RobotModel
-          TF Prefix: epuck2_robot_1
+          TF Prefix: epuck2_robot_5653
           Update Interval: 0
           Value: true
           Visual Enabled: true
@@ -1131,7 +1131,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_1/odom
+            Value: /epuck2_robot_5653/odom
           Value: true
         - Class: rviz_default_plugins/Marker
           Enabled: true
@@ -1144,7 +1144,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Best Effort
-            Value: /epuck2_robot_1/floor
+            Value: /epuck2_robot_5653/floor
           Value: true
         - Class: rviz_default_plugins/Marker
           Enabled: true
@@ -1157,7 +1157,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Best Effort
-            Value: /epuck2_robot_1/microphone
+            Value: /epuck2_robot_5653/microphone
           Value: true
         - Class: rviz_default_plugins/Image
           Enabled: false
@@ -1171,7 +1171,7 @@ Visualization Manager:
             Durability Policy: Volatile
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_1/camera
+            Value: /epuck2_robot_5653/camera
           Value: false
         - Alpha: 1
           Autocompute Intensity Bounds: true
@@ -1203,7 +1203,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_1/scan
+            Value: /epuck2_robot_5653/scan
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -1237,7 +1237,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_1/dist_sens
+            Value: /epuck2_robot_5653/dist_sens
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -1252,7 +1252,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Best Effort
-            Value: /epuck2_robot_1/mag_field_vector
+            Value: /epuck2_robot_5653/mag_field_vector
           Value: true
         - Alpha: 0.699999988079071
           Binary representation: false
@@ -1268,17 +1268,17 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: epuck2_robot_1/map
+            Value: epuck2_robot_5653/map
           Update Topic:
             Depth: 5
             Durability Policy: Volatile
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: epuck2_robot_1/map_updates
+            Value: epuck2_robot_5653/map_updates
           Use Timestamp: false
           Value: true
       Enabled: true
-      Name: epuck2_robot_1
+      Name: epuck2_robot_5653
     - Class: rviz_common/Group
       Displays:
         - Alpha: 0.5
@@ -1311,7 +1311,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_2/proximity0
+            Value: /epuck2_robot_5731/proximity0
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -1345,7 +1345,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_2/proximity1
+            Value: /epuck2_robot_5731/proximity1
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -1379,7 +1379,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_2/proximity2
+            Value: /epuck2_robot_5731/proximity2
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -1413,7 +1413,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_2/proximity3
+            Value: /epuck2_robot_5731/proximity3
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -1447,7 +1447,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_2/proximity4
+            Value: /epuck2_robot_5731/proximity4
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -1481,7 +1481,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_2/proximity5
+            Value: /epuck2_robot_5731/proximity5
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -1515,7 +1515,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_2/proximity6
+            Value: /epuck2_robot_5731/proximity6
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -1549,7 +1549,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_2/proximity7
+            Value: /epuck2_robot_5731/proximity7
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -1563,7 +1563,7 @@ Visualization Manager:
             Durability Policy: Volatile
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_2/robot_description
+            Value: /epuck2_robot_5731/robot_description
           Enabled: true
           Links:
             All Links Enabled: true
@@ -1575,7 +1575,7 @@ Visualization Manager:
             Inertia: false
             Mass: false
           Name: RobotModel
-          TF Prefix: epuck2_robot_2
+          TF Prefix: epuck2_robot_5731
           Update Interval: 0
           Value: true
           Visual Enabled: true
@@ -1616,7 +1616,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_2/odom
+            Value: /epuck2_robot_5731/odom
           Value: true
         - Class: rviz_default_plugins/Marker
           Enabled: true
@@ -1629,7 +1629,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Best Effort
-            Value: /epuck2_robot_2/floor
+            Value: /epuck2_robot_5731/floor
           Value: true
         - Class: rviz_default_plugins/Marker
           Enabled: true
@@ -1642,7 +1642,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Best Effort
-            Value: /epuck2_robot_2/microphone
+            Value: /epuck2_robot_5731/microphone
           Value: true
         - Class: rviz_default_plugins/Image
           Enabled: false
@@ -1656,7 +1656,7 @@ Visualization Manager:
             Durability Policy: Volatile
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_2/camera
+            Value: /epuck2_robot_5731/camera
           Value: false
         - Alpha: 1
           Autocompute Intensity Bounds: true
@@ -1688,7 +1688,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_2/scan
+            Value: /epuck2_robot_5731/scan
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -1722,7 +1722,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_2/dist_sens
+            Value: /epuck2_robot_5731/dist_sens
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -1737,7 +1737,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Best Effort
-            Value: /epuck2_robot_2/mag_field_vector
+            Value: /epuck2_robot_5731/mag_field_vector
           Value: true
         - Alpha: 0.699999988079071
           Binary representation: false
@@ -1753,17 +1753,17 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: epuck2_robot_2/map
+            Value: epuck2_robot_5731/map
           Update Topic:
             Depth: 5
             Durability Policy: Volatile
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: epuck2_robot_2/map_updates
+            Value: epuck2_robot_5731/map_updates
           Use Timestamp: false
           Value: true
       Enabled: true
-      Name: epuck2_robot_2
+      Name: epuck2_robot_5731
     - Class: rviz_common/Group
       Displays:
         - Alpha: 0.5
@@ -1796,7 +1796,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_3/proximity0
+            Value: /epuck2_robot_5831/proximity0
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -1830,7 +1830,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_3/proximity1
+            Value: /epuck2_robot_5831/proximity1
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -1864,7 +1864,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_3/proximity2
+            Value: /epuck2_robot_5831/proximity2
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -1898,7 +1898,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_3/proximity3
+            Value: /epuck2_robot_5831/proximity3
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -1932,7 +1932,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_3/proximity4
+            Value: /epuck2_robot_5831/proximity4
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -1966,7 +1966,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_3/proximity5
+            Value: /epuck2_robot_5831/proximity5
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -2000,7 +2000,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_3/proximity6
+            Value: /epuck2_robot_5831/proximity6
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -2034,7 +2034,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_3/proximity7
+            Value: /epuck2_robot_5831/proximity7
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -2048,7 +2048,7 @@ Visualization Manager:
             Durability Policy: Volatile
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_3/robot_description
+            Value: /epuck2_robot_5831/robot_description
           Enabled: true
           Links:
             All Links Enabled: true
@@ -2060,7 +2060,7 @@ Visualization Manager:
             Inertia: false
             Mass: false
           Name: RobotModel
-          TF Prefix: epuck2_robot_3
+          TF Prefix: epuck2_robot_5831
           Update Interval: 0
           Value: true
           Visual Enabled: true
@@ -2101,7 +2101,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_3/odom
+            Value: /epuck2_robot_5831/odom
           Value: true
         - Class: rviz_default_plugins/Marker
           Enabled: true
@@ -2114,7 +2114,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Best Effort
-            Value: /epuck2_robot_3/floor
+            Value: /epuck2_robot_5831/floor
           Value: true
         - Class: rviz_default_plugins/Marker
           Enabled: true
@@ -2127,7 +2127,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Best Effort
-            Value: /epuck2_robot_3/microphone
+            Value: /epuck2_robot_5831/microphone
           Value: true
         - Class: rviz_default_plugins/Image
           Enabled: false
@@ -2141,7 +2141,7 @@ Visualization Manager:
             Durability Policy: Volatile
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_3/camera
+            Value: /epuck2_robot_5831/camera
           Value: false
         - Alpha: 1
           Autocompute Intensity Bounds: true
@@ -2173,7 +2173,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_3/scan
+            Value: /epuck2_robot_5831/scan
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -2207,7 +2207,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: /epuck2_robot_3/dist_sens
+            Value: /epuck2_robot_5831/dist_sens
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -2222,7 +2222,7 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Best Effort
-            Value: /epuck2_robot_3/mag_field_vector
+            Value: /epuck2_robot_5831/mag_field_vector
           Value: true
         - Alpha: 0.699999988079071
           Binary representation: false
@@ -2238,17 +2238,502 @@ Visualization Manager:
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: epuck2_robot_3/map
+            Value: epuck2_robot_5831/map
           Update Topic:
             Depth: 5
             Durability Policy: Volatile
             History Policy: Keep Last
             Reliability Policy: Reliable
-            Value: epuck2_robot_3/map_updates
+            Value: epuck2_robot_5831/map_updates
           Use Timestamp: false
           Value: true
       Enabled: true
-      Name: epuck2_robot_3
+      Name: epuck2_robot_5831
+    - Class: rviz_common/Group
+      Displays:
+        - Alpha: 0.5
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz_default_plugins/LaserScan
+          Color: 255; 255; 255
+          Color Transformer: Intensity
+          Decay Time: 0
+          Enabled: true
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: -999999
+          Min Color: 0; 0; 0
+          Min Intensity: 999999
+          Name: Prox0
+          Position Transformer: XYZ
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.009999999776482582
+          Style: Flat Squares
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /epuck2_robot_5682/proximity0
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
+        - Alpha: 0.5
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz_default_plugins/LaserScan
+          Color: 255; 255; 255
+          Color Transformer: Intensity
+          Decay Time: 0
+          Enabled: true
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: -999999
+          Min Color: 0; 0; 0
+          Min Intensity: 999999
+          Name: Prox1
+          Position Transformer: XYZ
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.009999999776482582
+          Style: Flat Squares
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /epuck2_robot_5682/proximity1
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
+        - Alpha: 0.5
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz_default_plugins/LaserScan
+          Color: 255; 255; 255
+          Color Transformer: Intensity
+          Decay Time: 0
+          Enabled: true
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: -999999
+          Min Color: 0; 0; 0
+          Min Intensity: 999999
+          Name: Prox2
+          Position Transformer: XYZ
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.009999999776482582
+          Style: Flat Squares
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /epuck2_robot_5682/proximity2
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
+        - Alpha: 0.5
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz_default_plugins/LaserScan
+          Color: 255; 255; 255
+          Color Transformer: Intensity
+          Decay Time: 0
+          Enabled: true
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: -999999
+          Min Color: 0; 0; 0
+          Min Intensity: 999999
+          Name: Prox3
+          Position Transformer: XYZ
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.009999999776482582
+          Style: Flat Squares
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /epuck2_robot_5682/proximity3
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
+        - Alpha: 0.5
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz_default_plugins/LaserScan
+          Color: 255; 255; 255
+          Color Transformer: Intensity
+          Decay Time: 0
+          Enabled: true
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: -999999
+          Min Color: 0; 0; 0
+          Min Intensity: 999999
+          Name: Prox4
+          Position Transformer: XYZ
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.009999999776482582
+          Style: Flat Squares
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /epuck2_robot_5682/proximity4
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
+        - Alpha: 0.5
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz_default_plugins/LaserScan
+          Color: 255; 255; 255
+          Color Transformer: Intensity
+          Decay Time: 0
+          Enabled: true
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: -999999
+          Min Color: 0; 0; 0
+          Min Intensity: 999999
+          Name: Prox5
+          Position Transformer: XYZ
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.009999999776482582
+          Style: Flat Squares
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /epuck2_robot_5682/proximity5
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
+        - Alpha: 0.5
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz_default_plugins/LaserScan
+          Color: 255; 255; 255
+          Color Transformer: Intensity
+          Decay Time: 0
+          Enabled: true
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: -999999
+          Min Color: 0; 0; 0
+          Min Intensity: 999999
+          Name: Prox6
+          Position Transformer: XYZ
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.009999999776482582
+          Style: Flat Squares
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /epuck2_robot_5682/proximity6
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
+        - Alpha: 0.5
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz_default_plugins/LaserScan
+          Color: 255; 255; 255
+          Color Transformer: Intensity
+          Decay Time: 0
+          Enabled: true
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: -999999
+          Min Color: 0; 0; 0
+          Min Intensity: 999999
+          Name: Prox7
+          Position Transformer: XYZ
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.009999999776482582
+          Style: Flat Squares
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /epuck2_robot_5682/proximity7
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
+        - Alpha: 1
+          Class: rviz_default_plugins/RobotModel
+          Collision Enabled: false
+          Description File: ""
+          Description Source: Topic
+          Description Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /epuck2_robot_5682/robot_description
+          Enabled: true
+          Links:
+            All Links Enabled: true
+            Expand Joint Details: false
+            Expand Link Details: false
+            Expand Tree: false
+            Link Tree Style: Links in Alphabetic Order
+          Mass Properties:
+            Inertia: false
+            Mass: false
+          Name: RobotModel
+          TF Prefix: epuck2_robot_5682
+          Update Interval: 0
+          Value: true
+          Visual Enabled: true
+        - Angle Tolerance: 0.009999999776482582
+          Class: rviz_default_plugins/Odometry
+          Covariance:
+            Orientation:
+              Alpha: 0.5
+              Color: 255; 255; 127
+              Color Style: Unique
+              Frame: Local
+              Offset: 1
+              Scale: 1
+              Value: true
+            Position:
+              Alpha: 0.30000001192092896
+              Color: 204; 51; 204
+              Scale: 1
+              Value: true
+            Value: false
+          Enabled: true
+          Keep: 30
+          Name: Odometry
+          Position Tolerance: 0.009999999776482582
+          Shape:
+            Alpha: 1
+            Axes Length: 1
+            Axes Radius: 0.10000000149011612
+            Color: 255; 25; 0
+            Head Length: 0.009999999776482582
+            Head Radius: 0.009999999776482582
+            Shaft Length: 0.05000000074505806
+            Shaft Radius: 0.004999999888241291
+            Value: Arrow
+          Topic:
+            Depth: 10
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /epuck2_robot_5682/odom
+          Value: true
+        - Class: rviz_default_plugins/Marker
+          Enabled: true
+          Name: Floor
+          Namespaces:
+            {}
+          Topic:
+            Depth: 1
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Best Effort
+            Value: /epuck2_robot_5682/floor
+          Value: true
+        - Class: rviz_default_plugins/Marker
+          Enabled: true
+          Name: Microphone
+          Namespaces:
+            {}
+          Topic:
+            Depth: 1
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Best Effort
+            Value: /epuck2_robot_5682/microphone
+          Value: true
+        - Class: rviz_default_plugins/Image
+          Enabled: false
+          Max Value: 1
+          Median window: 5
+          Min Value: 0
+          Name: Image
+          Normalize Range: true
+          Topic:
+            Depth: 2
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /epuck2_robot_5682/camera
+          Value: false
+        - Alpha: 1
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensities
+          Class: rviz_default_plugins/LaserScan
+          Color: 255; 255; 255
+          Color Transformer: FlatColor
+          Decay Time: 1
+          Enabled: true
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: 4096
+          Min Color: 0; 0; 0
+          Min Intensity: 0
+          Name: LaserScan
+          Position Transformer: XYZ
+          Selectable: false
+          Size (Pixels): 3
+          Size (m): 0.004999999888241291
+          Style: Spheres
+          Topic:
+            Depth: 10
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /epuck2_robot_5682/scan
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
+        - Alpha: 0.5
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz_default_plugins/LaserScan
+          Color: 255; 255; 255
+          Color Transformer: Intensity
+          Decay Time: 0
+          Enabled: true
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: 10
+          Min Color: 0; 0; 0
+          Min Intensity: -10
+          Name: DistanceSensor
+          Position Transformer: XYZ
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.009999999776482582
+          Style: Flat Squares
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /epuck2_robot_5682/dist_sens
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
+        - Class: rviz_default_plugins/Marker
+          Enabled: true
+          Name: MagneticField
+          Namespaces:
+            {}
+          Topic:
+            Depth: 100
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Best Effort
+            Value: /epuck2_robot_5682/mag_field_vector
+          Value: true
+        - Alpha: 0.699999988079071
+          Binary representation: false
+          Binary threshold: 100
+          Class: rviz_default_plugins/Map
+          Color Scheme: map
+          Draw Behind: false
+          Enabled: true
+          Name: Map
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: epuck2_robot_5682/map
+          Update Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: epuck2_robot_5682/map_updates
+          Use Timestamp: false
+          Value: true
+      Enabled: true
+      Name: epuck2_robot_5682
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48

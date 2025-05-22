@@ -216,47 +216,6 @@ ROBOT_CONFIG_TEMPLATE = [
 ]
 
 
-def launch_static_transforms(context) -> list[launch.Action]:
-    """Launch static transforms for the robots."""
-
-    result = []
-
-    for i, agent in enumerate(launch_configuration['agents']):
-        arguments = []
-        for k, v in transform.items():
-            arguments.append(f'--{k}')
-            if 'frame' in k:
-                arguments.append(
-                    f"{v.format(launch_configuration['manager_robot_tf_prefix'] + str(agent['robot_id']) + launch_configuration['manager_robot_tf_suffix'])}"
-                )
-            elif k == 'x':
-                arguments.append(
-                    f"{v.format(agent['robot_xpos'])}"
-                )
-            elif k == 'y':
-                arguments.append(
-                    f"{v.format(agent['robot_ypos'])}"
-                )
-            elif k == 'yaw':
-                arguments.append(
-                    f"{v.format(agent['robot_theta'])}"
-                )
-            else:
-                arguments.append(v)
-
-        _static_transform = launch_ros.actions.Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name=f'static_agent_transform_{i}',
-            output='screen',
-            arguments=arguments,
-        )
-
-        result.append(_static_transform)
-
-    return result
-
-
 def setup_launch(context):
     # Declare launch arguments
     launch_args = list(
@@ -339,11 +298,11 @@ def setup_launch(context):
 
     def process_robot_ids(context):
         robot_ids_value = LaunchConfiguration("robot_ids").perform(context)
-        return robot_ids_value.split(",") if robot_ids_value else []
+        return [robot_id.strip() for robot_id in robot_ids_value.split(",")] if robot_ids_value else []
 
     # TODO: Make models in gazebo world configurable from launchfile
     robot_ids = process_robot_ids(context)
-    gz_world_robot_ids = [0, 1, 2, 3]
+    gz_world_robot_ids = [0, 1, 2, 3, 4]
     frame_publishers = []
 
     for i in range(min(len(robot_ids), len(gz_world_robot_ids))):
