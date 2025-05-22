@@ -395,11 +395,18 @@ class LocalCommsManager(rclpy.node.Node):
             f"Received knowledge request response from {robot_id} ({robot.robot_id} - {robot.robot_comms_host}:{robot.robot_comms_request_port}): {response}"
         )
 
-        # Remove trailing 'inf's
+        # # Remove trailing 'inf's
+        # for record in response.known_ids:
+        #     record.boundary.x_points = [pt for pt in record.boundary.x_points if abs(pt)!=float('inf')]
+        #     record.boundary.y_points = [pt for pt in record.boundary.y_points if abs(pt)!=float('inf')]
+        #     record.boundary.z_points = [pt for pt in record.boundary.z_points if abs(pt)!=float('inf')]
+
+        # Remove trailing 'inf's. Infer length from x vector.
         for record in response.known_ids:
             record.boundary.x_points = [pt for pt in record.boundary.x_points if abs(pt)!=float('inf')]
-            record.boundary.y_points = [pt for pt in record.boundary.y_points if abs(pt)!=float('inf')]
-            record.boundary.z_points = [pt for pt in record.boundary.z_points if abs(pt)!=float('inf')]
+            points_length = len(record.boundary.x_points)
+            record.boundary.y_points = record.boundary.y_points[:points_length]
+            record.boundary.z_points = record.boundary.z_points[:points_length]
 
         self.update_robot_model(robot.robot_id, response)
 
