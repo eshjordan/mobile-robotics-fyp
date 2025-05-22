@@ -30,6 +30,7 @@ def setup_launch(context):
             name='pose_tf',
             parameters=[
                 {
+                    "use_sim_time": True,
                     'source_topic_name': launch.substitutions.LaunchConfiguration('source_topic_name'),
                     'source_frame_id': launch.substitutions.LaunchConfiguration('source_frame_id'),
                     'source_child_frame_id': launch.substitutions.LaunchConfiguration('source_child_frame_id'),

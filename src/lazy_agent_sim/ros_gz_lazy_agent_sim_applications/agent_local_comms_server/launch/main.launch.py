@@ -309,6 +309,7 @@ available_configs['gazebo_cpp_comms'] = {
 available_configs['gazebo_ghost'] = {
     'epuck_implementation': 'gz_model_headless_py',
     'localisation_implementation': 'gz_localisation',
+    'logger_implementation': 'log_tf',
     'manager_server_host': '127.0.0.1',
     'manager_server_port': 50000,
     'manager_threshold_dist': 0.3,
@@ -571,6 +572,15 @@ implementations = {
             'extra_args': {
                 'server': '192.168.11.3',
                 'port': '3883',
+            },
+        },
+    },
+    'logger_implementation': {
+        'log_tf': {
+            'package': 'agent_local_comms_server',
+            'launchfile': 'log_tf.launch.py',
+            'oneshot': True,
+            'extra_args': {
             },
         },
     },
@@ -1196,6 +1206,54 @@ def include_mocap_implementation(context) -> list[launch.Action]:
 
     return result
 
+def include_logger_implementation(context) -> list[launch.Action]:
+    """Include the logger implementation."""
+    result = []
+
+    if get_implementation('logger_implementation') is None:
+        return result
+
+    launchfile = get_implementation_value(
+        'logger_implementation',
+        'launchfile',
+    )
+
+    if not launchfile:
+        return result
+
+    extra_args = get_implementation_value(
+        'logger_implementation',
+        'extra_args',
+    )
+
+    launch_arguments = {}
+    launch_arguments.update(extra_args if extra_args else {})
+
+    _include = IncludeLaunch(
+        PythonLaunch(
+            PathJoin(
+                [
+                    FindPackageShare(
+                        get_implementation_value(
+                            'logger_implementation',
+                            'package',
+                        ),
+                    ),
+                    'launch',
+                    get_implementation_value(
+                        'logger_implementation',
+                        'launchfile',
+                    ),
+                ]
+            )
+        ),
+        launch_arguments=launch_arguments.items(),
+    )
+
+    result.append(_include)
+
+    return result
+
 
 def launch_teleop(context) -> list[launch.Action]:
     """Launch teleop nodes for robots that require it."""
@@ -1320,6 +1378,7 @@ def setup_launch(context):
         include_localisation_implementation(context) + \
         include_repartitioner_implementation(context) + \
         include_mocap_implementation(context) + \
+        include_logger_implementation(context) + \
         launch_static_transforms(context) + \
         launch_teleop(context)
 

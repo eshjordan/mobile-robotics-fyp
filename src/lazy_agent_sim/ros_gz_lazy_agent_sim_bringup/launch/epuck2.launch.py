@@ -325,8 +325,8 @@ def setup_launch(context):
                 package="robot_state_publisher",
                 executable="robot_state_publisher",
                 parameters=[
-                    {"use_sim_time": True},
                     {
+                        "use_sim_time": True,
                         "frame_prefix": get_namespace(robot_id) + "/",
                         "publish_frequency": 60.0,
                         "robot_description": FileContent(
@@ -354,6 +354,9 @@ def setup_launch(context):
                 output='screen',
                 condition=IfCondition(PythonExpression(
                     f"'{get_namespace(robot_id)}/odom' != 'epuck2_robot_{gz_world_robot_id}/odom'")),
+                parameters=[
+                    {"use_sim_time": True},
+                ],
                 arguments=[
                     '--frame-id',
                     f"{get_namespace(robot_id)}/odom",
@@ -368,6 +371,9 @@ def setup_launch(context):
                 output='screen',
                 condition=IfCondition(PythonExpression(
                     f"'epuck2_robot_{gz_world_robot_id}/base_link' != '{get_namespace(robot_id)}/base_link'")),
+                parameters=[
+                    {"use_sim_time": True},
+                ],
                 arguments=[
                     '--frame-id',
                     f"epuck2_robot_{gz_world_robot_id}/base_link",
@@ -406,6 +412,7 @@ def setup_launch(context):
             name="gz_server",
             parameters=[
                 {
+                    "use_sim_time": True,
                     "world_sdf_file": PathJoinSubstitution(
                         [sim_gazebo, "worlds", "epuck2.sdf"]
                     ),
@@ -425,6 +432,11 @@ def setup_launch(context):
             gz_server,
         ],
         ros_arguments=['--disable-stdout-logs'],
+        parameters=[
+            {
+                "use_sim_time": True,
+            }
+        ],
     )
 
     return launch_args + [
