@@ -288,21 +288,21 @@ available_configs['gazebo_cpp_comms'] = {
             'robot_angular_offset': 0.0,
             'robot_vicon_name': 'BW_epuck3',
         },
-        {
-            'robot_id': 5682,
-            'robot_epuck_host': '127.0.0.1',
-            'robot_epuck_port': 10004,
-            'robot_comms_host': '127.0.0.1',
-            'robot_comms_request_port': 50010,
-            'robot_knowledge_host': '127.0.0.1',
-            'robot_knowledge_exchange_port': 50011,
-            'robot_xpos': 0.0,
-            'robot_ypos': 0.0,
-            'robot_theta': 0.0,
-            'robot_teleop': False,
-            'robot_angular_offset': 0.0,
-            'robot_vicon_name': 'BW_epuck4',
-        },
+        # {
+        #     'robot_id': 5682,
+        #     'robot_epuck_host': '127.0.0.1',
+        #     'robot_epuck_port': 10004,
+        #     'robot_comms_host': '127.0.0.1',
+        #     'robot_comms_request_port': 50010,
+        #     'robot_knowledge_host': '127.0.0.1',
+        #     'robot_knowledge_exchange_port': 50011,
+        #     'robot_xpos': 0.0,
+        #     'robot_ypos': 0.0,
+        #     'robot_theta': 0.0,
+        #     'robot_teleop': False,
+        #     'robot_angular_offset': 0.0,
+        #     'robot_vicon_name': 'BW_epuck4',
+        # },
     ],
 }
 
@@ -794,7 +794,7 @@ def include_comms_manager_implementation(context) -> list[launch.Action]:
         }.items(),
     )
 
-    result.append(TimerAction(period=2.0, actions=[_include]))
+    result.append(TimerAction(period=5.0, actions=[_include]))
 
     return result
 

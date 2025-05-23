@@ -131,7 +131,7 @@ class WaypointController_v1(Node):
             end_angle = msg.known_ids[this_idx_this].boundary.x_points[1]
             # centroid: Centroid = msg.known_ids[this_idx_this].centroid
             self.path_planner = SimplePathPlanner(
-                generate_angular_waypoints(start_angle, end_angle, radius=0.5), logger=self.get_logger()
+                generate_angular_waypoints(start_angle, end_angle, radius_lo=0.15, radius_hi=0.8, boundary_resolution=2), logger=self.get_logger()
                 # self.generate_initial_waypoints(start_angle, end_angle), logger=self.get_logger()
                 # self.generate_initial_waypoints(centroid.x - 0.1, centroid.x + 0.1), logger=self.get_logger()
                 # generate_centroid_waypoint_radial(centroid_angle=centroid.x, radius=0.14)
@@ -321,7 +321,7 @@ class WaypointController_v1(Node):
         angle_diff = (angle_to_waypoint - self.theta) % (2 * np.pi)
         if angle_diff > np.pi:
             angle_diff -= 2 * np.pi
-        if distance_to_waypoint < 0.05:
+        if distance_to_waypoint < 0.1:
             self.get_logger().info(
                 f"Reached waypoint {self.current_waypoint[0]:.2f}, {self.current_waypoint[1]:.2f}"
             )
@@ -529,7 +529,8 @@ def generate_angular_waypoints(
     start_angle,
     end_angle,
     line_spacing=0.1,
-    radius=1,
+    radius_hi=1,
+    radius_lo=0.1,
     center=(0, 0),
     boundary_resolution=20,
 ):
@@ -555,7 +556,7 @@ def generate_angular_waypoints(
 
     cx, cy = center
     flipped = True
-    radii = np.arange(line_spacing, radius+line_spacing, line_spacing)
+    radii = np.arange(radius_lo, radius_hi+line_spacing, line_spacing)
     boundary_points = np.array([[cx, cy]])
 
     for rad in radii:
