@@ -38,12 +38,20 @@ class TfLogger(Node):
         self.tf_mocap_buffer = Buffer()
         self.tf_mocap_listener = TransformListener(self.tf_mocap_buffer, self)
 
+        tf_sub_msg_type = self.tf_mocap_listener.tf_sub.msg_type
+        tf_sub_callback = self.tf_mocap_listener.tf_sub.callback
+        tf_sub_qos_profile = self.tf_mocap_listener.tf_sub.qos_profile
+        tf_sub_callback_group = self.tf_mocap_listener.tf_sub.callback_group
+
+        self.tf_mocap_listener.node.destroy_subscription(self.tf_mocap_listener.tf_sub)
+        del self.tf_mocap_listener.tf_sub
+
         new_tf_sub = self.tf_mocap_listener.node.create_subscription(
-            self.tf_mocap_listener.tf_sub.msg_type,
+            tf_sub_msg_type,
             '/tf_mocap',
-            self.tf_mocap_listener.tf_sub.callback,
-            self.tf_mocap_listener.tf_sub.qos_profile,
-            callback_group=self.tf_mocap_listener.tf_sub.callback_group
+            tf_sub_callback,
+            tf_sub_qos_profile,
+            callback_group=tf_sub_callback_group
         )
 
         new_tf_static_sub = self.tf_mocap_listener.node.create_subscription(
@@ -54,8 +62,8 @@ class TfLogger(Node):
             callback_group=self.tf_mocap_listener.tf_static_sub.callback_group
         )
 
-        self.tf_mocap_listener.node.destroy_subscription(self.tf_mocap_listener.tf_sub)
         self.tf_mocap_listener.node.destroy_subscription(self.tf_mocap_listener.tf_static_sub)
+        del self.tf_mocap_listener.tf_static_sub
 
         self.tf_mocap_listener.tf_sub = new_tf_sub
         self.tf_mocap_listener.tf_static_sub = new_tf_static_sub
@@ -103,6 +111,7 @@ class TfLogger(Node):
         # self.get_logger().info(out)
         for frame in frames:
             if not self.tf_buffer.can_transform('earth', frame, rclpy.time.Time(clock_type=rclpy.clock_type.ClockType.ROS_TIME)):
+                self.get_logger().debug("Can't transform tf")
                 continue
 
             tf_sim = self.tf_buffer.lookup_transform('earth', frame, rclpy.time.Time(clock_type=rclpy.clock_type.ClockType.ROS_TIME))
@@ -115,6 +124,7 @@ class TfLogger(Node):
             sim_qw = tf_sim.transform.rotation.w
 
             if not self.tf_mocap_buffer.can_transform('earth', frame, rclpy.time.Time(clock_type=rclpy.clock_type.ClockType.ROS_TIME)):
+                self.get_logger().debug("Can't transform tf_mocap")
                 continue
 
             tf_bag = self.tf_mocap_buffer.lookup_transform('earth', frame, rclpy.time.Time(clock_type=rclpy.clock_type.ClockType.ROS_TIME))
