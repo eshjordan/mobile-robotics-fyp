@@ -794,7 +794,7 @@ def include_comms_manager_implementation(context) -> list[launch.Action]:
         }.items(),
     )
 
-    result.append(_include)
+    result.append(TimerAction(period=2.0, actions=[_include]))
 
     return result
 
