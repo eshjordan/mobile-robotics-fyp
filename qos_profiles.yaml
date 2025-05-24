@@ -1,0 +1,67 @@
+/vrpn_mocap/epuck2_robot_5785/pose:
+  reliability: reliable
+  durability: transient_local
+  history: keep_last
+  depth: 100
+  liveliness: best_available
+  deadline:
+    sec: 9223372036
+    nsec: 854775806
+  lifespan:
+    sec: 0
+    nsec: 0
+  liveliness_lease_duration:
+    sec: 9223372036
+    nsec: 854775806
+  avoid_ros_namespace_conventions: false
+
+/vrpn_mocap/epuck2_robot_5653/pose:
+  reliability: reliable
+  durability: transient_local
+  history: keep_last
+  depth: 100
+  liveliness: best_available
+  deadline:
+    sec: 9223372036
+    nsec: 854775806
+  lifespan:
+    sec: 0
+    nsec: 0
+  liveliness_lease_duration:
+    sec: 9223372036
+    nsec: 854775806
+  avoid_ros_namespace_conventions: false
+
+/vrpn_mocap/epuck2_robot_5731/pose:
+  reliability: reliable
+  durability: transient_local
+  history: keep_last
+  depth: 100
+  liveliness: best_available
+  deadline:
+    sec: 9223372036
+    nsec: 854775806
+  lifespan:
+    sec: 0
+    nsec: 0
+  liveliness_lease_duration:
+    sec: 9223372036
+    nsec: 854775806
+  avoid_ros_namespace_conventions: false
+
+/vrpn_mocap/epuck2_robot_5831/pose:
+  reliability: reliable
+  durability: transient_local
+  history: keep_last
+  depth: 100
+  liveliness: best_available
+  deadline:
+    sec: 9223372036
+    nsec: 854775806
+  lifespan:
+    sec: 0
+    nsec: 0
+  liveliness_lease_duration:
+    sec: 9223372036
+    nsec: 854775806
+  avoid_ros_namespace_conventions: false

@@ -13,7 +13,7 @@ def launch_robot_comms() -> list[launch.Action]:
         output="screen",
         prefix=[ #IfElseSubstitution(EqualsSubstitution(launch.substitutions.LaunchConfiguration("robot_id"), "0"), [
             # Debugging with gdb
-            "xterm -bg black -fg white -fa 'Monospace' -fs 13 -e gdb -ex run --args"
+            # "xterm -bg black -fg white -fa 'Monospace' -fs 13 -e gdb -ex run --args"
         ], # []),
         ros_arguments=[
             # "--log-level",

@@ -23,9 +23,11 @@ def setup_launch(context):
             parameters=[
                 {
                     # 'use_sim_time': True,
+                    'play.qos_profile_overrides_path': '/home/jordan/colcon_ws/qos_profiles.yaml',
+                    'play.start_offset': 10.0,
                     'play.start_paused': True,
                     'play.disable_keyboard_controls': True,
-                    'play.regex_to_filter': '/tf|/tf_static|.*/mobile_base/cmd_vel',
+                    'play.regex_to_filter': '/tf|/tf_static|.*/mobile_base/cmd_vel|/vrpn_mocap/.*/pose',
                     'storage.uri': '/home/jordan/colcon_ws/rosbag2_2025_05_17-18_59_00'
                 }
             ],
