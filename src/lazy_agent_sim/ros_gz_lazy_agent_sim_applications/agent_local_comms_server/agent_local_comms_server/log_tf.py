@@ -1,33 +1,22 @@
 #!/usr/bin/env python3
 
 import asyncio
-import asyncio.coroutines
-import asyncio.taskgroups
-import asyncio.tasks
-import functools
-import itertools
-from typing import Optional, Union
+import os
 import geometry_msgs.msg
 import rclpy
-import rclpy.clock_type
+import rclpy.executors
 import rclpy.task
 import rclpy.time
-
 
 import numpy as np
 import time
 
 from rclpy.node import Node
 from tf2_ros import TransformListener, Buffer
-from tf2_msgs.msg import TFMessage
 from rclpy.qos import QoSProfile
 from rclpy.qos import DurabilityPolicy
-from rclpy.qos import HistoryPolicy
 from rclpy.qos import ReliabilityPolicy
-from rclpy.callback_groups import ReentrantCallbackGroup
-from rclpy.executors import SingleThreadedExecutor
 from threading import Thread
-import rosbag2_py
 from rosbag2_interfaces.srv import (
     Play as PlayRosbag,
     Stop as StopRosbag,
@@ -37,57 +26,11 @@ from rosbag2_interfaces.srv import (
 )
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 import matplotlib.backend_bases
-
-from csv import DictWriter
 
 import transforms3d as tf
 def quat_string_to_euler(val):
     return " ".join(map(str, tf.euler.quat2euler([float(v[1]) for v in sorted(dict([tuple(a.split('=')) for a in [s.strip() for s in val.split(",")]]).items())])))
-
-gz_topics = """
-/epuck2_robot_5831/camera
-/epuck2_robot_5831/dist_sens
-/epuck2_robot_5831/imu
-/epuck2_robot_5831/joint_states
-/epuck2_robot_5831/mobile_base/cmd_vel
-/epuck2_robot_5831/odom
-/epuck2_robot_5831/pose
-/epuck2_robot_5831/proximity0
-/epuck2_robot_5831/proximity1
-/epuck2_robot_5831/proximity2
-/epuck2_robot_5831/proximity3
-/epuck2_robot_5831/proximity4
-/epuck2_robot_5831/proximity5
-/epuck2_robot_5831/proximity6
-/epuck2_robot_5831/proximity7
-/epuck2_robot_5831/robot_description
-/epuck2_robot_5831/scan
-"""
-
-
-bag_topics = """
-/epuck2_robot_5653/battery
-/epuck2_robot_5653/dist_sens
-/epuck2_robot_5653/imu
-/epuck2_robot_5653/joint_states
-/epuck2_robot_5653/mag_field
-/epuck2_robot_5653/mag_field_vector
-/epuck2_robot_5653/microphone
-/epuck2_robot_5653/mobile_base/cmd_vel
-/epuck2_robot_5653/odom
-/epuck2_robot_5653/proximity0
-/epuck2_robot_5653/proximity1
-/epuck2_robot_5653/proximity2
-/epuck2_robot_5653/proximity3
-/epuck2_robot_5653/proximity4
-/epuck2_robot_5653/proximity5
-/epuck2_robot_5653/proximity6
-/epuck2_robot_5653/proximity7
-/epuck2_robot_5653/robot_description
-/epuck2_robot_5653/scan
-"""
 
 robots = [
     'epuck2_robot_5785',
@@ -129,37 +72,14 @@ class TfLogger(Node):
         if self.use_pose:
             self.tf_mocap_listeners = []
             qos = QoSProfile(
-                # reliability=ReliabilityPolicy.BEST_EFFORT,
-                # durability=DurabilityPolicy.VOLATILE,
-                reliability=ReliabilityPolicy.RELIABLE,
-                durability=DurabilityPolicy.TRANSIENT_LOCAL,
+                reliability=ReliabilityPolicy.BEST_AVAILABLE,
+                durability=DurabilityPolicy.BEST_AVAILABLE,
                 depth=100,
             )
-            # for i in range(len(robots)):
-            #     robot = robots[i]
-            #     topic = f'/vrpn_mocap/{robot}/pose'
-            #     sub = self.create_subscription(
-            #         geometry_msgs.msg.PoseStamped,
-            #         f'{topic}',
-            #         lambda msg: self.handle_pose_cb(msg, f'{robot}'),
-            #         qos,
-            #     )
-            #     self.tf_mocap_listeners.append(sub)
-
             self.epuck2_robot_5785_sub = self.create_subscription(geometry_msgs.msg.PoseStamped, '/vrpn_mocap/epuck2_robot_5785/pose', self.handle_epuck2_robot_5785_cb, qos)
             self.epuck2_robot_5653_sub = self.create_subscription(geometry_msgs.msg.PoseStamped, '/vrpn_mocap/epuck2_robot_5653/pose', self.handle_epuck2_robot_5653_cb, qos)
             self.epuck2_robot_5731_sub = self.create_subscription(geometry_msgs.msg.PoseStamped, '/vrpn_mocap/epuck2_robot_5731/pose', self.handle_epuck2_robot_5731_cb, qos)
             self.epuck2_robot_5831_sub = self.create_subscription(geometry_msgs.msg.PoseStamped, '/vrpn_mocap/epuck2_robot_5831/pose', self.handle_epuck2_robot_5831_cb, qos)
-            # qos = QoSProfile(
-            #     depth=100,
-            #     durability=DurabilityPolicy.VOLATILE,
-            #     history=HistoryPolicy.KEEP_LAST,
-            # ),
-            # self.tf_mocap_listeners = []
-            # self.tf_mocap_listeners += [self.create_subscription(geometry_msgs.msg.PoseStamped, '/vrpn_mocap/epuck2_robot_5785/pose', self.handle_pose_fn, qos)]
-            # self.tf_mocap_listeners += [self.create_subscription(geometry_msgs.msg.PoseStamped, '/vrpn_mocap/epuck2_robot_5653/pose', self.handle_pose_fn, qos)]
-            # self.tf_mocap_listeners += [self.create_subscription(geometry_msgs.msg.PoseStamped, '/vrpn_mocap/epuck2_robot_5731/pose', self.handle_pose_fn, qos)]
-            # self.tf_mocap_listeners += [self.create_subscription(geometry_msgs.msg.PoseStamped, '/vrpn_mocap/epuck2_robot_5831/pose', self.handle_pose_fn, qos)]
         else:
             self.tf_mocap_listener = TransformListener(self.tf_mocap_buffer, self)
             tf_sub_msg_type = self.tf_mocap_listener.tf_sub.msg_type
@@ -222,52 +142,9 @@ class TfLogger(Node):
             self._resume_tmr.cancel()
 
         self._resume_tmr = self.create_timer(2.0, resume_rosbag)
-        self._save_tmr = self.create_timer(5.0, self.save)
-        self.running_tasks: list[rclpy.task.Task] = []
-        def cleanup_tasks():
-            self.running_tasks = [task for task in self.running_tasks if task.done() or task.cancelled() or task.exception()]
-
-        self._cleanup_tasks = self.create_timer(0.5, cleanup_tasks)
+        self.next_task_id = 0
+        self.running_tasks: dict[int, rclpy.task.Task] = {}
         self.log_tf_tmr = self.create_timer(0.1, self.lookup_tfs, autostart=False)
-
-        plt.ion()
-        self.cid = None
-        self.positions_visibility = {}
-        self.positions_fig = plt.figure()
-        self.positions_ax = self.positions_fig.gca()
-        self.positions_ani = FuncAnimation(self.positions_fig, self.animate_positions, interval=100, save_count=5)
-        self.rmse_fig = plt.figure()
-        # self.rmse_ani = FuncAnimation(self.rmse_fig, self.animate_rmse, interval=1000, save_count=10)
-        # self.rmse_ax = self.rmse_fig.gca()
-
-        def show():
-            self.positions_fig.canvas.draw()
-            self.positions_fig.canvas.flush_events()
-            self.rmse_fig.canvas.draw()
-            self.rmse_fig.canvas.flush_events()
-
-        self._plt_tmr = self.create_timer(0.01, show)
-
-    def save(self):
-        self.positions_fig.canvas.draw()
-        self.positions_fig.canvas.flush_events()
-        self.positions_fig.savefig('/home/jordan/colcon_ws/tf_log_positions.png')
-        self.rmse_fig.canvas.draw()
-        self.rmse_fig.canvas.flush_events()
-        self.rmse_fig.savefig('/home/jordan/colcon_ws/tf_log_rmse.png')
-        self.df.to_csv('/home/jordan/colcon_ws/tf_log.csv', index=False)
-
-    def shutdown(self):
-        self.get_logger().warning('Shutting down tf logger')
-        self.save()
-        plt.ioff()
-        plt.close(self.positions_fig)
-        plt.close(self.rmse_fig)
-
-        self.destroy_node()
-
-    def __del__(self):
-        self.shutdown()
 
     def handle_epuck2_robot_5785_cb(self, msg: geometry_msgs.msg.PoseStamped):
         self.handle_pose_cb(msg, 'epuck2_robot_5785')
@@ -282,7 +159,7 @@ class TfLogger(Node):
         self.handle_pose_cb(msg, 'epuck2_robot_5831')
 
     def handle_pose_cb(self, msg: geometry_msgs.msg.PoseStamped, robot: str):
-        self.get_logger().info(f'Received pose for {robot}: {msg.pose.position.x}, {msg.pose.position.y}, {msg.pose.position.z}')
+        self.get_logger().debug(f'Received pose for {robot}: {msg.pose.position.x}, {msg.pose.position.y}, {msg.pose.position.z}')
         tf = geometry_msgs.msg.TransformStamped()
         tf.header.stamp = self.get_clock().now().to_msg()
         tf.header.frame_id = 'earth'
@@ -297,9 +174,9 @@ class TfLogger(Node):
         self.tf_mocap_buffer.set_transform(tf, 'mocap_pose_cb')
 
     def log_transforms(self, tf_sim: geometry_msgs.msg.TransformStamped, tf_bag: geometry_msgs.msg.TransformStamped, robot: str, current_time: rclpy.time.Time):
-        self.get_logger().info(f'Logging transforms for {robot} at {current_time.seconds_nanoseconds()}')
-        self.get_logger().info(f'{robot} Sim TF: {tf_sim.transform.translation.x}, {tf_sim.transform.translation.y}, {tf_sim.transform.translation.z}, {tf_sim.transform.rotation.x}, {tf_sim.transform.rotation.y}, {tf_sim.transform.rotation.z}, {tf_sim.transform.rotation.w}')
-        self.get_logger().info(f'{robot} Bag TF: {tf_bag.transform.translation.x}, {tf_bag.transform.translation.y}, {tf_bag.transform.translation.z}, {tf_bag.transform.rotation.x}, {tf_bag.transform.rotation.y}, {tf_bag.transform.rotation.z}, {tf_bag.transform.rotation.w}')
+        self.get_logger().debug(f'Logging transforms for {robot} at {current_time.seconds_nanoseconds()}')
+        self.get_logger().debug(f'{robot} Sim TF: {tf_sim.transform.translation.x}, {tf_sim.transform.translation.y}, {tf_sim.transform.translation.z}, {tf_sim.transform.rotation.x}, {tf_sim.transform.rotation.y}, {tf_sim.transform.rotation.z}, {tf_sim.transform.rotation.w}')
+        self.get_logger().debug(f'{robot} Bag TF: {tf_bag.transform.translation.x}, {tf_bag.transform.translation.y}, {tf_bag.transform.translation.z}, {tf_bag.transform.rotation.x}, {tf_bag.transform.rotation.y}, {tf_bag.transform.rotation.z}, {tf_bag.transform.rotation.w}')
         sim_x = tf_sim.transform.translation.x
         sim_y = tf_sim.transform.translation.y
         sim_z = tf_sim.transform.translation.z
@@ -340,41 +217,35 @@ class TfLogger(Node):
 
     def lookup_tfs(self):
         current_time = self.get_clock().now()
+        if not self.executor:
+            self.get_logger().error('Executor not set, cannot lookup transforms')
+            return
 
         for i in range(len(robots)):
             robot = robots[i]
-            # can_tf = self.tf_buffer.can_transform('earth', robot + '/base_link', current_time, rclpy.time.Duration(seconds=0.045))
-            # can_tf_mocap = self.tf_mocap_buffer.can_transform('earth', robot + '/base_link', current_time, rclpy.time.Duration(seconds=0.045))
-
-            # tf_corot = self.tf_buffer.lookup_transform_async('earth', robot + '/base_link', current_time)
-
-            # if not can_tf or not can_tf_mocap:
-            #     output = "Can't transform"
-            #     output += ' tf' if not can_tf else ''
-            #     output += ' or' if not (can_tf or can_tf_mocap) else ''
-            #     output += ' tf_mocap' if not can_tf_mocap else ''
-            #     output += f" - {robot}"
-            #     self.get_logger().info(output)
-            #     continue
-
-            self.running_tasks.append(rclpy.get_global_executor().create_task(self.tf_buffer.lookup_transform_async, 'earth', f'{robot}/base_link', rclpy.time.Time()))
-            tf_task = self.running_tasks[-1]
-            self.running_tasks.append(rclpy.get_global_executor().create_task(self.tf_mocap_buffer.lookup_transform_async, 'earth', f'{robot}/base_link', rclpy.time.Time()))
-            tf_mocap_task = self.running_tasks[-1]
+            self.running_tasks[self.next_task_id] = self.executor.create_task(self.tf_buffer.lookup_transform_async, 'earth', f'{robot}/base_link', rclpy.time.Time())
+            tf_task_id = self.next_task_id
+            self.next_task_id += 1
+            self.running_tasks[self.next_task_id] = self.executor.create_task(self.tf_mocap_buffer.lookup_transform_async, 'earth', f'{robot}/base_link', rclpy.time.Time())
+            tf_mocap_task_id = self.next_task_id
+            self.next_task_id += 1
 
 
-            def call_log_transforms(tf_task: rclpy.task.Task, tf_mocap_task, robot_name: str, current_time: rclpy.time.Time):
+            def call_log_transforms(tf_task_id: int, tf_mocap_task_id: int, robot_name: str, current_time: rclpy.time.Time):
                 def inner(this_task: rclpy.task.Task):
                     if this_task.cancelled() or this_task.exception():
                         self.get_logger().error(f'Task failed: {this_task.exception()}')
                         rclpy.shutdown()
                         return
 
-                    if this_task == tf_task:
+                    if tf_task_id not in self.running_tasks or this_task == self.running_tasks[tf_task_id]:
                         return
 
+                    tf_task = self.running_tasks.pop(tf_task_id)
+                    tf_mocap_task = self.running_tasks.pop(tf_mocap_task_id)
+
                     if tf_task.executing():
-                        asyncio.wait_for(tf_task, timeout=5.0)
+                        asyncio.wait_for(tf_task, timeout=0.1)
 
                     tf_sim = tf_task.result()
                     tf_bag = tf_mocap_task.result()
@@ -388,16 +259,65 @@ class TfLogger(Node):
                     if tf_sim is None or tf_bag is None:
                         return
 
-                    self.log_transforms(tf_sim, tf_bag, robot, current_time)
+                    self.log_transforms(tf_sim, tf_bag, robot_name, current_time)
                 return inner
 
-            tf_task.add_done_callback(call_log_transforms(tf_task, tf_mocap_task, f"{robot}", current_time))
-            tf_mocap_task.add_done_callback(call_log_transforms(tf_task, tf_mocap_task, f"{robot}", current_time))
+            self.running_tasks[tf_task_id].add_done_callback(call_log_transforms(int(tf_task_id), int(tf_mocap_task_id), f"{robot}", current_time))
+            self.running_tasks[tf_mocap_task_id].add_done_callback(call_log_transforms(int(tf_task_id), int(tf_mocap_task_id), f"{robot}", current_time))
 
 
+class TfPlotter(Node):
+    def __init__(self, logger: TfLogger):
+        super().__init__('tf_plotter')
+        self.logger = logger
+
+        self.declare_parameter('data_dir', '')
+
+        plt.ion()
+
+        self.positions_cid = None
+        self.positions_visibility = {}
+        self.positions_fig = plt.figure(1)
+        self.positions_ax = self.positions_fig.gca()
+
+        self.rmse_cid = None
+        self.rmse_visibility = {}
+        self.rmse_fig = plt.figure(2)
+        self.rmse_ax = self.rmse_fig.gca()
+
+        self.do_show = True
+        async def show_positions():
+            self.animate_positions(0)
+            self.positions_fig.canvas.draw()
+            self.positions_fig.canvas.flush_events()
+        async def show_rmse():
+            self.animate_rmse(0)
+            self.rmse_fig.canvas.draw()
+            self.rmse_fig.canvas.flush_events()
+        def on_show_pos_finish(future):
+            self.show_positions_task = rclpy.get_global_executor().create_task(show_positions())
+            self.show_positions_task.add_done_callback(on_show_pos_finish)
+        def on_show_rmse_finish(future):
+            self.show_rmse_task = rclpy.get_global_executor().create_task(show_rmse())
+            self.show_rmse_task.add_done_callback(on_show_rmse_finish)
+
+        self.show_positions_task = rclpy.get_global_executor().create_task(show_positions())
+        self.show_positions_task.add_done_callback(on_show_pos_finish)
+        self.show_rmse_task = rclpy.get_global_executor().create_task(show_rmse())
+        self.show_rmse_task.add_done_callback(on_show_rmse_finish)
+
+        self._save_tmr = self.create_timer(2.0, self.save, autostart=False)
+
+        self.data_dir = self.get_parameter('data_dir').get_parameter_value().string_value
+        if self.data_dir != '':
+            os.makedirs(self.data_dir, exist_ok=True)
+            self.get_logger().info(f'Saving data to {self.data_dir}')
+            self._save_tmr.reset()
+
+    def __del__(self):
+        self.shutdown()
 
     def animate_positions(self, i):
-        self.get_logger().debug('Animating positions start')
         t1 = time.time()
         self.positions_ax.clear()
         self.positions_ax.set_title('TF Positions')
@@ -410,18 +330,20 @@ class TfLogger(Node):
         self.positions_ax.set_ylim(-5, 5)
         self.positions_ax.set_aspect('equal', adjustable='box')
 
-        robot_lines = {}
+        robot_lines = []
+
+        df = self.logger.df.copy(deep=False)
 
         for robot in robots:
-            if robot not in self.df['robot'].values:
+            if robot not in df['robot'].values:
                 continue
 
-            df_frame = self.df[self.df['robot'] == robot]
+            df_frame = df[df['robot'] == robot]
 
             if robot not in self.positions_visibility:
                 self.positions_visibility[robot] = {'Mocap': True, 'Sim': True}
 
-            robot_lines[robot] = {}
+            robot_lines += [robot]
 
             # Show the history of the robot's position as a line
             # Show the latest position as a point
@@ -443,7 +365,7 @@ class TfLogger(Node):
         leg.get_frame().set_alpha(0.4)
 
         for legline in leg.get_lines():
-            legline.set_picker(20)
+            legline.set_picker(10)
 
         def on_pick(event: matplotlib.backend_bases.PickEvent):
             impl, robot = event.artist.get_label().split(' ')
@@ -451,25 +373,173 @@ class TfLogger(Node):
             self.positions_visibility[robot][impl] = not self.positions_visibility[robot][impl]
             self.positions_fig.canvas.draw_idle()
 
-        if self.cid:
-            self.positions_fig.canvas.mpl_disconnect(self.cid)
-        self.cid = self.positions_fig.canvas.mpl_connect('pick_event', on_pick)
+        if self.positions_cid:
+            self.positions_fig.canvas.mpl_disconnect(self.positions_cid)
+        self.positions_cid = self.positions_fig.canvas.mpl_connect('pick_event', on_pick)
 
         t2 = time.time()
         self.get_logger().debug(f'Animating positions took {t2 - t1:.2f} seconds')
 
     def animate_rmse(self, i):
-        pass
+        t1 = time.time()
+        self.rmse_ax.clear()
+        self.rmse_ax.set_title('TF RMSE')
+        self.rmse_ax.set_xlabel('Time (s)')
+        self.rmse_ax.set_ylabel('RMSE (m)')
+        self.rmse_ax.grid()
+
+        # Show +-5m range
+        self.rmse_ax.set_ylim(0, 5)
+
+        robot_lines = []
+
+        df = self.logger.df.copy(deep=False)
+
+        for robot in robots:
+            if robot not in df['robot'].values:
+                continue
+
+            df_frame = df[df['robot'] == robot]
+
+            if robot not in self.rmse_visibility:
+                self.rmse_visibility[robot] = True
+
+            robot_lines += [robot]
+
+            rmse_alpha = 1.0 if self.rmse_visibility[robot] else 0.0
+            x_vals = df_frame['diff_x'].to_numpy(np.float32)
+            y_vals = df_frame['diff_y'].to_numpy(np.float32)
+            z_vals = df_frame['diff_z'].to_numpy(np.float32)
+
+            rmse = np.sqrt(x_vals**2 + y_vals**2 + z_vals**2)
+            time_series = df_frame['timestamp']
+
+            self.rmse_ax.plot(time_series, rmse, color=robot_colors[robot], label=robot, alpha=rmse_alpha)
+            self.rmse_fig.canvas.draw_idle()
+
+        if len(robot_lines) == 0:
+            return
+
+        leg = self.rmse_ax.legend(fancybox=True)
+        leg.get_frame().set_alpha(0.4)
+
+        for legline in leg.get_lines():
+            legline.set_picker(10)
+
+        def on_pick(event: matplotlib.backend_bases.PickEvent):
+            robot = event.artist.get_label()
+            self.get_logger().debug(f'Picked RMSE for {robot}, robot_lines: {robot_lines}')
+            self.rmse_visibility[robot] = not self.rmse_visibility[robot]
+            self.rmse_fig.canvas.draw_idle()
+
+        if self.rmse_cid:
+            self.rmse_fig.canvas.mpl_disconnect(self.rmse_cid)
+        self.rmse_cid = self.rmse_fig.canvas.mpl_connect('pick_event', on_pick)
+
+        t2 = time.time()
+        self.get_logger().debug(f'Animating RMSE took {t2 - t1:.2f} seconds')
+
+
+    def shutdown(self):
+        self.do_show = False
+        self.get_logger().warning('Shutting down tf logger')
+        # self.save()
+        plt.ioff()
+        plt.close(self.positions_fig)
+        plt.close(self.rmse_fig)
+
+    def save(self):
+        self.positions_fig.savefig(os.path.join(self.data_dir, 'tf_log_positions.png'))
+        self.rmse_fig.savefig(os.path.join(self.data_dir, 'tf_log_rmse.png'))
+        self.logger.df.to_csv(os.path.join(self.data_dir, 'tf_log.csv'), index=False)
+
+    def show(self):
+        if self.do_show:
+            async def show_positions():
+                self.animate_positions(0)
+                self.positions_fig.canvas.draw()
+                self.positions_fig.canvas.flush_events()
+            async def show_rmse():
+                self.animate_rmse(0)
+                self.rmse_fig.canvas.draw()
+                self.rmse_fig.canvas.flush_events()
+            t1 = time.time()
+            task1 = rclpy.get_global_executor().create_task(show_positions())
+            task2 = rclpy.get_global_executor().create_task(show_rmse())
+
+
+
+class TwistRepub(Node):
+    def __init__(self):
+        super().__init__('twist_repub')
+        self.get_logger().info('Starting twist republisher')
+
+        self.epuck2_robot_5785_sub = self.create_subscription(geometry_msgs.msg.TwistStamped, '/vrpn_mocap/epuck2_robot_5785/twist', self.epuck2_robot_5785_cb, qos_profile=QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            depth=10,
+        ))
+        self.epuck2_robot_5785_pub = self.create_publisher(geometry_msgs.msg.Twist, '/epuck2_robot_5785/mobile_base/cmd_vel', 10)
+        self.epuck2_robot_5653_sub = self.create_subscription(geometry_msgs.msg.TwistStamped, '/vrpn_mocap/epuck2_robot_5653/twist', self.epuck2_robot_5653_cb, qos_profile=QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            depth=10,
+        ))
+        self.epuck2_robot_5653_pub = self.create_publisher(geometry_msgs.msg.Twist, '/epuck2_robot_5653/mobile_base/cmd_vel', 10)
+        self.epuck2_robot_5731_sub = self.create_subscription(geometry_msgs.msg.TwistStamped, '/vrpn_mocap/epuck2_robot_5731/twist', self.epuck2_robot_5731_cb, qos_profile=QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            depth=10,
+        ))
+        self.epuck2_robot_5731_pub = self.create_publisher(geometry_msgs.msg.Twist, '/epuck2_robot_5731/mobile_base/cmd_vel', 10)
+        self.epuck2_robot_5831_sub = self.create_subscription(geometry_msgs.msg.TwistStamped, '/vrpn_mocap/epuck2_robot_5831/twist', self.epuck2_robot_5831_cb, qos_profile=QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            depth=10,
+        ))
+        self.epuck2_robot_5831_pub = self.create_publisher(geometry_msgs.msg.Twist, '/epuck2_robot_5831/mobile_base/cmd_vel', 10)
+
+    def handle_cmd_vel(self, msg: geometry_msgs.msg.TwistStamped, robot_name: str):
+        self.get_logger().debug(f'Received cmd_vel: {msg.twist.linear.x}, {msg.twist.linear.y}, {msg.twist.angular.z}')
+        new_msg = geometry_msgs.msg.Twist()
+        new_msg.linear.x = msg.twist.linear.x
+        new_msg.linear.y = msg.twist.linear.y
+        new_msg.linear.z = msg.twist.linear.z
+        new_msg.angular.x = msg.twist.angular.x
+        new_msg.angular.y = msg.twist.angular.y
+        new_msg.angular.z = msg.twist.angular.z
+        if robot_name == 'epuck2_robot_5785':
+            self.epuck2_robot_5785_pub.publish(new_msg)
+        elif robot_name == 'epuck2_robot_5653':
+            self.epuck2_robot_5653_pub.publish(new_msg)
+        elif robot_name == 'epuck2_robot_5731':
+            self.epuck2_robot_5731_pub.publish(new_msg)
+        elif robot_name == 'epuck2_robot_5831':
+            self.epuck2_robot_5831_pub.publish(new_msg)
+
+    def epuck2_robot_5785_cb(self, msg: geometry_msgs.msg.TwistStamped):
+        self.handle_cmd_vel(msg, 'epuck2_robot_5785')
+    def epuck2_robot_5653_cb(self, msg: geometry_msgs.msg.TwistStamped):
+        self.handle_cmd_vel(msg, 'epuck2_robot_5653')
+    def epuck2_robot_5731_cb(self, msg: geometry_msgs.msg.TwistStamped):
+        self.handle_cmd_vel(msg, 'epuck2_robot_5731')
+    def epuck2_robot_5831_cb(self, msg: geometry_msgs.msg.TwistStamped):
+        self.handle_cmd_vel(msg, 'epuck2_robot_5831')
 
 
 def main():
     rclpy.init()
+    executor = rclpy.executors.SingleThreadedExecutor()
     node = TfLogger(use_pose=True)
+    plotter = TfPlotter(node)
+    twist_repub = TwistRepub()
+    executor.add_node(node)
+    executor.add_node(twist_repub)
+    node_thread = Thread(target=executor.spin)
+    node_thread.start()
+
     try:
-        rclpy.spin(node)
-    except:
+        rclpy.spin(plotter)
+    except Exception as e:
         node.shutdown()
         rclpy.shutdown()
+        raise e
 
 
 if __name__ == '__main__':

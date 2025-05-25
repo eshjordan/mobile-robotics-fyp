@@ -20,7 +20,7 @@ from launch.substitutions import (
 import launch_ros.actions
 from launch_ros.substitutions import FindPackageShare
 
-selected_config = 'gazebo_ghost'
+selected_config = 'epuck'
 
 available_configs = {
     'epuck': {},
@@ -377,21 +377,21 @@ available_configs['gazebo_ghost'] = {
             'robot_angular_offset': 0.0,
             'robot_vicon_name': 'BW_epuck3',
         },
-        {
-            'robot_id': 5682,
-            'robot_epuck_host': '127.0.0.1',
-            'robot_epuck_port': 10004,
-            'robot_comms_host': '127.0.0.1',
-            'robot_comms_request_port': 50010,
-            'robot_knowledge_host': '127.0.0.1',
-            'robot_knowledge_exchange_port': 50011,
-            'robot_xpos': 0.0,
-            'robot_ypos': 0.0,
-            'robot_theta': 0.0,
-            'robot_teleop': False,
-            'robot_angular_offset': 0.0,
-            'robot_vicon_name': 'BW_epuck4',
-        },
+        # {
+        #     'robot_id': 5682,
+        #     'robot_epuck_host': '127.0.0.1',
+        #     'robot_epuck_port': 10004,
+        #     'robot_comms_host': '127.0.0.1',
+        #     'robot_comms_request_port': 50010,
+        #     'robot_knowledge_host': '127.0.0.1',
+        #     'robot_knowledge_exchange_port': 50011,
+        #     'robot_xpos': 0.0,
+        #     'robot_ypos': 0.0,
+        #     'robot_theta': 0.0,
+        #     'robot_teleop': False,
+        #     'robot_angular_offset': 0.0,
+        #     'robot_vicon_name': 'BW_epuck4',
+        # },
     ],
 }
 
@@ -456,7 +456,7 @@ implementations = {
             ),
             'extra_args': {
                 'gui': 'false',
-                'robot_ids': '5785, 5653, 5731, 5831, 5682',
+                'robot_ids': '5785, 5653, 5731, 5831',
                 "gz_version": "8",
                 "manager_robot_tf_prefix": "epuck2_robot_",
                 "manager_robot_tf_suffix": "",
@@ -581,6 +581,14 @@ implementations = {
             'launchfile': 'log_tf.launch.py',
             'oneshot': True,
             'extra_args': {
+                'data_dir': PathJoin(
+                    [
+                        FindPackageShare(
+                            'agent_local_comms_server',
+                        ),
+                        '..', '..', '..', '..', 'data',
+                    ],
+                ),
             },
         },
     },
