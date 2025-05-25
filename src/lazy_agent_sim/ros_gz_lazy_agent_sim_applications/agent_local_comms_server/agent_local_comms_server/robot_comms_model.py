@@ -55,8 +55,8 @@ class BaseRobotCommsModel:
     robot_id: int
     manager_host: str
     manager_port: int
-    robot_comms_host: str
-    robot_comms_request_port: int
+    robot_command_host: str
+    robot_command_port: int
     robot_knowledge_host: str
     robot_knowledge_exchange_port: str
 
@@ -68,16 +68,16 @@ class BaseRobotCommsModel:
         robot_id: int,
         manager_host: str,
         manager_port: int,
-        robot_comms_host: str,
-        robot_comms_request_port: int,
+        robot_command_host: str,
+        robot_command_port: int,
         robot_knowledge_host: str,
         robot_knowledge_exchange_port: int,
     ):
         self.robot_id = robot_id
         self.manager_host = manager_host
         self.manager_port = manager_port
-        self.robot_comms_host = robot_comms_host
-        self.robot_comms_request_port = robot_comms_request_port
+        self.robot_command_host = robot_command_host
+        self.robot_command_port = robot_command_port
         self.robot_knowledge_host = robot_knowledge_host
         self.robot_knowledge_exchange_port = robot_knowledge_exchange_port
 
@@ -114,7 +114,7 @@ class BaseRobotCommsModel:
                 self.known_ids_[record.robot_id] = record
 
         return self.KnownIdsSize() - size_before
-    
+
     def SetN(self, N):
         self.n_ = N
 
@@ -182,8 +182,8 @@ class RobotCommsModel(BaseRobotCommsModel):
         robot_id: int,
         manager_host: str,
         manager_port: int,
-        robot_comms_host: str,
-        robot_comms_request_port: int,
+        robot_command_host: str,
+        robot_command_port: int,
         robot_knowledge_host: str,
         robot_knowledge_exchange_port: int,
         KnowledgeServerClass: type[BaseKnowledgeServer],
@@ -194,8 +194,8 @@ class RobotCommsModel(BaseRobotCommsModel):
             robot_id,
             manager_host,
             manager_port,
-            robot_comms_host,
-            robot_comms_request_port,
+            robot_command_host,
+            robot_command_port,
             robot_knowledge_host,
             robot_knowledge_exchange_port,
         )
@@ -214,7 +214,7 @@ class RobotCommsModel(BaseRobotCommsModel):
         self.knowledge_clients: dict[int, BaseKnowledgeClient] = None
 
         self.knowledge_request_server = socketserver.ThreadingUDPServer(
-            (self.robot_comms_host, self.robot_comms_request_port),
+            (self.robot_command_host, self.robot_command_port),
             self.server_factory(),
         )
 
@@ -291,7 +291,7 @@ class RobotCommsModel(BaseRobotCommsModel):
 
     def exchange_heartbeats(self):
         self.logger.info(
-            f"Starting heartbeat exchange client on {self.robot_comms_host}"
+            f"Starting heartbeat exchange client on {self.robot_id}"
         )
 
         self.knowledge_server = self.KnowledgeServerClass(self)
@@ -309,8 +309,8 @@ class RobotCommsModel(BaseRobotCommsModel):
             self.heartbeat_client.sendto(
                 EpuckHeartbeatPacket(
                     robot_id=self.robot_id,
-                    robot_comms_host=self.robot_comms_host,
-                    robot_comms_request_port=self.robot_comms_request_port,
+                    robot_command_host=self.robot_command_host,
+                    robot_command_port=self.robot_command_port,
                     robot_knowledge_host=self.robot_knowledge_host,
                     robot_knowledge_exchange_port=self.robot_knowledge_exchange_port,
                 ).pack(),

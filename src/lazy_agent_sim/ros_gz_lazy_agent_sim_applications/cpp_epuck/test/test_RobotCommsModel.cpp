@@ -22,14 +22,14 @@ public:
         const robot_id_type robot_id                 = 0x123;
         host_size_string manager_host                = "manager_host";
         const uint16_t manager_port                  = 0x456;
-        host_size_string robot_comms_host            = "robot_comms_hst";
-        const uint16_t robot_comms_request_port      = 0x789;
+        host_size_string robot_command_host          = "robot_cmd_hst";
+        const uint16_t robot_command_port            = 0x789;
         host_size_string robot_knowledge_host        = "robot_knldg_hst";
         const uint16_t robot_knowledge_exchange_port = 0xabc;
         auto network_factory                         = std::make_shared<MockNetworkFactory>();
 
         model = std::make_shared<RobotCommsModel<UDPKnowledgeServer, UDPKnowledgeClient>>(
-            robot_id, manager_host, manager_port, robot_comms_host, robot_comms_request_port, robot_knowledge_host,
+            robot_id, manager_host, manager_port, robot_command_host, robot_command_port, robot_knowledge_host,
             robot_knowledge_exchange_port, network_factory);
     }
 
@@ -41,8 +41,8 @@ TEST_F(TestRobotCommsModel, TestConstructor)
     uint64_t expected_robot_id = 0x123;
     std::string expected_manager_host("manager_host");
     uint64_t expected_manager_port = 0x456;
-    std::string expected_robot_comms_host("robot_comms_hst");
-    uint64_t expected_robot_comms_request_port = 0x789;
+    std::string expected_robot_command_host("robot_cmd_hst");
+    uint64_t expected_robot_command_port = 0x789;
     std::string expected_robot_knowledge_host("robot_knldg_hst");
     uint64_t expected_robot_knowledge_exchange_port = 0xabc;
 
@@ -51,8 +51,8 @@ TEST_F(TestRobotCommsModel, TestConstructor)
     EXPECT_EQ(expected_robot_id, model->robot_id);
     EXPECT_STREQ(expected_manager_host.c_str(), model->manager_host.c_str());
     EXPECT_EQ(expected_manager_port, model->manager_port);
-    EXPECT_STREQ(expected_robot_comms_host.c_str(), model->robot_comms_host.c_str());
-    EXPECT_EQ(expected_robot_comms_request_port, model->robot_comms_request_port);
+    EXPECT_STREQ(expected_robot_command_host.c_str(), model->robot_command_host.c_str());
+    EXPECT_EQ(expected_robot_command_port, model->robot_command_port);
     EXPECT_STREQ(expected_robot_knowledge_host.c_str(), model->robot_knowledge_host.c_str());
     EXPECT_EQ(expected_robot_knowledge_exchange_port, model->robot_knowledge_exchange_port);
 }

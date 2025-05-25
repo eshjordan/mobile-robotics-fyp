@@ -389,7 +389,7 @@ class TfPlotter(Node):
         self.rmse_ax.grid()
 
         # Show +-5m range
-        self.rmse_ax.set_ylim(0, 5)
+        self.rmse_ax.set_ylim(0, 8)
 
         robot_lines = []
 

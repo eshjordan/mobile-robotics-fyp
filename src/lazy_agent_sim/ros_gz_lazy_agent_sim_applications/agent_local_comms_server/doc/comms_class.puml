@@ -3,29 +3,33 @@
 !theme sunlust
 
 abstract class BaseKnowledgeServer {
-  + BaseKnowledgeServer(std::shared_ptr<BaseRobotCommsModel> robot_model)
+  + BaseKnowledgeServer(std::shared_ptr<BaseRobotCommsModel> robot_model, std::shared_ptr<INetworkFactory> network_factory)
   + {abstract} void start()
   + {abstract} void stop()
-  # std::shared_ptr<BaseRobotCommsModel> robot_model
+
+  # std::shared_ptr<BaseRobotCommsModel> _robot_model
+  # std::shared_ptr<INetworkFactory> _network_factory
 }
 
 abstract class BaseKnowledgeClient {
-  + BaseKnowledgeClient(EpuckNeighbourPacket neighbour, std::function<bool()> running, std::shared_ptr<BaseRobotCommsModel> robot_model)
+  + BaseKnowledgeClient(EpuckNeighbourPacket neighbour, std::function<bool()> running, std::shared_ptr<BaseRobotCommsModel> robot_model, std::shared_ptr<INetworkFactory> network_factory)
   + {abstract} void start()
   + {abstract} void stop()
-  # EpuckNeighbourPacket neighbour
-  # {field} std::function<bool()> running
-  # std::shared_ptr<BaseRobotCommsModel> robot_model
+
+  # EpuckNeighbourPacket _neighbour
+  # {field} std::function<bool()> _running
+  # std::shared_ptr<BaseRobotCommsModel> _robot_model
+  # std::shared_ptr<INetworkFactory> _network_factory
 }
 
 abstract class BaseRobotCommsModel {
-  + uint16_t ROBOT_ID
-  + std::string MANAGER_HOST
-  + uint16_t MANAGER_PORT
-  + std::string ROBOT_COMMS_HOST
-  + uint16_t ROBOT_COMMS_REQUEST_PORT
-  + std::string ROBOT_KNOWLEDGE_HOST
-  + uint16_t ROBOT_KNOWLEDGE_EXCHANGE_PORT
+  + uint16_t robot_id
+  + std::string manager_host
+  + uint16_t manager_port
+  + std::string robot_command_host
+  + uint16_t robot_command_port
+  + std::string robot_knowledge_host
+  + uint16_t robot_knowledge_exchange_host
   - std::map<uint16_t, EpuckKnowledgeRecord> known_ids
   - Centroid centroid
   - Boundary boundary
@@ -40,18 +44,44 @@ abstract class BaseRobotCommsModel {
   + size_t known_ids_size()
   + size_t insert_known_ids(EpuckKnowledgeRecord *begin, EpuckKnowledgeRecord *end)
   + EpuckKnowledgePacket create_knowledge_packet()
-  + void set_centroid(const Centroid &centroid)
-  + void set_boundary(const Boundary &boundary)
-  + const Centroid &get_centroid()
-  + const Boundary &get_boundary()
+  + void set_centroid(Centroid centroid)
+  + void set_boundary(Boundary boundary)
+  + Centroid get_centroid()
+  + Boundary get_boundary()
+  + uint16_t get_seq()
+  + EpuckKnowledgePacket create_knowledge_packet()
+  - EpuckKnowledgeRecord update_record()
 }
 
+abstract class INetworkFactory {
+  + {abstract} std::shared_ptr<IIoContext> create_io_context()
+  + {abstract} std::shared_ptr<ITcpSocket> create_tcp_socket(IIoContext &io_context)
+  + {abstract} std::shared_ptr<IUdpSocket> create_udp_socket(IIoContext &io_context)
+  + {abstract} std::shared_ptr<IResolver> create_resolver(IIoContext &io_context)
+  + {abstract} std::shared_ptr<ITimer> create_timer(IIoContext &io_context)
+  + {abstract} std::shared_ptr<ITCPEndpoint> create_tcp_endpoint()
+  + {abstract} std::shared_ptr<ITCPEndpoint> create_tcp_endpoint(asio::ip::address_v4 addr, uint16_t port)
+  + {abstract} std::shared_ptr<IUDPEndpoint> create_udp_endpoint()
+  + {abstract} std::shared_ptr<IUDPEndpoint> create_udp_endpoint(asio::ip::address_v4 addr, uint16_t port)
+}
+
+class NetworkFactory {
+  + std::shared_ptr<IIoContext> create_io_context()
+  + std::shared_ptr<ITcpSocket> create_tcp_socket(IIoContext &io_context)
+  + std::shared_ptr<IUdpSocket> create_udp_socket(IIoContext &io_context)
+  + std::shared_ptr<IResolver> create_resolver(IIoContext &io_context)
+  + std::shared_ptr<ITimer> create_timer(IIoContext &io_context)
+  + std::shared_ptr<ITCPEndpoint> create_tcp_endpoint()
+  + std::shared_ptr<ITCPEndpoint> create_tcp_endpoint(asio::ip::address_v4 addr, uint16_t port)
+  + std::shared_ptr<IUDPEndpoint> create_udp_endpoint()
+  + std::shared_ptr<IUDPEndpoint> create_udp_endpoint(asio::ip::address_v4 addr, uint16_t port)
+}
 
 struct EpuckHeartbeatPacket {
   +{static} uint8_t ID
   +uint16_t robot_id
-  +std::array<char, MAX_HOST_LEN + 1> robot_comms_host
-  +uint16_t robot_comms_request_port
+  +std::array<char, MAX_HOST_LEN + 1> robot_command_host
+  +uint16_t robot_command_port
   +std::array<char, MAX_HOST_LEN + 1> robot_knowledge_host
   +uint16_t robot_knowledge_exchange_port
 }
@@ -110,49 +140,53 @@ class RobotCommsModel <T : BaseKnowledgeServer\nU : BaseKnowledgeClient> {
   + void stop()
   - void launch_exchange_heartbeats()
   - void exchange_heartbeats()
-  - void launch_handle_knowledge_requests()
-  - void handle_knowledge_requests()
-  - asio::io_context io_context_
-  - std::shared_ptr<T> knowledge_server_
-  - std::map<uint16_t, U> knowledge_clients_
-  - bool running_
-  - std::thread heartbeat_thread_
-  - std::thread knowledge_request_thread_
-  - asio::ip::udp::socket *knowledge_request_socket_
+  - void launch_handle_commands()
+  - void handle_commands()
+
+  - bool _running
+  - T* _knowledge_server
+  - std::map<uint16_t, U> _knowledge_clients
+  - std::thread _exchange_heartbeats_thread
+  - std::thread _handle_commands_thread
+  - std::shared_ptr<INetworkFactory> _network_factory
+  - std::shared_ptr<IIoContext> _io_context
+  - std::shared_ptr<IUdpSocket> _command_request_socket
   - {static} char* TAG
 }
 
 
 class UDPKnowledgeServer <T : BaseRobotCommsModel> {
-  + UDPKnowledgeServer(std::shared_ptr<T> robot_model)
+  + UDPKnowledgeServer(std::shared_ptr<T> robot_model, std::shared_ptr<INetworkFactory> network_factory)
   + void start()
   + void stop()
-  - void launch_start_receive()
-  - void start_receive()
-  - void handle_receive(asio::ip::udp::endpoint client, std::array<uint8_t, sizeof(EpuckKnowledgePacket)> data)
-  - asio::io_context io_context_
-  - asio::ip::udp::socket *socket_
-  - std::thread heartbeat_thread_
-  - bool running_
+  - void launch_receive_knowledge()
+  - void receive_knowledge()
+  - void handle_knowledge_packet(IUDPEndpoint &client, std::array<uint8_t, sizeof(EpuckKnowledgePacket)> &data)
+
+  - bool _running
+  - std::thread _receive_knowledge_thread
+  - std::shared_ptr<IIoContext> _io_context
+  - std::shared_ptr<IUdpSocket> _knowledge_server_socket
   - {static} char* TAG
 }
 
 class UDPKnowledgeClient <T : BaseRobotCommsModel> {
-  + UDPKnowledgeClient(EpuckNeighbourPacket neighbour, std::function<bool()> running, std::shared_ptr<T> robot_model)
+  + UDPKnowledgeClient(EpuckNeighbourPacket neighbour, std::function<bool()> running, std::shared_ptr<BaseRobotCommsModel> robot_model, std::shared_ptr<INetworkFactory> network_factory)
   + void start()
   + void stop()
   - void launch_send_knowledge()
   - void send_knowledge()
-  - asio::io_context io_context_
-  - asio::ip::udp::socket *client_
-  - std::thread thread_
-  - bool stopping_
+
+  - bool _stopping
+  - std::thread _send_knowledge_thread
+  - std::shared_ptr<IIoContext> _io_context
+  - std::shared_ptr<IUdpSocket> _knowledge_client_socket
   - {static} char* TAG
 }
 
 
 class GZKnowledgeServer <T : BaseRobotCommsModel> {
-  + GZKnowledgeServer(std::shared_ptr<T> robot_model)
+  + GZKnowledgeServer(std::shared_ptr<T> robot_model, std::shared_ptr<INetworkFactory> network_factory)
   + void start()
   + void stop()
   - void on_knowledge(const gz_msgs::Dataframe &msg)
@@ -163,7 +197,7 @@ class GZKnowledgeServer <T : BaseRobotCommsModel> {
 }
 
 class GZKnowledgeClient <T : BaseRobotCommsModel> {
-  + GZKnowledgeClient(EpuckNeighbourPacket neighbour, std::function<bool()> running, std::shared_ptr<T> robot_model)
+  + GZKnowledgeClient(EpuckNeighbourPacket neighbour, std::function<bool()> running, std::shared_ptr<T> robot_model, std::shared_ptr<INetworkFactory> network_factory)
   + void start()
   + void stop()
   - void send_knowledge()
@@ -180,13 +214,28 @@ BaseKnowledgeClient <|-- UDPKnowledgeClient
 BaseKnowledgeServer <|-- GZKnowledgeServer
 BaseKnowledgeClient <|-- GZKnowledgeClient
 
-RobotCommsModel <|-[hidden]- BaseKnowledgeServer
-RobotCommsModel <|-[hidden]- BaseKnowledgeClient
+INetworkFactory <|.. NetworkFactory
 
-BaseRobotCommsModel -[hidden]left-> EpuckHeartbeatPacket
-RobotCommsModel -[hidden]left-> EpuckHeartbeatResponsePacket
-BaseRobotCommsModel -[hidden]right-> EpuckNeighbourPacket
-RobotCommsModel -[hidden]right-> EpuckKnowledgePacket
-RobotCommsModel -[hidden]right-> EpuckKnowledgeRecord
+EpuckCommandPacket -- RobotCommsModel
+EpuckHeartbeatPacket -- RobotCommsModel
+EpuckHeartbeatResponsePacket -- RobotCommsModel
+EpuckKnowledgePacket o-- EpuckKnowledgeRecord
+EpuckHeartbeatResponsePacket o-- EpuckNeighbourPacket
+
+EpuckKnowledgeRecord *-- Centroid
+EpuckKnowledgeRecord *-- Boundary
+
+Centroid --> BaseRobotCommsModel
+Boundary --> BaseRobotCommsModel
+
+INetworkFactory <.. RobotCommsModel
+RobotCommsModel <--> BaseKnowledgeServer
+RobotCommsModel *--> BaseKnowledgeClient
+
+EpuckNeighbourPacket -- BaseKnowledgeClient
+EpuckKnowledgeRecord -left-o BaseRobotCommsModel
+EpuckKnowledgePacket -- BaseRobotCommsModel
+EpuckKnowledgePacket -- RobotCommsModel
+
 
 @enduml

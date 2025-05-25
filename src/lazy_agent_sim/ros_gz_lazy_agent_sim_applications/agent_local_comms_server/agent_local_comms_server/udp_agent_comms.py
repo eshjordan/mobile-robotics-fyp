@@ -169,13 +169,13 @@ def main():
         .get_parameter_value()
         .integer_value
     )
-    robot_comms_host = (
-        node.declare_parameter("robot_comms_host", "127.0.0.1")
+    robot_command_host = (
+        node.declare_parameter("robot_command_host", "127.0.0.1")
         .get_parameter_value()
         .string_value
     )
-    robot_comms_request_port = (
-        node.declare_parameter("robot_comms_request_port", 50001)
+    robot_command_port = (
+        node.declare_parameter("robot_command_port", 50001)
         .get_parameter_value()
         .integer_value
     )
@@ -194,8 +194,8 @@ def main():
         robot_id,
         manager_server_host,
         manager_server_port,
-        robot_comms_host,
-        robot_comms_request_port,
+        robot_command_host,
+        robot_command_port,
         robot_knowledge_host,
         robot_knowledge_exchange_port,
         UDPKnowledgeServer,

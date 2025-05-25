@@ -33,11 +33,11 @@ def launch_robot_comms(
                 "manager_server_port": launch.substitutions.LaunchConfiguration(
                     "manager_server_port"
                 ),
-                "robot_comms_host": launch.substitutions.LaunchConfiguration(
-                    "robot_comms_host"
+                "robot_command_host": launch.substitutions.LaunchConfiguration(
+                    "robot_command_host"
                 ),
-                "robot_comms_request_port": launch.substitutions.LaunchConfiguration(
-                    "robot_comms_request_port"
+                "robot_command_port": launch.substitutions.LaunchConfiguration(
+                    "robot_command_port"
                 ),
                 "robot_knowledge_host": launch.substitutions.LaunchConfiguration(
                     "robot_knowledge_host"
@@ -70,8 +70,8 @@ def generate_launch_description():
                 "robot_id": "0",
                 "manager_server_host": "127.0.0.1",
                 "manager_server_port": "50000",
-                "robot_comms_host": "127.0.0.1",
-                "robot_comms_request_port": "50001",
+                "robot_command_host": "127.0.0.1",
+                "robot_command_port": "50001",
                 "robot_knowledge_host": "aa:bb:cc:dd:ee:00",
                 "robot_knowledge_exchange_port": "1",
             }.items(),

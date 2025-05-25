@@ -202,8 +202,8 @@ class LocalCommsManager(rclpy.node.Node):
                             heartbeat.robot_id,
                             manager.get_parameter("server_host").value,
                             manager.get_parameter("server_port").value,
-                            heartbeat.robot_comms_host,
-                            heartbeat.robot_comms_request_port,
+                            heartbeat.robot_command_host,
+                            heartbeat.robot_command_port,
                             heartbeat.robot_knowledge_host,
                             heartbeat.robot_knowledge_exchange_port,
                         )
@@ -353,7 +353,7 @@ class LocalCommsManager(rclpy.node.Node):
 
         client.sendto(
             command,
-            (robot.robot_comms_host, robot.robot_comms_request_port),
+            (robot.robot_command_host, robot.robot_command_port),
         )
 
         self.get_logger().debug("Command packet sent")
@@ -392,7 +392,7 @@ class LocalCommsManager(rclpy.node.Node):
             )
 
         self.get_logger().debug(
-            f"Received knowledge request response from {robot_id} ({robot.robot_id} - {robot.robot_comms_host}:{robot.robot_comms_request_port}): {response}"
+            f"Received knowledge request response from {robot_id} ({robot.robot_id} - {robot.robot_command_host}:{robot.robot_command_port}): {response}"
         )
 
         self.update_robot_model(robot.robot_id, response)
@@ -544,7 +544,7 @@ class LocalCommsManager(rclpy.node.Node):
 
         client.sendto(
             command,
-            (robot.robot_comms_host, robot.robot_comms_request_port),
+            (robot.robot_command_host, robot.robot_command_port),
         )
 
         self.get_logger().debug("Command packet sent")
@@ -555,7 +555,7 @@ class LocalCommsManager(rclpy.node.Node):
         self.get_logger().debug("Knowledge packet packed")
         client.sendto(
             data,
-            (robot.robot_comms_host, robot.robot_comms_request_port),
+            (robot.robot_command_host, robot.robot_command_port),
         )
         self.get_logger().debug("Knowledge packet sent")
 
