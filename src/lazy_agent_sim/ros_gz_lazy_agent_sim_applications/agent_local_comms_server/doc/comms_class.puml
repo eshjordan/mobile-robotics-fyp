@@ -222,8 +222,8 @@ EpuckHeartbeatResponsePacket -- RobotCommsModel
 EpuckKnowledgePacket o-- EpuckKnowledgeRecord
 EpuckHeartbeatResponsePacket o-- EpuckNeighbourPacket
 
-EpuckKnowledgeRecord *-- Centroid
-EpuckKnowledgeRecord *-- Boundary
+EpuckKnowledgeRecord <-- Centroid
+EpuckKnowledgeRecord <-- Boundary
 
 Centroid --> BaseRobotCommsModel
 Boundary --> BaseRobotCommsModel

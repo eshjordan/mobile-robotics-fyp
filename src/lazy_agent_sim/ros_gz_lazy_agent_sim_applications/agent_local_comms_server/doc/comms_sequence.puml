@@ -2,43 +2,58 @@
 
 !theme sunlust
 
-participant "Robot[N] Server"
-participant "Robot[N] Client"
+participant "Robot[N] Robot Model"
+participant "Robot[N] Knowledge Server"
+participant "Robot[N] Knowledge Client"
 participant "Local Comms Manager"
-participant "Robot[N+1] Client"
-participant "Robot[N+1] Server"
+participant "Robot[N+1] Knowledge Client"
+participant "Robot[N+1] Knowledge Server"
+participant "Robot[N+1] Robot Model"
 
 "Local Comms Manager" -> "Local Comms Manager" : Listen
-
-...
-
-"Robot[N] Server" -> "Robot[N] Server" : Listen
-"Robot[N] Client" -> "Local Comms Manager" : Connect
 activate "Local Comms Manager"
 
-par Runs continously on a timer
-loop
-"Robot[N] Client" --> "Local Comms Manager": EpuckHeartbeatPacket {\n\tID(N), Host(N), Port(N)\n}
-"Local Comms Manager" --> "Robot[N] Client": EpuckHeartbeatResponsePacket { }
+"Robot[N] Robot Model" -> "Robot[N] Robot Model" : Listen
+"Robot[N] Knowledge Server" -> "Robot[N] Knowledge Server" : Listen
+
+par
+"Local Comms Manager" -> "Robot[N] Robot Model": Connect
+activate "Robot[N] Robot Model"
+loop Runs continously on a timer
+"Local Comms Manager" --> "Robot[N] Robot Model": EpuckCommandPacket {\n\tCommand{...}, Data{...}\n}
+"Robot[N] Robot Model" --> "Local Comms Manager": Response - optional, depends on command, e.g.\nEpuckKnowledgePacket {...}
+end
+deactivate "Robot[N] Robot Model"
+end
+
+...
+
+par
+"Robot[N] Robot Model" -> "Local Comms Manager" : Connect
+activate "Robot[N] Robot Model"
+loop Runs continously on a timer
+"Robot[N] Robot Model" --> "Local Comms Manager": EpuckHeartbeatPacket {\n\tID(N), Host(N), Port(N)\n}
+"Local Comms Manager" --> "Robot[N] Robot Model": EpuckHeartbeatResponsePacket { }
 end
 end
 
 ...
 
-"Robot[N+1] Server" <- "Robot[N+1] Server" : Listen
-"Robot[N+1] Client" -> "Local Comms Manager" : Connect
-activate "Local Comms Manager"
+"Robot[N+1] Robot Model" <- "Robot[N+1] Robot Model" : Listen
+"Robot[N+1] Knowledge Server" <- "Robot[N+1] Knowledge Server" : Listen
 
-par Runs continously on a timer
-loop
-"Robot[N+1] Client" --> "Local Comms Manager": EpuckHeartbeatPacket {\n\tID(N+1), Host(N+1), Port(N+1)\n}
-"Local Comms Manager" --> "Robot[N+1] Client": EpuckHeartbeatResponsePacket { }
+par
+"Local Comms Manager" -> "Robot[N+1] Robot Model": Connect
+activate "Robot[N+1] Robot Model"
+loop Runs continously on a timer
+"Local Comms Manager" --> "Robot[N+1] Robot Model": EpuckCommandPacket {\n\tCommand{...}, Data{...}\n}
+"Robot[N+1] Robot Model" --> "Local Comms Manager": Response - optional, depends on command, e.g.\nEpuckKnowledgePacket {...}
 end
 end
 
 ...
 
-note right of "Robot[N+1] Client"
+note right of "Robot[N+1] Knowledge Client"
 Robot[N+1] may spawn multiple
 clients to connect to multiple
 robots, as long as their IDs
@@ -46,27 +61,33 @@ are less than N+1.
 end note
 
 loop
-alt Robot[N+1] sees Robot[N] is within comms range
-"Robot[N+1] Client" --> "Local Comms Manager": EpuckHeartbeatPacket {\n\tID(N+1), Host(N+1), Port(N+1)\n}
-"Local Comms Manager" --> "Robot[N+1] Client": EpuckHeartbeatResponsePacket {\n\t(ID(N), Host(N), Port(N), Dist(N+1, N)), (...) \n}
+alt Robot[N+1] sees Robot[N] is out of comms range
+"Robot[N+1] Robot Model" --> "Local Comms Manager": EpuckHeartbeatPacket {\n\tID(N+1), Host(N+1), Port(N+1)\n}
+"Local Comms Manager" --> "Robot[N+1] Robot Model": EpuckHeartbeatResponsePacket {}
+
+else Robot[N+1] sees Robot[N] is within comms range
+"Robot[N+1] Robot Model" --> "Local Comms Manager": EpuckHeartbeatPacket {\n\tID(N+1), Host(N+1), Port(N+1)\n}
+"Local Comms Manager" --> "Robot[N+1] Robot Model": EpuckHeartbeatResponsePacket {\n\t(ID(N), Host(N), Port(N), Dist(N+1, N)), (...) \n}
+
 par
-"Robot[N+1] Client" -> "Robot[N] Server": Connect
-activate "Robot[N] Server"
+"Robot[N+1] Robot Model" -> "Robot[N+1] Knowledge Client": Create
+activate "Robot[N+1] Knowledge Client"
+"Robot[N+1] Knowledge Client" -> "Robot[N] Knowledge Server": Connect
+activate "Robot[N] Knowledge Server"
 loop
-"Robot[N+1] Client" --> "Robot[N] Server": EpuckKnowledgePacket {...}
-"Robot[N] Server" --> "Robot[N+1] Client": EpuckKnowledgePacket {...}
+"Robot[N+1] Knowledge Client" --> "Robot[N] Knowledge Server": EpuckKnowledgePacket {...}
+"Robot[N] Knowledge Server" --> "Robot[N+1] Knowledge Client": EpuckKnowledgePacket {...}
 end
 end
 ...Robot[N+1] sees Robot[N] go out of comms range...
 
-"Robot[N+1] Client" --> "Local Comms Manager": EpuckHeartbeatPacket {\n\tID(N+1), Host(N+1), Port(N+1)\n}
-"Local Comms Manager" --> "Robot[N+1] Client": EpuckHeartbeatResponsePacket {}
-"Robot[N+1] Client" -> "Robot[N] Server": Close
-deactivate "Robot[N] Server"
+"Robot[N+1] Robot Model" --> "Local Comms Manager": EpuckHeartbeatPacket {\n\tID(N+1), Host(N+1), Port(N+1)\n}
+"Local Comms Manager" --> "Robot[N+1] Robot Model": EpuckHeartbeatResponsePacket {}
+"Robot[N+1] Robot Model" -> "Robot[N+1] Knowledge Client": Destroy
+"Robot[N+1] Knowledge Client" -> "Robot[N] Knowledge Server": Close
+deactivate "Robot[N] Knowledge Server"
+deactivate "Robot[N+1] Knowledge Client"
 
-else Robot[N+1] sees Robot[N] is out of comms range
-"Robot[N+1] Client" --> "Local Comms Manager": EpuckHeartbeatPacket {\n\tID(N+1), Host(N+1), Port(N+1)\n}
-"Local Comms Manager" --> "Robot[N+1] Client": EpuckHeartbeatResponsePacket {}
 end
 end
 
