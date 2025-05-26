@@ -20,7 +20,7 @@ from launch.substitutions import (
 import launch_ros.actions
 from launch_ros.substitutions import FindPackageShare
 
-selected_config = 'gazebo_ghost'
+selected_config = 'epuck'
 
 available_configs = {
     'epuck': {},
