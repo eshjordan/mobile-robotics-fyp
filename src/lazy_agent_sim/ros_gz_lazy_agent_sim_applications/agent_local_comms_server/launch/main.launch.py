@@ -443,7 +443,10 @@ implementations = {
             ),
             'extra_args': {
                 'gui': 'true',
-                'gz_version': '8',
+                'robot_ids': '5785, 5653, 5731, 5831',
+                "gz_version": "8",
+                "manager_robot_tf_prefix": "epuck2_robot_",
+                "manager_robot_tf_suffix": "",
             },
         },
         'gz_model_headless_py': {
